@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { TrendingUp, TrendingDown, Wallet, RefreshCw, Plus, BarChart2 } from 'lucide-react'
@@ -37,7 +39,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
 
-/* ── Helpers ──────────────────────────────────────────────── */
 const formatKz = (v: number) =>
   new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(v)
 
@@ -49,14 +50,14 @@ function tipoVariant(tipo: string): 'default' | 'destructive' {
 }
 
 /* ── Saldo cards ──────────────────────────────────────────── */
-function SaldoCards({ saldo }: { saldo: SaldoResponse | null }) {
+function SaldoCards({ saldo, t }: { saldo: SaldoResponse | null; t: TFunction }) {
   if (!saldo) return null
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Wallet className="size-4" /> Saldo Actual
+            <Wallet className="size-4" /> {t('cashflow.currentBalance')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -66,7 +67,7 @@ function SaldoCards({ saldo }: { saldo: SaldoResponse | null }) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <TrendingUp className="size-4 text-green-500" /> Total Entradas
+            <TrendingUp className="size-4 text-green-500" /> {t('cashflow.totalIn')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -76,7 +77,7 @@ function SaldoCards({ saldo }: { saldo: SaldoResponse | null }) {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <TrendingDown className="size-4 text-red-500" /> Total Saídas
+            <TrendingDown className="size-4 text-red-500" /> {t('cashflow.totalOut')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -89,13 +90,12 @@ function SaldoCards({ saldo }: { saldo: SaldoResponse | null }) {
 
 /* ── Novo lançamento dialog ───────────────────────────────── */
 function NovoLancamentoDialog({
-  open,
-  onClose,
-  onCreated,
+  open, onClose, onCreated, t,
 }: {
   open: boolean
   onClose: () => void
   onCreated: () => void
+  t: TFunction
 }) {
   const [tipo, setTipo]           = useState<'ENTRADA' | 'SAIDA'>('ENTRADA')
   const [categoria, setCategoria] = useState('')
@@ -109,29 +109,25 @@ function NovoLancamentoDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!categoria || !valor || !descricao || !data) {
-      toast.error('Preencha todos os campos')
+      toast.error(t('cashflow.toasts.fillAll'))
       return
     }
     const valorNum = parseFloat(valor)
     if (isNaN(valorNum) || valorNum <= 0) {
-      toast.error('Valor inválido')
+      toast.error(t('cashflow.toasts.invalidValue'))
       return
     }
     setLoading(true)
     try {
       await fluxoCaixaService.criarLancamento({
-        tipo,
-        categoria,
-        valor: valorNum,
-        descricao,
-        data_movimento: data,
+        tipo, categoria, valor: valorNum, descricao, data_movimento: data,
       })
-      toast.success('Lançamento registado')
+      toast.success(t('cashflow.toasts.registered'))
       onCreated()
       onClose()
       setValor(''); setDescricao(''); setCategoria('')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao registar lançamento')
+      toast.error(err instanceof Error ? err.message : t('cashflow.toasts.registerError'))
     } finally {
       setLoading(false)
     }
@@ -141,29 +137,29 @@ function NovoLancamentoDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Novo Lançamento</DialogTitle>
+          <DialogTitle>{t('cashflow.newEntryTitle')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Tipo</Label>
+              <Label>{t('cashflow.fieldType')}</Label>
               <Select value={tipo} onValueChange={(v) => { setTipo(v as 'ENTRADA' | 'SAIDA'); setCategoria('') }}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ENTRADA">Entrada</SelectItem>
-                  <SelectItem value="SAIDA">Saída</SelectItem>
+                  <SelectItem value="ENTRADA">{t('cashflow.typeIn')}</SelectItem>
+                  <SelectItem value="SAIDA">{t('cashflow.typeOut')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Data</Label>
+              <Label>{t('cashflow.fieldDate')}</Label>
               <Input type="date" value={data} onChange={(e) => setData(e.target.value)} required />
             </div>
           </div>
           <div className="space-y-2">
-            <Label>Categoria</Label>
+            <Label>{t('cashflow.fieldCategory')}</Label>
             <Select value={categoria} onValueChange={setCategoria}>
-              <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder={t('cashflow.categorySelect')} /></SelectTrigger>
               <SelectContent>
                 {categorias.map((c) => (
                   <SelectItem key={c} value={c}>{c.replace(/_/g, ' ')}</SelectItem>
@@ -172,16 +168,16 @@ function NovoLancamentoDialog({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Descrição</Label>
+            <Label>{t('cashflow.fieldDesc')}</Label>
             <Input
-              placeholder="Ex: Salário funcionário, venda balcão..."
+              placeholder={t('cashflow.descPlaceholder')}
               value={descricao}
               onChange={(e) => setDescricao(e.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label>Valor (Kz)</Label>
+            <Label>{t('cashflow.fieldValue')}</Label>
             <Input
               type="number"
               min="0.01"
@@ -193,9 +189,9 @@ function NovoLancamentoDialog({
             />
           </div>
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="button" variant="outline" onClick={onClose}>{t('common.cancel')}</Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'A guardar...' : 'Registar'}
+              {loading ? t('cashflow.saving') : t('cashflow.register')}
             </Button>
           </div>
         </form>
@@ -205,7 +201,7 @@ function NovoLancamentoDialog({
 }
 
 /* ── Aba Extrato ──────────────────────────────────────────── */
-function ExtratoTab() {
+function ExtratoTab({ t }: { t: TFunction }) {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim]       = useState('')
   const [categoria, setCategoria]   = useState('')
@@ -230,7 +226,7 @@ function ExtratoTab() {
         saldo_periodo: res.saldo_periodo,
       })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar extrato')
+      toast.error(err instanceof Error ? err.message : t('cashflow.toasts.loadError'))
     } finally {
       setLoading(false)
     }
@@ -240,22 +236,21 @@ function ExtratoTab() {
 
   return (
     <div className="space-y-4">
-      {/* Filtros */}
       <div className="flex flex-wrap gap-3 items-end">
         <div className="space-y-1">
-          <Label className="text-xs">Data início</Label>
+          <Label className="text-xs">{t('cashflow.filterStart')}</Label>
           <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-full sm:w-40" />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Data fim</Label>
+          <Label className="text-xs">{t('cashflow.filterEnd')}</Label>
           <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-full sm:w-40" />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Categoria</Label>
+          <Label className="text-xs">{t('cashflow.filterCategory')}</Label>
           <Select value={categoria || '__all__'} onValueChange={(v) => setCategoria(v === '__all__' ? '' : v)}>
             <SelectTrigger className="w-full sm:w-44"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="__all__">Todas</SelectItem>
+              <SelectItem value="__all__">{t('cashflow.filterAll')}</SelectItem>
               {[...CATEGORIAS_ENTRADA, ...CATEGORIAS_SAIDA].map((c) => (
                 <SelectItem key={c} value={c}>{c.replace(/_/g, ' ')}</SelectItem>
               ))}
@@ -263,45 +258,51 @@ function ExtratoTab() {
           </Select>
         </div>
         <Button variant="outline" size="sm" onClick={carregar} disabled={loading}>
-          <RefreshCw className="size-4 mr-1" /> Actualizar
+          <RefreshCw className="size-4 mr-1" /> {t('cashflow.refresh')}
         </Button>
         <Button size="sm" onClick={() => setDialogOpen(true)}>
-          <Plus className="size-4 mr-1" /> Novo Lançamento
+          <Plus className="size-4 mr-1" /> {t('cashflow.newEntry')}
         </Button>
       </div>
 
-      {/* Resumo período */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Lançamentos', value: totais.total_lancamentos.toString() },
-          { label: 'Entradas', value: formatKz(totais.total_entradas), color: 'text-green-600' },
-          { label: 'Saídas', value: formatKz(totais.total_saidas), color: 'text-red-600' },
-          { label: 'Saldo Período', value: formatKz(totais.saldo_periodo), color: totais.saldo_periodo >= 0 ? 'text-green-600' : 'text-red-600' },
+          { label: t('cashflow.totalEntries'), value: totais.total_lancamentos.toString(), color: '' },
+          { label: t('cashflow.periodIn'),      value: formatKz(totais.total_entradas),    color: 'text-green-600' },
+          { label: t('cashflow.periodOut'),     value: formatKz(totais.total_saidas),      color: 'text-red-600' },
+          { label: t('cashflow.periodBalance'), value: formatKz(totais.saldo_periodo),     color: totais.saldo_periodo >= 0 ? 'text-green-600' : 'text-red-600' },
         ].map(({ label, value, color }) => (
           <div key={label} className="bg-muted/50 rounded-lg p-3">
             <p className="text-xs text-muted-foreground">{label}</p>
-            <p className={`text-sm font-semibold mt-0.5 ${color ?? ''}`}>{value}</p>
+            <p className={`text-sm font-semibold mt-0.5 ${color}`}>{value}</p>
           </div>
         ))}
       </div>
 
-      {/* Tabela */}
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Data</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead>Categoria</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
+              <TableHead>{t('cashflow.colDate')}</TableHead>
+              <TableHead>{t('cashflow.colDescription')}</TableHead>
+              <TableHead>{t('cashflow.colCategory')}</TableHead>
+              <TableHead>{t('cashflow.colType')}</TableHead>
+              <TableHead className="text-right">{t('cashflow.colValue')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">A carregar...</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  {t('cashflow.loading')}
+                </TableCell>
+              </TableRow>
             ) : lancamentos.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Nenhum lançamento encontrado</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                  {t('cashflow.empty')}
+                </TableCell>
+              </TableRow>
             ) : (
               lancamentos.map((l) => (
                 <TableRow key={l.id}>
@@ -327,13 +328,14 @@ function ExtratoTab() {
         open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         onCreated={carregar}
+        t={t}
       />
     </div>
   )
 }
 
 /* ── Aba Demonstrativo ───────────────────────────────────── */
-function CategoriaTable({ title, rows }: { title: string; rows: CategoriaGrupoResponse[] }) {
+function CategoriaTable({ title, rows, t }: { title: string; rows: CategoriaGrupoResponse[]; t: TFunction }) {
   return (
     <div>
       <h4 className="text-sm font-semibold mb-2 text-muted-foreground uppercase tracking-wide">{title}</h4>
@@ -341,14 +343,18 @@ function CategoriaTable({ title, rows }: { title: string; rows: CategoriaGrupoRe
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Categoria</TableHead>
-              <TableHead className="text-center">Qtd</TableHead>
-              <TableHead className="text-right">Total</TableHead>
+              <TableHead>{t('cashflow.colCategory')}</TableHead>
+              <TableHead className="text-center">{t('cashflow.colQty')}</TableHead>
+              <TableHead className="text-right">{t('common.total')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 ? (
-              <TableRow><TableCell colSpan={3} className="text-center text-muted-foreground py-4">Sem registos</TableCell></TableRow>
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
+                  {t('cashflow.empty')}
+                </TableCell>
+              </TableRow>
             ) : (
               rows.map((r) => (
                 <TableRow key={r.categoria}>
@@ -365,7 +371,7 @@ function CategoriaTable({ title, rows }: { title: string; rows: CategoriaGrupoRe
   )
 }
 
-function DemonstrativoTab() {
+function DemonstrativoTab({ t }: { t: TFunction }) {
   const hoje = format(new Date(), 'yyyy-MM-dd')
   const inicioMes = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd')
   const [dataInicio, setDataInicio] = useState(inicioMes)
@@ -375,7 +381,7 @@ function DemonstrativoTab() {
 
   async function carregar() {
     if (!dataInicio || !dataFim) {
-      toast.error('Seleccione o período')
+      toast.error(t('cashflow.toasts.selectPeriod'))
       return
     }
     setLoading(true)
@@ -383,7 +389,7 @@ function DemonstrativoTab() {
       const res = await fluxoCaixaService.demonstrativo(dataInicio, dataFim)
       setDemo(res)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro ao carregar demonstrativo')
+      toast.error(err instanceof Error ? err.message : t('cashflow.toasts.statementError'))
     } finally {
       setLoading(false)
     }
@@ -395,39 +401,42 @@ function DemonstrativoTab() {
     <div className="space-y-4">
       <div className="flex flex-wrap gap-3 items-end">
         <div className="space-y-1">
-          <Label className="text-xs">Data início</Label>
+          <Label className="text-xs">{t('cashflow.filterStart')}</Label>
           <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-full sm:w-40" />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Data fim</Label>
+          <Label className="text-xs">{t('cashflow.filterEnd')}</Label>
           <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-full sm:w-40" />
         </div>
         <Button variant="outline" size="sm" onClick={carregar} disabled={loading}>
-          <BarChart2 className="size-4 mr-1" /> Gerar
+          <BarChart2 className="size-4 mr-1" /> {t('cashflow.generate')}
         </Button>
       </div>
 
       {demo && (
         <div className="space-y-4">
-          {/* Resumo */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-              <p className="text-xs text-green-700 font-medium">Total Entradas</p>
+              <p className="text-xs text-green-700 font-medium">{t('cashflow.statementIn')}</p>
               <p className="text-xl font-bold text-green-700 mt-1">{formatKz(demo.total_entradas)}</p>
             </div>
             <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-              <p className="text-xs text-red-700 font-medium">Total Saídas</p>
+              <p className="text-xs text-red-700 font-medium">{t('cashflow.statementOut')}</p>
               <p className="text-xl font-bold text-red-700 mt-1">{formatKz(demo.total_saidas)}</p>
             </div>
             <div className={`border rounded-lg p-4 text-center ${demo.saldo_final >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
-              <p className={`text-xs font-medium ${demo.saldo_final >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>Saldo Final</p>
-              <p className={`text-xl font-bold mt-1 ${demo.saldo_final >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>{formatKz(demo.saldo_final)}</p>
+              <p className={`text-xs font-medium ${demo.saldo_final >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                {t('cashflow.statementBalance')}
+              </p>
+              <p className={`text-xl font-bold mt-1 ${demo.saldo_final >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
+                {formatKz(demo.saldo_final)}
+              </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <CategoriaTable title="Entradas por categoria" rows={demo.entradas} />
-            <CategoriaTable title="Saídas por categoria" rows={demo.saidas} />
+            <CategoriaTable title={t('cashflow.inByCategory')} rows={demo.entradas} t={t} />
+            <CategoriaTable title={t('cashflow.outByCategory')} rows={demo.saidas} t={t} />
           </div>
         </div>
       )}
@@ -436,7 +445,7 @@ function DemonstrativoTab() {
 }
 
 /* ── Aba Sincronizar ─────────────────────────────────────── */
-function SincronizarTab() {
+function SincronizarTab({ t }: { t: TFunction }) {
   const [loading, setLoading] = useState(false)
   const [resultado, setResultado] = useState<{ total_sincronizados: number; sincronizados: Record<string, number> } | null>(null)
 
@@ -445,9 +454,9 @@ function SincronizarTab() {
     try {
       const res = await fluxoCaixaService.sincronizar()
       setResultado(res)
-      toast.success(`${res.total_sincronizados} lançamento(s) sincronizado(s)`)
+      toast.success(t('cashflow.syncResult', { count: res.total_sincronizados }))
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro na sincronização')
+      toast.error(err instanceof Error ? err.message : t('cashflow.toasts.syncError'))
     } finally {
       setLoading(false)
     }
@@ -456,19 +465,20 @@ function SincronizarTab() {
   return (
     <div className="space-y-6 max-w-lg">
       <div className="bg-muted/40 rounded-lg p-4 text-sm text-muted-foreground leading-relaxed">
-        <p className="font-medium text-foreground mb-1">O que faz a sincronização?</p>
-        Importa vendas, pagamentos de prestações e compras de stock já existentes como
-        lançamentos de caixa. Não duplica registos que já foram sincronizados anteriormente.
+        <p className="font-medium text-foreground mb-1">{t('cashflow.syncWhat')}</p>
+        {t('cashflow.syncInfo')}
       </div>
 
       <Button onClick={handleSync} disabled={loading} className="w-full sm:w-auto">
         <RefreshCw className={`size-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-        {loading ? 'A sincronizar...' : 'Sincronizar Histórico'}
+        {loading ? t('cashflow.syncing') : t('cashflow.syncButton')}
       </Button>
 
       {resultado && (
         <div className="border rounded-lg p-4 space-y-3">
-          <p className="font-semibold text-sm">Resultado — {resultado.total_sincronizados} lançamento(s) criado(s)</p>
+          <p className="font-semibold text-sm">
+            {t('cashflow.syncResult', { count: resultado.total_sincronizados })}
+          </p>
           <div className="divide-y text-sm">
             {Object.entries(resultado.sincronizados).map(([k, v]) => (
               <div key={k} className="flex justify-between py-2">
@@ -485,6 +495,7 @@ function SincronizarTab() {
 
 /* ── Page ────────────────────────────────────────────────── */
 export default function FluxoCaixaPage() {
+  const { t } = useTranslation()
   const [saldo, setSaldo] = useState<SaldoResponse | null>(null)
 
   useEffect(() => {
@@ -496,29 +507,27 @@ export default function FluxoCaixaPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Fluxo de Caixa</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Controlo de entradas, saídas e saldo do caixa
-        </p>
+        <h1 className="text-2xl font-bold tracking-tight">{t('cashflow.title')}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{t('cashflow.subtitle')}</p>
       </div>
 
-      <SaldoCards saldo={saldo} />
+      <SaldoCards saldo={saldo} t={t} />
 
       <Tabs defaultValue="extrato">
         <TabsList>
-          <TabsTrigger value="extrato">Extrato</TabsTrigger>
-          <TabsTrigger value="demonstrativo">Demonstrativo</TabsTrigger>
-          <TabsTrigger value="sincronizar">Sincronizar</TabsTrigger>
+          <TabsTrigger value="extrato">{t('cashflow.tabExtract')}</TabsTrigger>
+          <TabsTrigger value="demonstrativo">{t('cashflow.tabStatement')}</TabsTrigger>
+          <TabsTrigger value="sincronizar">{t('cashflow.tabSync')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="extrato" className="mt-4">
-          <ExtratoTab />
+          <ExtratoTab t={t} />
         </TabsContent>
         <TabsContent value="demonstrativo" className="mt-4">
-          <DemonstrativoTab />
+          <DemonstrativoTab t={t} />
         </TabsContent>
         <TabsContent value="sincronizar" className="mt-4">
-          <SincronizarTab />
+          <SincronizarTab t={t} />
         </TabsContent>
       </Tabs>
     </div>

@@ -211,50 +211,50 @@ export default function ClientesPage() {
           </DialogHeader>
           <form onSubmit={handleSave} className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="nome">Nome *</Label>
+              <Label htmlFor="nome">{t('common.name')} *</Label>
               <Input
                 id="nome"
                 value={form.nome}
                 onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
-                placeholder="Ex: João dos Santos"
+                placeholder={t('clients.namePlaceholder')}
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="telefone">Telefone</Label>
+              <Label htmlFor="telefone">{t('common.phone')}</Label>
               <Input
                 id="telefone"
                 value={form.telefone}
                 onChange={(e) => setForm((f) => ({ ...f, telefone: e.target.value }))}
-                placeholder="Ex: 923456789"
+                placeholder={t('clients.phonePlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('common.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={form.email}
                 onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                placeholder="Ex: joao@email.com"
+                placeholder={t('clients.emailPlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="nif">NIF</Label>
+              <Label htmlFor="nif">{t('clients.fieldNif')}</Label>
               <Input
                 id="nif"
                 value={form.nif}
                 onChange={(e) => setForm((f) => ({ ...f, nif: e.target.value }))}
-                placeholder="Ex: 123456789"
+                placeholder={t('clients.nifPlaceholder')}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endereco">Endereço</Label>
+              <Label htmlFor="endereco">{t('common.address')}</Label>
               <Input
                 id="endereco"
                 value={form.endereco}
                 onChange={(e) => setForm((f) => ({ ...f, endereco: e.target.value }))}
-                placeholder="Endereço completo"
+                placeholder={t('clients.addressPlaceholder')}
               />
             </div>
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
@@ -264,10 +264,10 @@ export default function ClientesPage() {
                 onClick={() => setDialogOpen(false)}
                 disabled={saving}
               >
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={saving}>
-                {saving ? 'A guardar...' : 'Guardar'}
+                {saving ? t('common.saving') : t('common.save')}
               </Button>
             </div>
           </form>
