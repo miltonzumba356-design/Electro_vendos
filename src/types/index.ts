@@ -295,3 +295,27 @@ export interface SyncResult {
   total_sincronizados: number
   sincronizados: Record<string, number>
 }
+
+// ── Assistente IA ────────────────────────────────────────────────
+export interface SessaoIaCreate {
+  titulo: string
+}
+
+export interface SessaoIaResponse {
+  id: string
+  titulo: string
+  criado_em: string
+}
+
+export interface MensagemIaResponse {
+  id: string
+  sessao_id: string
+  role: string
+  content: string
+  criado_em: string
+}
+
+export interface PerguntaResponse {
+  resposta: string
+  mensagem_id: string
+}

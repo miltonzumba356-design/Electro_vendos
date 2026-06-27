@@ -29,6 +29,7 @@ import vendosLogo from '@/assets/vendos-logo.png'
 import { cn } from '@/app/components/ui/utils'
 import { LANGUAGES, type LangCode } from '@/i18n/index'
 import i18next from 'i18next'
+import { AiAssistant } from '@/app/components/AiAssistant'
 
 const navDefs = [
   { to: '/',             key: 'dashboard',    icon: LayoutDashboard, gestorOnly: false },
@@ -187,6 +188,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      <AiAssistant />
     </div>
   )
 }
