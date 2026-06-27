@@ -1,0 +1,2270 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Bisness SAIDE - Gestão de Vendas",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Login do utilizador",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Token JWT e dados do utilizador",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Registar novo utilizador (apenas Gestor)",
+        "operationId": "register_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Dados do utilizador criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UtilizadorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/utilizadores": {
+      "get": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Listar utilizadores (apenas Gestor)",
+        "operationId": "listar_utilizadores_auth_utilizadores_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UtilizadorResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Utilizadores Auth Utilizadores Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Dados do utilizador autenticado",
+        "operationId": "me_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UtilizadorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/produtos": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Listar produtos ativos",
+        "operationId": "listar_produtos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProdutoResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Produtos Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Criar produto (Gestor)",
+        "operationId": "criar_produtos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProdutoCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/produtos/{id}": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Detalhes de um produto",
+        "operationId": "buscar_produtos__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Atualizar produto (Gestor)",
+        "operationId": "atualizar_produtos__id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProdutoUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Desativar produto (Gestor)",
+        "operationId": "remover_produtos__id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produtos/stock/baixo": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Produtos abaixo do stock mínimo (Gestor)",
+        "operationId": "stock_baixo_produtos_stock_baixo_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProdutoStockBaixo"
+                  },
+                  "type": "array",
+                  "title": "Response Stock Baixo Produtos Stock Baixo Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/clientes": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Listar clientes",
+        "operationId": "listar_clientes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClienteResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Clientes Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Criar cliente",
+        "operationId": "criar_clientes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/clientes/{id}": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Detalhes de um cliente",
+        "operationId": "buscar_clientes__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Atualizar cliente",
+        "operationId": "atualizar_clientes__id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendas": {
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Listar vendas",
+        "operationId": "listar_vendas_get",
+        "responses": {
+          "200": {
+            "description": "Gestor vê todas, Operador vê apenas as suas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VendaResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Vendas Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Registar nova venda",
+        "operationId": "criar_vendas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendaCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Venda criada com cálculo de IVA, desconto e atualização de stock",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/vendas/{id}": {
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Detalhes de uma venda",
+        "operationId": "buscar_vendas__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stock/movimento": {
+      "post": {
+        "tags": [
+          "Stock"
+        ],
+        "summary": "Registar movimento de stock (Gestor)",
+        "operationId": "criar_movimento_stock_movimento_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovimentoCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Movimento registado e stock atualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovimentoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/stock/movimentos": {
+      "get": {
+        "tags": [
+          "Stock"
+        ],
+        "summary": "Histórico de movimentos (Gestor)",
+        "operationId": "listar_movimentos_stock_movimentos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "produto_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por produto",
+              "title": "Produto Id"
+            },
+            "description": "Filtrar por produto"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MovimentoResponse"
+                  },
+                  "title": "Response Listar Movimentos Stock Movimentos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/vendas/periodo": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Vendas por período",
+        "description": "Total de vendas, receita, IVA, descontos e lucro bruto num intervalo de datas",
+        "operationId": "vendas_periodo_relatorios_vendas_periodo_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Data início (ISO)",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início (ISO)"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Data fim (ISO)",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim (ISO)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/vendas/diario": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Vendas do dia",
+        "operationId": "vendas_diario_relatorios_vendas_diario_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Dia (ISO). Omite para hoje",
+              "examples": [
+                "2026-06-27T00:00:00Z"
+              ],
+              "title": "Data"
+            },
+            "description": "Dia (ISO). Omite para hoje"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/vendas/mensal": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Vendas do mês",
+        "operationId": "vendas_mensal_relatorios_vendas_mensal_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ano",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Ano",
+              "examples": [2026],
+              "title": "Ano"
+            },
+            "description": "Ano"
+          },
+          {
+            "name": "mes",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "Mês (1-12)",
+              "examples": [6],
+              "title": "Mes"
+            },
+            "description": "Mês (1-12)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/clientes/fieis": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Clientes fiéis (maior gasto)",
+        "operationId": "clientes_fieis_relatorios_clientes_fieis_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/relatorios/clientes/inativos": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Clientes inativos",
+        "description": "Clientes sem compras há X dias",
+        "operationId": "clientes_inativos_relatorios_clientes_inativos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dias",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Dias sem comprar",
+              "examples": [90],
+              "default": 90,
+              "title": "Dias"
+            },
+            "description": "Dias sem comprar"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/produtos/mais-vendidos": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Top produtos mais vendidos",
+        "operationId": "produtos_mais_vendidos_relatorios_produtos_mais_vendidos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "description": "Quantos produtos",
+              "examples": [10],
+              "default": 10,
+              "title": "Limite"
+            },
+            "description": "Quantos produtos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/vendas/por-cliente": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Vendas agregadas por cliente",
+        "operationId": "vendas_por_cliente_relatorios_vendas_por_cliente_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/relatorios/stock/baixo": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Produtos com stock crítico",
+        "operationId": "stock_baixo_relatorios_stock_baixo_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ClienteCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome",
+            "description": "Nome do cliente",
+            "examples": [
+              "João dos Santos"
+            ]
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone",
+            "description": "Telefone",
+            "examples": [
+              "923456789"
+            ]
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "Email",
+            "examples": [
+              "joao@email.com"
+            ]
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif",
+            "description": "NIF",
+            "examples": [
+              "123456789"
+            ]
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco",
+            "description": "Endereço"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "ClienteCreate"
+      },
+      "ClienteResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "telefone",
+          "email",
+          "nif",
+          "endereco",
+          "criado_em"
+        ],
+        "title": "ClienteResponse"
+      },
+      "ClienteUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          }
+        },
+        "type": "object",
+        "title": "ClienteUpdate"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ItemVendaInput": {
+        "properties": {
+          "produto_id": {
+            "type": "integer",
+            "title": "Produto Id",
+            "description": "ID do produto",
+            "examples": [1]
+          },
+          "quantidade": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Quantidade",
+            "description": "Quantidade",
+            "examples": [2]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "quantidade"
+        ],
+        "title": "ItemVendaInput"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "examples": [
+              "admin@bisness.com"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "examples": [
+              "admin123"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "MovimentoCreate": {
+        "properties": {
+          "produto_id": {
+            "type": "integer",
+            "title": "Produto Id",
+            "description": "ID do produto",
+            "examples": [1]
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "ENTRADA ou SAIDA",
+            "examples": [
+              "ENTRADA",
+              "SAIDA"
+            ]
+          },
+          "quantidade": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Quantidade",
+            "description": "Quantidade",
+            "examples": [20]
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo",
+            "description": "Motivo do movimento",
+            "examples": [
+              "Reposição de stock"
+            ]
+          },
+          "preco_unitario": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco Unitario",
+            "description": "Preço de custo (entrada)",
+            "examples": [1500]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "tipo",
+          "quantidade"
+        ],
+        "title": "MovimentoCreate"
+      },
+      "MovimentoResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "produto_id": {
+            "type": "integer",
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "preco_unitario": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco Unitario"
+          },
+          "utilizador_nome": {
+            "type": "string",
+            "title": "Utilizador Nome"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_id",
+          "produto_nome",
+          "tipo",
+          "quantidade",
+          "motivo",
+          "preco_unitario",
+          "utilizador_nome",
+          "criado_em"
+        ],
+        "title": "MovimentoResponse"
+      },
+      "ProdutoCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome",
+            "description": "Nome do produto",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao",
+            "description": "Descrição detalhada"
+          },
+          "codigo_barras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Barras",
+            "description": "Código de barras",
+            "examples": [
+              "7891234567890"
+            ]
+          },
+          "preco_custo": {
+            "type": "number",
+            "title": "Preco Custo",
+            "description": "Preço de compra (Kz)",
+            "default": 0,
+            "examples": [1500]
+          },
+          "preco_venda": {
+            "type": "number",
+            "title": "Preco Venda",
+            "description": "Preço de venda (Kz)",
+            "default": 0,
+            "examples": [2500]
+          },
+          "iva": {
+            "type": "number",
+            "title": "Iva",
+            "description": "Taxa de IVA (%)",
+            "default": 14,
+            "examples": [14]
+          },
+          "stock_atual": {
+            "type": "integer",
+            "title": "Stock Atual",
+            "description": "Quantidade em stock",
+            "default": 0,
+            "examples": [50]
+          },
+          "stock_minimo": {
+            "type": "integer",
+            "title": "Stock Minimo",
+            "description": "Stock mínimo para alerta",
+            "default": 0,
+            "examples": [10]
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "ProdutoCreate"
+      },
+      "ProdutoResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "codigo_barras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Barras"
+          },
+          "preco_custo": {
+            "type": "number",
+            "title": "Preco Custo"
+          },
+          "preco_venda": {
+            "type": "number",
+            "title": "Preco Venda"
+          },
+          "iva": {
+            "type": "number",
+            "title": "Iva"
+          },
+          "margem_lucro": {
+            "type": "number",
+            "title": "Margem Lucro",
+            "description": "Margem de lucro (%)"
+          },
+          "preco_com_iva": {
+            "type": "number",
+            "title": "Preco Com Iva",
+            "description": "Preço final com IVA"
+          },
+          "stock_atual": {
+            "type": "integer",
+            "title": "Stock Atual"
+          },
+          "stock_minimo": {
+            "type": "integer",
+            "title": "Stock Minimo"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "descricao",
+          "codigo_barras",
+          "preco_custo",
+          "preco_venda",
+          "iva",
+          "margem_lucro",
+          "preco_com_iva",
+          "stock_atual",
+          "stock_minimo",
+          "ativo",
+          "criado_em"
+        ],
+        "title": "ProdutoResponse"
+      },
+      "ProdutoStockBaixo": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "codigo_barras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Barras"
+          },
+          "preco_custo": {
+            "type": "number",
+            "title": "Preco Custo"
+          },
+          "preco_venda": {
+            "type": "number",
+            "title": "Preco Venda"
+          },
+          "iva": {
+            "type": "number",
+            "title": "Iva"
+          },
+          "margem_lucro": {
+            "type": "number",
+            "title": "Margem Lucro",
+            "description": "Margem de lucro (%)"
+          },
+          "preco_com_iva": {
+            "type": "number",
+            "title": "Preco Com Iva",
+            "description": "Preço final com IVA"
+          },
+          "stock_atual": {
+            "type": "integer",
+            "title": "Stock Atual"
+          },
+          "stock_minimo": {
+            "type": "integer",
+            "title": "Stock Minimo"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "diferenca": {
+            "type": "integer",
+            "title": "Diferenca",
+            "description": "Quantidade em falta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "descricao",
+          "codigo_barras",
+          "preco_custo",
+          "preco_venda",
+          "iva",
+          "margem_lucro",
+          "preco_com_iva",
+          "stock_atual",
+          "stock_minimo",
+          "ativo",
+          "criado_em",
+          "diferenca"
+        ],
+        "title": "ProdutoStockBaixo"
+      },
+      "ProdutoUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "codigo_barras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Barras"
+          },
+          "preco_custo": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco Custo"
+          },
+          "preco_venda": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco Venda"
+          },
+          "iva": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iva"
+          },
+          "stock_minimo": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Minimo"
+          }
+        },
+        "type": "object",
+        "title": "ProdutoUpdate"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome",
+            "description": "Nome completo",
+            "examples": [
+              "Maria Silva"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "Email de acesso",
+            "examples": [
+              "maria@bisness.com"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "description": "Password de acesso",
+            "examples": [
+              "123456"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Role do utilizador",
+            "default": "OPERADOR",
+            "examples": [
+              "OPERADOR",
+              "GESTOR"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "email",
+          "password"
+        ],
+        "title": "RegisterRequest"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "Token JWT para autenticação"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome",
+            "description": "Nome do utilizador"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Role do utilizador"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "nome",
+          "role"
+        ],
+        "title": "TokenResponse"
+      },
+      "UtilizadorResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "email",
+          "role",
+          "ativo"
+        ],
+        "title": "UtilizadorResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VendaCreate": {
+        "properties": {
+          "cliente_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Id",
+            "description": "ID do cliente existente",
+            "examples": [1]
+          },
+          "cliente": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente",
+            "description": "Dados do novo cliente (se não existir)",
+            "examples": [
+              {
+                "nome": "João",
+                "telefone": "923456789"
+              }
+            ]
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemVendaInput"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Itens",
+            "description": "Itens da venda"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens"
+        ],
+        "title": "VendaCreate"
+      },
+      "VendaItemResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "produto_id": {
+            "type": "integer",
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade"
+          },
+          "preco_unitario": {
+            "type": "number",
+            "title": "Preco Unitario",
+            "description": "Preço unitário no momento da venda"
+          },
+          "iva_aplicado": {
+            "type": "number",
+            "title": "Iva Aplicado",
+            "description": "IVA (%) aplicado"
+          },
+          "subtotal": {
+            "type": "number",
+            "title": "Subtotal",
+            "description": "Subtotal (preço × quantidade)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_id",
+          "produto_nome",
+          "quantidade",
+          "preco_unitario",
+          "iva_aplicado",
+          "subtotal"
+        ],
+        "title": "VendaItemResponse"
+      },
+      "VendaResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "cliente_id": {
+            "type": "integer",
+            "title": "Cliente Id"
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "utilizador_nome": {
+            "type": "string",
+            "title": "Utilizador Nome"
+          },
+          "total_sem_iva": {
+            "type": "number",
+            "title": "Total Sem Iva",
+            "description": "Total antes do IVA"
+          },
+          "total_iva": {
+            "type": "number",
+            "title": "Total Iva",
+            "description": "Valor total do IVA"
+          },
+          "total_com_iva": {
+            "type": "number",
+            "title": "Total Com Iva",
+            "description": "Total com IVA antes do desconto"
+          },
+          "desconto_percentual": {
+            "type": "number",
+            "title": "Desconto Percentual",
+            "description": "Desconto aplicado (%)"
+          },
+          "total_desconto": {
+            "type": "number",
+            "title": "Total Desconto",
+            "description": "Valor do desconto"
+          },
+          "total_final": {
+            "type": "number",
+            "title": "Total Final",
+            "description": "Total a pagar"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/VendaItemResponse"
+            },
+            "type": "array",
+            "title": "Itens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "cliente_id",
+          "cliente_nome",
+          "utilizador_nome",
+          "total_sem_iva",
+          "total_iva",
+          "total_com_iva",
+          "desconto_percentual",
+          "total_desconto",
+          "total_final",
+          "criado_em",
+          "itens"
+        ],
+        "title": "VendaResponse"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
