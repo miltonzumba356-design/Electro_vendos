@@ -24,17 +24,17 @@ import { LANGUAGES, type LangCode } from '@/i18n/index'
 import i18next from 'i18next'
 
 /* ── Brand tokens ──────────────────────────────────────────── */
-const BLUE   = '#0F6CB5'
+const BLUE = '#0F6CB5'
 const ORANGE = '#E97817'
 
 /* ── Animação ──────────────────────────────────────────────── */
 const containerVariants = {
-  hidden:  { opacity: 0 },
+  hidden: { opacity: 0 },
   visible: { opacity: 1, transition: { staggerChildren: 0.07 } },
 }
 const itemVariants = {
-  hidden:  { y: 16, opacity: 0 },
-  visible: { y: 0,  opacity: 1 },
+  hidden: { y: 16, opacity: 0 },
+  visible: { y: 0, opacity: 1 },
 }
 
 /* ── Language selector ─────────────────────────────────────── */
@@ -124,7 +124,7 @@ function FormContent({ form, loading, showPassword, onTogglePassword, onSubmit }
                 <FormControl>
                   <Input
                     type="email"
-                    placeholder="admin@bisness.com"
+                    placeholder="milton@gmail.com"
                     autoComplete="email"
                     disabled={loading}
                     className={cn(fieldCls, 'pl-11 pr-4')}
@@ -209,13 +209,13 @@ function FormContent({ form, loading, showPassword, onTogglePassword, onSubmit }
 /* ── Page ──────────────────────────────────────────────────── */
 export default function LoginPage() {
   const { t, i18n } = useTranslation()
-  const { login }   = useAuth()
-  const navigate    = useNavigate()
-  const [loading, setLoading]           = useState(false)
+  const { login } = useAuth()
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
   const formSchema = z.object({
-    email:    z.string().email({ message: t('login.emailInvalid') }),
+    email: z.string().email({ message: t('login.emailInvalid') }),
     password: z.string().min(1, { message: t('login.passwordRequired') }),
   })
 

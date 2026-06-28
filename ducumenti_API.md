@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Bisness SAIDE - Gestão de Vendas",
-    "version": "1.0.0"
+    "version": "1.0.1"
   },
   "paths": {
     "/auth/login": {
@@ -2062,6 +2062,24 @@
           }
         }
       }
+    },
+    "/debug/users": {
+      "get": {
+        "summary": "Debug Users",
+        "operationId": "debug_users_debug_users_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3983,7 +4001,6 @@
             "title": "Total Sincronizados"
           },
           "sincronizados": {
-            "additionalProperties": true,
             "type": "object",
             "title": "Sincronizados"
           },
@@ -4117,13 +4134,6 @@
           "type": {
             "type": "string",
             "title": "Error Type"
-          },
-          "input": {
-            "title": "Input"
-          },
-          "ctx": {
-            "type": "object",
-            "title": "Context"
           }
         },
         "type": "object",
@@ -4152,7 +4162,6 @@
           "cliente": {
             "anyOf": [
               {
-                "additionalProperties": true,
                 "type": "object"
               },
               {

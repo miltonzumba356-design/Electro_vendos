@@ -446,13 +446,25 @@ function DemonstrativoTab({ t }: { t: TFunction }) {
 
 /* ── Aba Sincronizar ─────────────────────────────────────── */
 function SincronizarTab({ t }: { t: TFunction }) {
-  const [loading, setLoading] = useState(false)
-  const [resultado, setResultado] = useState<{ total_sincronizados: number; sincronizados: Record<string, number> } | null>(null)
+  const [loading, setLoading]     = useState(false)
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim]       = useState('')
+  const [resultado, setResultado] = useState<SyncResultState | null>(null)
+
+  interface SyncResultState {
+    total_sincronizados: number
+    sincronizados: Record<string, number>
+    data_inicio: string | null
+    data_fim: string | null
+  }
 
   async function handleSync() {
     setLoading(true)
     try {
-      const res = await fluxoCaixaService.sincronizar()
+      const res = await fluxoCaixaService.sincronizar({
+        data_inicio: dataInicio || undefined,
+        data_fim:    dataFim    || undefined,
+      })
       setResultado(res)
       toast.success(t('cashflow.syncResult', { count: res.total_sincronizados }))
     } catch (err) {
@@ -469,6 +481,31 @@ function SincronizarTab({ t }: { t: TFunction }) {
         {t('cashflow.syncInfo')}
       </div>
 
+      {/* Optional date range */}
+      <div className="space-y-3">
+        <p className="text-sm font-medium">{t('cashflow.filterStart')} / {t('cashflow.filterEnd')} <span className="text-muted-foreground font-normal text-xs">({t('common.optional')})</span></p>
+        <div className="flex flex-wrap gap-3">
+          <div className="space-y-1">
+            <Label className="text-xs">{t('cashflow.filterStart')}</Label>
+            <Input
+              type="date"
+              value={dataInicio}
+              onChange={(e) => setDataInicio(e.target.value)}
+              className="w-full sm:w-40"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">{t('cashflow.filterEnd')}</Label>
+            <Input
+              type="date"
+              value={dataFim}
+              onChange={(e) => setDataFim(e.target.value)}
+              className="w-full sm:w-40"
+            />
+          </div>
+        </div>
+      </div>
+
       <Button onClick={handleSync} disabled={loading} className="w-full sm:w-auto">
         <RefreshCw className={`size-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
         {loading ? t('cashflow.syncing') : t('cashflow.syncButton')}
@@ -476,9 +513,16 @@ function SincronizarTab({ t }: { t: TFunction }) {
 
       {resultado && (
         <div className="border rounded-lg p-4 space-y-3">
-          <p className="font-semibold text-sm">
-            {t('cashflow.syncResult', { count: resultado.total_sincronizados })}
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <p className="font-semibold text-sm">
+              {t('cashflow.syncResult', { count: resultado.total_sincronizados })}
+            </p>
+            {(resultado.data_inicio || resultado.data_fim) && (
+              <p className="text-xs text-muted-foreground shrink-0">
+                {resultado.data_inicio ?? '—'} → {resultado.data_fim ?? '—'}
+              </p>
+            )}
+          </div>
           <div className="divide-y text-sm">
             {Object.entries(resultado.sincronizados).map(([k, v]) => (
               <div key={k} className="flex justify-between py-2">

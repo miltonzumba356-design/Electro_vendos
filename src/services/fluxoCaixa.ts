@@ -21,6 +21,11 @@ export const fluxoCaixaService = {
   demonstrativo: (data_inicio: string, data_fim: string) =>
     api.get<DemonstrativoResponse>('/fluxo-caixa/demonstrativo', { data_inicio, data_fim }),
 
-  sincronizar: () =>
-    api.post<SyncResult>('/fluxo-caixa/sync', {}),
+  sincronizar: (params?: { data_inicio?: string; data_fim?: string }) => {
+    const sp = new URLSearchParams()
+    if (params?.data_inicio) sp.append('data_inicio', params.data_inicio)
+    if (params?.data_fim)    sp.append('data_fim',    params.data_fim)
+    const qs = sp.toString()
+    return api.post<SyncResult>(`/fluxo-caixa/sync${qs ? `?${qs}` : ''}`)
+  },
 }

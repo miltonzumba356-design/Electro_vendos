@@ -257,6 +257,7 @@ export interface LancamentoResponse {
   categoria: string
   venda_id: string | null
   prestacao_id: string | null
+  pagamento_prestacao_id: string | null
   movimento_stock_id: string | null
   criado_em: string
 }
@@ -294,6 +295,8 @@ export interface DemonstrativoResponse {
 export interface SyncResult {
   total_sincronizados: number
   sincronizados: Record<string, number>
+  data_inicio: string | null
+  data_fim: string | null
 }
 
 // ── Assistente IA ────────────────────────────────────────────────
