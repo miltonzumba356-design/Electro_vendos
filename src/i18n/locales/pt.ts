@@ -81,6 +81,7 @@ const pt = {
     detailsTitle: 'Detalhes da venda', detailsClient: 'Cliente', detailsOperator: 'Operador',
     detailsDate: 'Data', detailsItems: 'Itens', detailsNetSubtotal: 'Subtotal s/ IVA',
     detailsVat: 'IVA', detailsDiscount: 'Desconto ({{pct}}%)', detailsFinalTotal: 'Total Final',
+    printReceipt: 'Imprimir Recibo',
     toasts: {
       minOneProduct: 'Adicione pelo menos um produto à venda', registered: 'Venda registada com sucesso',
       loadError: 'Erro ao carregar dados', registerError: 'Erro ao registar venda',

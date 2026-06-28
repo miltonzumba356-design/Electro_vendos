@@ -39,10 +39,24 @@ export function Combobox({
   disabled,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const selected = options.find((o) => o.value === value)
+  const [search, setSearch] = React.useState('')
+
+  /* Filtragem manual — shouldFilter={false} no Command evita o reset do input */
+  const filtered = React.useMemo(() => {
+    if (!search) return options
+    const q = search.toLowerCase()
+    return options.filter((o) => o.label.toLowerCase().includes(q))
+  }, [options, search])
+
+  const selected = React.useMemo(() => options.find((o) => o.value === value), [options, value])
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next)
+    if (!next) setSearch('')
+  }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -58,18 +72,23 @@ export function Combobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command>
-          <CommandInput placeholder={searchPlaceholder} />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder={searchPlaceholder}
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {options.map((opt) => (
+              {filtered.map((opt) => (
                 <CommandItem
                   key={opt.value}
-                  value={opt.label}
+                  value={opt.value}
                   onSelect={() => {
                     onValueChange(opt.value === value ? '' : opt.value)
                     setOpen(false)
+                    setSearch('')
                   }}
                 >
                   <Check

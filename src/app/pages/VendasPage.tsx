@@ -25,9 +25,10 @@ import {
 import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
-import { Plus, Eye, Trash2, Search } from 'lucide-react'
+import { Plus, Eye, Trash2, Search, Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { imprimirVenda } from '@/lib/recibo'
 
 function formatKz(value: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -135,6 +136,7 @@ export default function VendasPage() {
       setVendas((prev) => [nova, ...prev])
       toast.success(t('sales.toasts.registered'))
       setNovaVendaOpen(false)
+      imprimirVenda(nova)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.registerError'))
     } finally {
@@ -377,7 +379,15 @@ export default function VendasPage() {
       <Dialog open={!!detalhesVenda} onOpenChange={() => setDetalhesVenda(null)}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{t('sales.detailsTitle')}</DialogTitle>
+            <div className="flex items-center justify-between pr-6">
+              <DialogTitle>{t('sales.detailsTitle')}</DialogTitle>
+              {detalhesVenda && (
+                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => imprimirVenda(detalhesVenda)}>
+                  <Printer className="size-4" />
+                  {t('sales.printReceipt')}
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           {detalhesVenda && (
             <div className="space-y-4 pt-2">

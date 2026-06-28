@@ -78,6 +78,7 @@ const zh = {
     detailsTitle: '销售详情', detailsClient: '客户', detailsOperator: '操作员',
     detailsDate: '日期', detailsItems: '商品', detailsNetSubtotal: '不含税小计',
     detailsVat: '增值税', detailsDiscount: '折扣 ({{pct}}%)', detailsFinalTotal: '最终合计',
+    printReceipt: '打印收据',
     toasts: {
       minOneProduct: '请至少添加一个产品', registered: '销售记录成功',
       loadError: '加载数据时出错', registerError: '登记销售时出错',

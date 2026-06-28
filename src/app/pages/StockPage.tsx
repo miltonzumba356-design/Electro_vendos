@@ -24,9 +24,10 @@ import {
 } from '@/app/components/ui/dialog'
 import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { Plus, Filter, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
+import { Plus, Filter, ArrowUpCircle, ArrowDownCircle, Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { imprimirEntradaStock } from '@/lib/recibo'
 
 function formatKz(value: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -159,6 +160,7 @@ export default function StockPage() {
               <TableHead className="text-right">{t('stock.colUnitPrice')}</TableHead>
               <TableHead>{t('stock.colReason')}</TableHead>
               <TableHead>{t('stock.colUser')}</TableHead>
+              <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -206,6 +208,13 @@ export default function StockPage() {
                     {m.motivo ?? '—'}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{m.utilizador_nome}</TableCell>
+                  <TableCell>
+                    {m.tipo === 'ENTRADA' && (
+                      <Button variant="ghost" size="icon" title="Imprimir nota de entrada" onClick={() => imprimirEntradaStock(m)}>
+                        <Printer className="size-4 text-muted-foreground" />
+                      </Button>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))
             )}

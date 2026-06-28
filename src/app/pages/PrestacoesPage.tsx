@@ -1,13 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { prestacoesService } from '@/services/prestacoes'
 import { vendasService } from '@/services/vendas'
-import { clientesService } from '@/services/clientes'
 import type {
   PrestacaoResponse,
   VendaResponse,
-  ClienteResponse,
   ClienteDividaResponse,
 } from '@/types'
 import { Button } from '@/app/components/ui/button'
@@ -40,7 +38,7 @@ import {
 import { Separator } from '@/app/components/ui/separator'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Progress } from '@/app/components/ui/progress'
-import { Plus, Eye, CreditCard, Search } from 'lucide-react'
+import { Plus, Eye, CreditCard, Search, Users } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -462,117 +460,195 @@ function PlanosTab({ t }: { t: TFunction }) {
   )
 }
 
-/* ── Dívidas tab ────────────────────────────────────────────── */
+/* ── Dívidas tab — mostra todos os clientes com dívidas em aberto ── */
 function DividasTab({ t }: { t: TFunction }) {
-  const [clientes, setClientes] = useState<ClienteResponse[]>([])
-  const [clienteId, setClienteId] = useState('')
-  const [divida, setDivida] = useState<ClienteDividaResponse | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [loadingClientes, setLoadingClientes] = useState(true)
+  const [prestacoes, setPrestacoes] = useState<PrestacaoResponse[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [search, setSearch]         = useState('')
+  const [detalhe, setDetalhe]       = useState<ClienteDividaResponse | null>(null)
+  const [loadingDetalhe, setLoadingDetalhe] = useState(false)
 
   useEffect(() => {
-    clientesService.listar()
-      .then(setClientes)
+    prestacoesService.listar()
+      .then(setPrestacoes)
       .catch(() => {})
-      .finally(() => setLoadingClientes(false))
+      .finally(() => setLoading(false))
   }, [])
 
-  async function handleConsultar() {
-    if (!clienteId) { toast.error(t('installments.toasts.selectClient')); return }
-    setLoading(true)
+  /* Agrega prestações por cliente — só mostra quem tem saldo > 0 */
+  const clientesComDivida = useMemo(() => {
+    const map = new Map<string, {
+      id: string; nome: string
+      total: number; pago: number; saldo: number; count: number
+    }>()
+    for (const p of prestacoes) {
+      if (!map.has(p.cliente_id)) {
+        map.set(p.cliente_id, { id: p.cliente_id, nome: p.cliente_nome, total: 0, pago: 0, saldo: 0, count: 0 })
+      }
+      const entry = map.get(p.cliente_id)!
+      entry.total += p.valor_total
+      entry.pago  += p.valor_pago
+      entry.saldo += p.saldo
+      entry.count += 1
+    }
+    return [...map.values()]
+      .filter(c => c.saldo > 0)
+      .sort((a, b) => b.saldo - a.saldo)
+  }, [prestacoes])
+
+  const filtrados = useMemo(() => {
+    if (!search) return clientesComDivida
+    const q = search.toLowerCase()
+    return clientesComDivida.filter(c => c.nome.toLowerCase().includes(q))
+  }, [clientesComDivida, search])
+
+  async function handleVerDetalhe(clienteId: string) {
+    setLoadingDetalhe(true)
     try {
       const data = await prestacoesService.dividasCliente(clienteId)
-      setDivida(data)
+      setDetalhe(data)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('installments.toasts.debtError'))
     } finally {
-      setLoading(false)
+      setLoadingDetalhe(false)
     }
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3">
-        <div className="w-full sm:flex-1 sm:max-w-sm space-y-2">
-          <Label>{t('installments.clientLabel')}</Label>
-          {loadingClientes ? (
-            <Skeleton className="h-9 w-full" />
-          ) : (
-            <Select value={clienteId} onValueChange={setClienteId}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('installments.selectClient')} />
-              </SelectTrigger>
-              <SelectContent>
-                {clientes.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-        <Button onClick={handleConsultar} disabled={loading || !clienteId}>
-          {loading ? t('common.consulting') : t('installments.consultDebts')}
-        </Button>
+      {/* Barra de pesquisa */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <Input
+          placeholder={t('installments.searchPlaceholder')}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
-      {loading && <Skeleton className="h-48 w-full" />}
-
-      {divida && !loading && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {[
-              { label: t('installments.totalDebts'),  value: String(divida.total_dividas),         highlight: false },
-              { label: t('installments.totalOwed'),   value: formatKz(divida.valor_total_devido),  highlight: true  },
-              { label: t('installments.totalPaid'),   value: formatKz(divida.valor_total_pago),    highlight: false },
-              { label: t('installments.openBalance'), value: formatKz(divida.saldo_aberto),        highlight: divida.saldo_aberto > 0 },
-            ].map(({ label, value, highlight }) => (
-              <Card key={label}>
-                <CardHeader className="pb-1 pt-4 px-4">
-                  <CardTitle className="text-xs text-muted-foreground">{label}</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-4 px-4">
-                  <p className={`text-lg font-bold ${highlight ? 'text-destructive' : ''}`}>{value}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {divida.prestacoes.length > 0 && (
-            <div className="rounded-md border bg-card overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('installments.colInstallments')}</TableHead>
-                    <TableHead className="text-right">{t('installments.colTotal')}</TableHead>
-                    <TableHead className="text-right">{t('installments.colPaid')}</TableHead>
-                    <TableHead className="text-right">{t('installments.colBalance')}</TableHead>
-                    <TableHead>{t('installments.colStatus')}</TableHead>
-                    <TableHead>{t('installments.colDate')}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {divida.prestacoes.map((p) => (
-                    <TableRow key={p.id}>
-                      <TableCell>
-                        <Badge variant="secondary">{p.numero_prestacoes}x</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">{formatKz(p.valor_total)}</TableCell>
-                      <TableCell className="text-right text-green-600">{formatKz(p.valor_pago)}</TableCell>
-                      <TableCell className="text-right font-medium text-destructive">
-                        {formatKz(p.saldo)}
-                      </TableCell>
-                      <TableCell>{situacaoBadge(p.situacao)}</TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {format(new Date(p.criado_em), 'dd/MM/yyyy')}
-                      </TableCell>
-                    </TableRow>
+      {/* Tabela de todos os clientes com dívidas */}
+      <div className="rounded-md border bg-card overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('installments.colClient')}</TableHead>
+              <TableHead className="text-center">{t('installments.totalDebts')}</TableHead>
+              <TableHead className="text-right">{t('installments.totalOwed')}</TableHead>
+              <TableHead className="text-right">{t('installments.totalPaid')}</TableHead>
+              <TableHead className="text-right">{t('installments.openBalance')}</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 6 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
-                </TableBody>
-              </Table>
+                </TableRow>
+              ))
+            ) : filtrados.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
+                  <div className="flex flex-col items-center gap-2">
+                    <Users className="size-8 opacity-30" />
+                    <p>{t('installments.empty')}</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtrados.map((c) => (
+                <TableRow
+                  key={c.id}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => handleVerDetalhe(c.id)}
+                >
+                  <TableCell className="font-medium">{c.nome}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge variant="secondary">{c.count}x</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">{formatKz(c.total)}</TableCell>
+                  <TableCell className="text-right text-green-600">{formatKz(c.pago)}</TableCell>
+                  <TableCell className="text-right font-semibold text-destructive">{formatKz(c.saldo)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" disabled={loadingDetalhe}>
+                      <Eye className="size-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Dialog detalhe do cliente seleccionado */}
+      <Dialog open={!!detalhe} onOpenChange={() => setDetalhe(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="size-4" />
+              {detalhe?.cliente_nome}
+            </DialogTitle>
+          </DialogHeader>
+          {detalhe && (
+            <div className="space-y-4 pt-2">
+              {/* Resumo */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: t('installments.totalDebts'),  value: String(detalhe.total_dividas),         hi: false },
+                  { label: t('installments.totalOwed'),   value: formatKz(detalhe.valor_total_devido),  hi: false },
+                  { label: t('installments.totalPaid'),   value: formatKz(detalhe.valor_total_pago),    hi: false },
+                  { label: t('installments.openBalance'), value: formatKz(detalhe.saldo_aberto),        hi: detalhe.saldo_aberto > 0 },
+                ].map(({ label, value, hi }) => (
+                  <Card key={label}>
+                    <CardHeader className="pb-1 pt-4 px-4">
+                      <CardTitle className="text-xs text-muted-foreground">{label}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pb-4 px-4">
+                      <p className={`text-lg font-bold ${hi ? 'text-destructive' : ''}`}>{value}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Planos do cliente */}
+              {detalhe.prestacoes.length > 0 && (
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('installments.colInstallments')}</TableHead>
+                        <TableHead className="text-right">{t('installments.colTotal')}</TableHead>
+                        <TableHead className="text-right">{t('installments.colPaid')}</TableHead>
+                        <TableHead className="text-right">{t('installments.colBalance')}</TableHead>
+                        <TableHead>{t('installments.colStatus')}</TableHead>
+                        <TableHead>{t('installments.colDate')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {detalhe.prestacoes.map((p) => (
+                        <TableRow key={p.id}>
+                          <TableCell><Badge variant="secondary">{p.numero_prestacoes}x</Badge></TableCell>
+                          <TableCell className="text-right">{formatKz(p.valor_total)}</TableCell>
+                          <TableCell className="text-right text-green-600">{formatKz(p.valor_pago)}</TableCell>
+                          <TableCell className="text-right font-medium text-destructive">{formatKz(p.saldo)}</TableCell>
+                          <TableCell>{situacaoBadge(p.situacao)}</TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {format(new Date(p.criado_em), 'dd/MM/yyyy')}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </div>
           )}
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

@@ -78,6 +78,7 @@ const ar = {
     detailsTitle: 'تفاصيل البيع', detailsClient: 'العميل', detailsOperator: 'المشغل',
     detailsDate: 'التاريخ', detailsItems: 'العناصر', detailsNetSubtotal: 'المجموع الفرعي بدون ضريبة',
     detailsVat: 'ضريبة القيمة المضافة', detailsDiscount: 'خصم ({{pct}}%)', detailsFinalTotal: 'الإجمالي النهائي',
+    printReceipt: 'طباعة الإيصال',
     toasts: {
       minOneProduct: 'أضف منتجًا واحدًا على الأقل', registered: 'تم تسجيل البيع بنجاح',
       loadError: 'خطأ في تحميل البيانات', registerError: 'خطأ في تسجيل البيع',

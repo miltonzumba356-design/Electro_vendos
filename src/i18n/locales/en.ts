@@ -80,6 +80,7 @@ const en = {
     detailsTitle: 'Sale details', detailsClient: 'Client', detailsOperator: 'Operator',
     detailsDate: 'Date', detailsItems: 'Items', detailsNetSubtotal: 'Net subtotal',
     detailsVat: 'VAT', detailsDiscount: 'Discount ({{pct}}%)', detailsFinalTotal: 'Final Total',
+    printReceipt: 'Print Receipt',
     toasts: {
       minOneProduct: 'Add at least one product to the sale', registered: 'Sale registered successfully',
       loadError: 'Error loading data', registerError: 'Error registering sale',

@@ -82,6 +82,7 @@ const fr = {
     detailsClient: 'Client', detailsOperator: 'Opérateur', detailsDate: 'Date',
     detailsItems: 'Articles', detailsNetSubtotal: 'Sous-total HT', detailsVat: 'TVA',
     detailsDiscount: 'Remise ({{pct}}%)', detailsFinalTotal: 'Total TTC',
+    printReceipt: 'Imprimer le reçu',
     toasts: {
       minOneProduct: 'Ajoutez au moins un produit à la vente',
       registered: 'Vente enregistrée avec succès',
