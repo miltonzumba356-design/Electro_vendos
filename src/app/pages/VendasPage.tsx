@@ -22,13 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/app/components/ui/select'
+import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import { Plus, Eye, Trash2, Search } from 'lucide-react'
@@ -262,18 +256,17 @@ export default function VendasPage() {
               </div>
 
               {clienteMode === 'existente' && (
-                <Select value={clienteId} onValueChange={setClienteId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('sales.selectClient')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clientes.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.nome} {c.telefone ? `· ${c.telefone}` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Combobox
+                  options={clientes.map((c) => ({
+                    value: c.id,
+                    label: c.nome + (c.telefone ? ` · ${c.telefone}` : ''),
+                  }))}
+                  value={clienteId}
+                  onValueChange={setClienteId}
+                  placeholder={t('sales.selectClient')}
+                  searchPlaceholder={t('common.search')}
+                  emptyText={t('clients.empty')}
+                />
               )}
 
               {clienteMode === 'novo' && (
@@ -317,21 +310,17 @@ export default function VendasPage() {
                     <div key={i} className="flex flex-col sm:flex-row gap-2 items-start sm:items-end">
                       <div className="flex-1 w-full space-y-1">
                         {i === 0 && <span className="text-xs text-muted-foreground">{t('sales.selectProduct').replace('...','')}</span>}
-                        <Select
+                        <Combobox
+                          options={produtos.map((p) => ({
+                            value: p.id,
+                            label: `${p.nome} — ${formatKz(p.preco_com_iva)}`,
+                          }))}
                           value={item.produto_id}
                           onValueChange={(v) => updateItem(i, 'produto_id', v)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder={t('sales.selectProduct')} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {produtos.map((p) => (
-                              <SelectItem key={p.id} value={p.id}>
-                                {p.nome} — {formatKz(p.preco_com_iva)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder={t('sales.selectProduct')}
+                          searchPlaceholder={t('common.search')}
+                          emptyText={t('products.empty')}
+                        />
                       </div>
                       <div className="w-full sm:w-24 space-y-1">
                         {i === 0 && <span className="text-xs text-muted-foreground">{t('sales.qty')}</span>}

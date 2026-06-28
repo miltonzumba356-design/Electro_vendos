@@ -3,13 +3,18 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { TrendingUp, TrendingDown, Wallet, RefreshCw, Plus, BarChart2 } from 'lucide-react'
+import {
+  TrendingUp, TrendingDown, Wallet, RefreshCw, Plus, BarChart2,
+  Clock, Link2
+} from 'lucide-react'
 import { fluxoCaixaService } from '@/services/fluxoCaixa'
 import type {
   LancamentoResponse,
   SaldoResponse,
   DemonstrativoResponse,
   CategoriaGrupoResponse,
+  SyncResult,
+  SyncHistoricoResponse,
 } from '@/types'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
@@ -53,37 +58,61 @@ function tipoVariant(tipo: string): 'default' | 'destructive' {
 function SaldoCards({ saldo, t }: { saldo: SaldoResponse | null; t: TFunction }) {
   if (!saldo) return null
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Wallet className="size-4" /> {t('cashflow.currentBalance')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold">{formatKz(saldo.saldo_atual)}</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <TrendingUp className="size-4 text-green-500" /> {t('cashflow.totalIn')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold text-green-600">{formatKz(saldo.total_entradas)}</p>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <TrendingDown className="size-4 text-red-500" /> {t('cashflow.totalOut')}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-2xl font-bold text-red-600">{formatKz(saldo.total_saidas)}</p>
-        </CardContent>
-      </Card>
+    <div className="space-y-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Wallet className="size-4" /> {t('cashflow.currentBalance')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold">{formatKz(saldo.saldo_atual)}</p>
+            <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+              <span>↑ {t('cashflow.synced')}: {formatKz(saldo.saldo_sincronizado ?? 0)}</span>
+              <span>✎ {t('cashflow.manual')}: {formatKz(saldo.saldo_manual ?? 0)}</span>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <TrendingUp className="size-4 text-green-500" /> {t('cashflow.totalIn')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-green-600">{formatKz(saldo.total_entradas)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <TrendingDown className="size-4 text-red-500" /> {t('cashflow.totalOut')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-2xl font-bold text-red-600">{formatKz(saldo.total_saidas)}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Period / last sync info bar */}
+      {(saldo.data_inicio || saldo.ultima_sincronizacao) && (
+        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground bg-muted/40 rounded-lg px-4 py-2">
+          {(saldo.data_inicio || saldo.data_fim) && (
+            <span className="flex items-center gap-1">
+              <Clock className="size-3" />
+              {t('cashflow.period')}: {saldo.data_inicio ?? '—'} → {saldo.data_fim ?? '—'}
+            </span>
+          )}
+          {saldo.ultima_sincronizacao && (
+            <span className="flex items-center gap-1">
+              <Link2 className="size-3" />
+              {t('cashflow.lastSync')}: {format(new Date(saldo.ultima_sincronizacao), 'dd/MM/yyyy HH:mm')}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -202,35 +231,39 @@ function NovoLancamentoDialog({
 
 /* ── Aba Extrato ──────────────────────────────────────────── */
 function ExtratoTab({ t }: { t: TFunction }) {
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim]       = useState('')
-  const [categoria, setCategoria]   = useState('')
-  const [lancamentos, setLancamentos] = useState<LancamentoResponse[]>([])
-  const [totais, setTotais] = useState({ total_lancamentos: 0, total_entradas: 0, total_saidas: 0, saldo_periodo: 0 })
-  const [loading, setLoading] = useState(false)
+  const [dataInicio, setDataInicio]         = useState('')
+  const [dataFim, setDataFim]               = useState('')
+  const [categoria, setCategoria]           = useState('')
+  const [incluirSubst, setIncluirSubst]     = useState(false)
+  const [lancamentos, setLancamentos]       = useState<LancamentoResponse[]>([])
+  const [totais, setTotais] = useState({
+    total_lancamentos: 0, total_entradas: 0, total_saidas: 0, saldo_periodo: 0,
+  })
+  const [loading, setLoading]   = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
 
   const carregar = useCallback(async () => {
     setLoading(true)
     try {
-      const params: Record<string, string> = {}
-      if (dataInicio) params.data_inicio = dataInicio
-      if (dataFim)    params.data_fim    = dataFim
-      if (categoria)  params.categoria   = categoria
-      const res = await fluxoCaixaService.listarLancamentos(params)
+      const res = await fluxoCaixaService.listarLancamentos({
+        data_inicio: dataInicio || undefined,
+        data_fim:    dataFim    || undefined,
+        categoria:   categoria  || undefined,
+        incluir_substituidos: incluirSubst || undefined,
+      })
       setLancamentos(res.lancamentos)
       setTotais({
         total_lancamentos: res.total_lancamentos,
-        total_entradas: res.total_entradas,
-        total_saidas: res.total_saidas,
-        saldo_periodo: res.saldo_periodo,
+        total_entradas:    res.total_entradas,
+        total_saidas:      res.total_saidas,
+        saldo_periodo:     res.saldo_periodo,
       })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('cashflow.toasts.loadError'))
     } finally {
       setLoading(false)
     }
-  }, [dataInicio, dataFim, categoria])
+  }, [dataInicio, dataFim, categoria, incluirSubst])
 
   useEffect(() => { carregar() }, [carregar])
 
@@ -257,6 +290,15 @@ function ExtratoTab({ t }: { t: TFunction }) {
             </SelectContent>
           </Select>
         </div>
+        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={incluirSubst}
+            onChange={(e) => setIncluirSubst(e.target.checked)}
+            className="rounded"
+          />
+          {t('cashflow.includeReplaced')}
+        </label>
         <Button variant="outline" size="sm" onClick={carregar} disabled={loading}>
           <RefreshCw className="size-4 mr-1" /> {t('cashflow.refresh')}
         </Button>
@@ -307,7 +349,12 @@ function ExtratoTab({ t }: { t: TFunction }) {
               lancamentos.map((l) => (
                 <TableRow key={l.id}>
                   <TableCell className="text-sm">{l.data_movimento}</TableCell>
-                  <TableCell className="max-w-xs truncate">{l.descricao}</TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {l.descricao}
+                    {l.periodo_referencia && (
+                      <span className="ml-1 text-xs text-muted-foreground">({l.periodo_referencia})</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{l.categoria.replace(/_/g, ' ')}</span>
                   </TableCell>
@@ -446,27 +493,41 @@ function DemonstrativoTab({ t }: { t: TFunction }) {
 
 /* ── Aba Sincronizar ─────────────────────────────────────── */
 function SincronizarTab({ t }: { t: TFunction }) {
-  const [loading, setLoading]     = useState(false)
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim]       = useState('')
-  const [resultado, setResultado] = useState<SyncResultState | null>(null)
+  const hoje      = format(new Date(), 'yyyy-MM-dd')
+  const inicioMes = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd')
 
-  interface SyncResultState {
-    total_sincronizados: number
-    sincronizados: Record<string, number>
-    data_inicio: string | null
-    data_fim: string | null
+  const [loading, setLoading]       = useState(false)
+  const [dataInicio, setDataInicio] = useState(inicioMes)
+  const [dataFim, setDataFim]       = useState(hoje)
+  const [resultado, setResultado]   = useState<SyncResult | null>(null)
+  const [historico, setHistorico]   = useState<SyncHistoricoResponse[]>([])
+  const [loadingHist, setLoadingHist] = useState(false)
+
+  async function carregarHistorico() {
+    setLoadingHist(true)
+    try {
+      const res = await fluxoCaixaService.listarHistoricoSync()
+      setHistorico(res)
+    } catch {
+      // histórico opcional
+    } finally {
+      setLoadingHist(false)
+    }
   }
 
+  useEffect(() => { carregarHistorico() }, [])
+
   async function handleSync() {
+    if (!dataInicio || !dataFim) {
+      toast.error(t('cashflow.toasts.selectPeriod'))
+      return
+    }
     setLoading(true)
     try {
-      const res = await fluxoCaixaService.sincronizar({
-        data_inicio: dataInicio || undefined,
-        data_fim:    dataFim    || undefined,
-      })
+      const res = await fluxoCaixaService.sincronizar(dataInicio, dataFim)
       setResultado(res)
       toast.success(t('cashflow.syncResult', { count: res.total_sincronizados }))
+      carregarHistorico()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('cashflow.toasts.syncError'))
     } finally {
@@ -475,15 +536,15 @@ function SincronizarTab({ t }: { t: TFunction }) {
   }
 
   return (
-    <div className="space-y-6 max-w-lg">
+    <div className="space-y-6 max-w-2xl">
       <div className="bg-muted/40 rounded-lg p-4 text-sm text-muted-foreground leading-relaxed">
         <p className="font-medium text-foreground mb-1">{t('cashflow.syncWhat')}</p>
         {t('cashflow.syncInfo')}
       </div>
 
-      {/* Optional date range */}
+      {/* Required date range */}
       <div className="space-y-3">
-        <p className="text-sm font-medium">{t('cashflow.filterStart')} / {t('cashflow.filterEnd')} <span className="text-muted-foreground font-normal text-xs">({t('common.optional')})</span></p>
+        <p className="text-sm font-medium">{t('cashflow.filterStart')} / {t('cashflow.filterEnd')} <span className="text-destructive">*</span></p>
         <div className="flex flex-wrap gap-3">
           <div className="space-y-1">
             <Label className="text-xs">{t('cashflow.filterStart')}</Label>
@@ -492,6 +553,7 @@ function SincronizarTab({ t }: { t: TFunction }) {
               value={dataInicio}
               onChange={(e) => setDataInicio(e.target.value)}
               className="w-full sm:w-40"
+              required
             />
           </div>
           <div className="space-y-1">
@@ -501,38 +563,78 @@ function SincronizarTab({ t }: { t: TFunction }) {
               value={dataFim}
               onChange={(e) => setDataFim(e.target.value)}
               className="w-full sm:w-40"
+              required
             />
           </div>
         </div>
       </div>
 
-      <Button onClick={handleSync} disabled={loading} className="w-full sm:w-auto">
+      <Button onClick={handleSync} disabled={loading || !dataInicio || !dataFim} className="w-full sm:w-auto">
         <RefreshCw className={`size-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
         {loading ? t('cashflow.syncing') : t('cashflow.syncButton')}
       </Button>
 
       {resultado && (
-        <div className="border rounded-lg p-4 space-y-3">
-          <div className="flex items-start justify-between gap-4">
-            <p className="font-semibold text-sm">
+        <div className="border rounded-lg p-4 space-y-3 bg-green-50/60 border-green-200">
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-semibold text-sm text-green-800">
               {t('cashflow.syncResult', { count: resultado.total_sincronizados })}
             </p>
-            {(resultado.data_inicio || resultado.data_fim) && (
-              <p className="text-xs text-muted-foreground shrink-0">
-                {resultado.data_inicio ?? '—'} → {resultado.data_fim ?? '—'}
-              </p>
-            )}
+            <p className="text-xs text-muted-foreground shrink-0">
+              {resultado.data_inicio ?? '—'} → {resultado.data_fim ?? '—'}
+            </p>
           </div>
-          <div className="divide-y text-sm">
-            {Object.entries(resultado.sincronizados).map(([k, v]) => (
-              <div key={k} className="flex justify-between py-2">
-                <span className="text-muted-foreground capitalize">{k.replace(/_/g, ' ')}</span>
-                <span className="font-medium">{v}</span>
-              </div>
-            ))}
-          </div>
+          {(resultado.substituidos ?? 0) > 0 && (
+            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-1.5">
+              {t('cashflow.syncReplaced', { count: resultado.substituidos })}
+            </p>
+          )}
         </div>
       )}
+
+      {/* Sync history */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">{t('cashflow.syncHistory')}</h3>
+          <Button variant="ghost" size="sm" onClick={carregarHistorico} disabled={loadingHist}>
+            <RefreshCw className={`size-3.5 ${loadingHist ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
+        {historico.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('cashflow.syncHistoryEmpty')}</p>
+        ) : (
+          <div className="rounded-md border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('cashflow.filterStart')}</TableHead>
+                  <TableHead>{t('cashflow.filterEnd')}</TableHead>
+                  <TableHead className="text-right">{t('sales.title')}</TableHead>
+                  <TableHead className="text-right">{t('installments.title')}</TableHead>
+                  <TableHead className="text-right">{t('stock.title')}</TableHead>
+                  <TableHead className="text-right">{t('common.total')}</TableHead>
+                  <TableHead>{t('cashflow.colDate')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {historico.map((h) => (
+                  <TableRow key={h.id}>
+                    <TableCell className="text-sm">{h.data_inicio}</TableCell>
+                    <TableCell className="text-sm">{h.data_fim}</TableCell>
+                    <TableCell className="text-right text-sm">{h.total_vendas}</TableCell>
+                    <TableCell className="text-right text-sm">{h.total_pagamentos}</TableCell>
+                    <TableCell className="text-right text-sm">{h.total_compras_stock}</TableCell>
+                    <TableCell className="text-right font-medium text-sm">{h.total_geral}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {format(new Date(h.criado_em), 'dd/MM/yyyy HH:mm')}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

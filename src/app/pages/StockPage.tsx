@@ -22,13 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/app/components/ui/select'
+import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Plus, Filter, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
 import { format } from 'date-fns'
@@ -139,17 +133,18 @@ export default function StockPage() {
       {/* Filter */}
       <div className="flex flex-wrap items-center gap-2">
         <Filter className="size-4 text-muted-foreground shrink-0" />
-        <Select value={filterProduto} onValueChange={handleFilterChange}>
-          <SelectTrigger className="w-full sm:w-64">
-            <SelectValue placeholder={t('stock.filterByProduct')} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t('stock.allProducts')}</SelectItem>
-            {produtos.map((p) => (
-              <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox
+          options={[
+            { value: 'all', label: t('stock.allProducts') },
+            ...produtos.map((p) => ({ value: p.id, label: p.nome })),
+          ]}
+          value={filterProduto}
+          onValueChange={(v) => handleFilterChange(v || 'all')}
+          placeholder={t('stock.filterByProduct')}
+          searchPlaceholder={t('common.search')}
+          emptyText={t('products.empty')}
+          className="w-full sm:w-64"
+        />
       </div>
 
       {/* Table */}
@@ -227,21 +222,17 @@ export default function StockPage() {
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <div className="space-y-2">
               <Label>{t('stock.fieldProduct')} *</Label>
-              <Select
+              <Combobox
+                options={produtos.map((p) => ({
+                  value: p.id,
+                  label: `${p.nome} (stock: ${p.stock_atual})`,
+                }))}
                 value={form.produto_id}
                 onValueChange={(v) => setForm((f) => ({ ...f, produto_id: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('sales.selectProduct')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {produtos.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.nome} (stock: {p.stock_atual})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                placeholder={t('sales.selectProduct')}
+                searchPlaceholder={t('common.search')}
+                emptyText={t('products.empty')}
+              />
             </div>
 
             <div className="space-y-2">

@@ -113,6 +113,7 @@ export interface VendaItemResponse {
   produto_nome: string
   quantidade: number
   preco_unitario: number
+  preco_custo_unitario: number
   iva_aplicado: number
   subtotal: number
 }
@@ -259,6 +260,7 @@ export interface LancamentoResponse {
   prestacao_id: string | null
   pagamento_prestacao_id: string | null
   movimento_stock_id: string | null
+  periodo_referencia: string | null
   criado_em: string
 }
 
@@ -274,6 +276,11 @@ export interface SaldoResponse {
   saldo_atual: number
   total_entradas: number
   total_saidas: number
+  saldo_sincronizado: number
+  saldo_manual: number
+  data_inicio: string | null
+  data_fim: string | null
+  ultima_sincronizacao: string | null
 }
 
 export interface CategoriaGrupoResponse {
@@ -294,9 +301,21 @@ export interface DemonstrativoResponse {
 
 export interface SyncResult {
   total_sincronizados: number
-  sincronizados: Record<string, number>
+  substituidos: number
   data_inicio: string | null
   data_fim: string | null
+}
+
+export interface SyncHistoricoResponse {
+  id: string
+  periodo: string
+  data_inicio: string
+  data_fim: string
+  total_vendas: number
+  total_pagamentos: number
+  total_compras_stock: number
+  total_geral: number
+  criado_em: string
 }
 
 // ── Assistente IA ────────────────────────────────────────────────

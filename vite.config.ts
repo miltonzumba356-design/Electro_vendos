@@ -17,12 +17,26 @@ function figmaAssetResolver() {
   }
 }
 
+/* Redirect all non-asset requests to index.html so SPA routes survive F5 / direct navigation */
+function spaFallback(): import('vite').Plugin {
+  const rewrite = (req: import('http').IncomingMessage) => {
+    const url = req.url ?? '/'
+    if (!url.includes('.') && !url.startsWith('/api')) req.url = '/'
+  }
+  return {
+    name: 'spa-fallback',
+    configureServer(s)        { s.middlewares.use((req, _res, next) => { rewrite(req); next() }) },
+    configurePreviewServer(s) { s.middlewares.use((req, _res, next) => { rewrite(req); next() }) },
+  }
+}
+
 export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
   },
   plugins: [
+    spaFallback(),
     figmaAssetResolver(),
     // The React and Tailwind plugins are both required for Make, even if
     // Tailwind is not being actively used – do not remove them

@@ -1495,7 +1495,7 @@
           "Fluxo de Caixa"
         ],
         "summary": "Registar lançamento manual",
-        "description": "Regista uma entrada ou saída manual (salário, renda, energia, etc.)",
+        "description": "Regista uma entrada ou saída manual (salário, renda, energia, etc.). Lançamentos manuais não são afetados por sincronizações.",
         "operationId": "criar_lancamento_fluxo_caixa_lancamentos_post",
         "security": [
           {
@@ -1540,7 +1540,7 @@
           "Fluxo de Caixa"
         ],
         "summary": "Extrato de fluxo de caixa",
-        "description": "Lista lançamentos com filtros opcionais por período e categoria. Retorna totais de entradas, saídas e saldo do período.",
+        "description": "Lista lançamentos com filtros opcionais por período e categoria. Por defeito oculta lançamentos substituídos por re-sincronização. Use incluir_substituidos=true para os incluir.",
         "operationId": "listar_lancamentos_fluxo_caixa_lancamentos_get",
         "security": [
           {
@@ -1613,6 +1613,18 @@
               "title": "Categoria"
             },
             "description": "Filtrar por categoria"
+          },
+          {
+            "name": "incluir_substituidos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Incluir lançamentos substituídos por re-sincronização",
+              "default": false,
+              "title": "Incluir Substituidos"
+            },
+            "description": "Incluir lançamentos substituídos por re-sincronização"
           }
         ],
         "responses": {
@@ -1645,11 +1657,11 @@
           "Fluxo de Caixa"
         ],
         "summary": "Saldo atual do caixa",
-        "description": "Retorna o saldo atual com total de entradas e saídas acumuladas",
+        "description": "Retorna o saldo atual com total de entradas, saídas, saldo sincronizado vs manual, período dos lançamentos e data da última sincronização",
         "operationId": "saldo_fluxo_caixa_saldo_get",
         "responses": {
           "200": {
-            "description": "Saldo atual, total de entradas e total de saídas",
+            "description": "Saldo atual, entradas, saídas, saldo sincronizado/manual, data_inicio, data_fim e última sincronização",
             "content": {
               "application/json": {
                 "schema": {
@@ -1740,8 +1752,8 @@
         "tags": [
           "Fluxo de Caixa"
         ],
-        "summary": "Sincronizar histórico para fluxo de caixa",
-        "description": "Importa vendas, pagamentos de prestações e compras de stock já existentes como lançamentos de caixa. Não duplica lançamentos já sincronizados.",
+        "summary": "Sincronizar histórico por período",
+        "description": "Importa vendas, pagamentos e compras de stock num intervalo de datas como lançamentos de fluxo de caixa. Re-sincronizar o mesmo período substitui os lançamentos anteriores (marca como substituídos) e recria-os.",
         "operationId": "sincronizar_fluxo_caixa_sync_post",
         "security": [
           {
@@ -1752,51 +1764,37 @@
           {
             "name": "data_inicio",
             "in": "query",
-            "required": false,
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Sincronizar a partir desta data",
+              "type": "string",
+              "format": "date",
+              "description": "Data início",
               "examples": [
-                "2026-01-01"
+                "2026-06-01"
               ],
               "title": "Data Inicio"
             },
-            "description": "Sincronizar a partir desta data"
+            "description": "Data início"
           },
           {
             "name": "data_fim",
             "in": "query",
-            "required": false,
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string",
-                  "format": "date"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Sincronizar até esta data",
+              "type": "string",
+              "format": "date",
+              "description": "Data fim",
               "examples": [
-                "2026-12-31"
+                "2026-06-30"
               ],
               "title": "Data Fim"
             },
-            "description": "Sincronizar até esta data"
+            "description": "Data fim"
           }
         ],
         "responses": {
           "200": {
-            "description": "Total de lançamentos criados na sincronização",
+            "description": "Total de lançamentos sincronizados, período e quantidade de substituídos",
             "content": {
               "application/json": {
                 "schema": {
@@ -1811,6 +1809,35 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Fluxo de Caixa"
+        ],
+        "summary": "Histórico de sincronizações",
+        "description": "Lista todas as sincronizações executadas, ordenadas da mais recente para a mais antiga",
+        "operationId": "listar_syncs_fluxo_caixa_sync_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de sincronizações com totais por período",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SyncHistoricoResponse"
+                  },
+                  "title": "Response Listar Syncs Fluxo Caixa Sync Get"
                 }
               }
             }
@@ -2729,6 +2756,17 @@
             ],
             "title": "Movimento Stock Id"
           },
+          "periodo_referencia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodo Referencia"
+          },
           "criado_em": {
             "type": "string",
             "format": "date-time",
@@ -2743,10 +2781,6 @@
           "tipo",
           "valor",
           "categoria",
-          "venda_id",
-          "prestacao_id",
-          "pagamento_prestacao_id",
-          "movimento_stock_id",
           "criado_em"
         ],
         "title": "LancamentoResponse"
@@ -3927,6 +3961,52 @@
           "total_saidas": {
             "type": "number",
             "title": "Total Saidas"
+          },
+          "saldo_sincronizado": {
+            "type": "number",
+            "title": "Saldo Sincronizado",
+            "default": 0
+          },
+          "saldo_manual": {
+            "type": "number",
+            "title": "Saldo Manual",
+            "default": 0
+          },
+          "data_inicio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Inicio"
+          },
+          "data_fim": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Fim"
+          },
+          "ultima_sincronizacao": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultima Sincronizacao"
           }
         },
         "type": "object",
@@ -3937,9 +4017,14 @@
         ],
         "title": "SaldoResponse",
         "example": {
+          "data_fim": "2026-06-30",
+          "data_inicio": "2026-01-15",
           "saldo_atual": 150000,
+          "saldo_manual": 30000,
+          "saldo_sincronizado": 120000,
           "total_entradas": 700000,
-          "total_saidas": 550000
+          "total_saidas": 550000,
+          "ultima_sincronizacao": "2026-06-28T14:30:00Z"
         }
       },
       "SessaoIaCreate": {
@@ -3994,15 +4079,68 @@
           "titulo": "Análise de vendas junho"
         }
       },
+      "SyncHistoricoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "periodo": {
+            "type": "string",
+            "title": "Periodo"
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date",
+            "title": "Data Inicio"
+          },
+          "data_fim": {
+            "type": "string",
+            "format": "date",
+            "title": "Data Fim"
+          },
+          "total_vendas": {
+            "type": "integer",
+            "title": "Total Vendas"
+          },
+          "total_pagamentos": {
+            "type": "integer",
+            "title": "Total Pagamentos"
+          },
+          "total_compras_stock": {
+            "type": "integer",
+            "title": "Total Compras Stock"
+          },
+          "total_geral": {
+            "type": "integer",
+            "title": "Total Geral"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "periodo",
+          "data_inicio",
+          "data_fim",
+          "total_vendas",
+          "total_pagamentos",
+          "total_compras_stock",
+          "total_geral",
+          "criado_em"
+        ],
+        "title": "SyncHistoricoResponse"
+      },
       "SyncResult": {
         "properties": {
           "total_sincronizados": {
             "type": "integer",
             "title": "Total Sincronizados"
-          },
-          "sincronizados": {
-            "type": "object",
-            "title": "Sincronizados"
           },
           "data_inicio": {
             "anyOf": [
@@ -4027,22 +4165,22 @@
               }
             ],
             "title": "Data Fim"
+          },
+          "substituidos": {
+            "type": "integer",
+            "title": "Substituidos",
+            "default": 0
           }
         },
         "type": "object",
         "required": [
-          "total_sincronizados",
-          "sincronizados"
+          "total_sincronizados"
         ],
         "title": "SyncResult",
         "example": {
           "data_fim": "2026-06-30",
-          "data_inicio": "2026-01-01",
-          "sincronizados": {
-            "compras_stock": 3,
-            "pagamentos_prestacao": 12,
-            "vendas": 30
-          },
+          "data_inicio": "2026-06-01",
+          "substituidos": 0,
           "total_sincronizados": 45
         }
       },
