@@ -39,26 +39,33 @@ export function Combobox({
   disabled,
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const [search, setSearch] = React.useState('')
 
-  /* Filtragem manual — shouldFilter={false} no Command evita o reset do input */
-  const filtered = React.useMemo(() => {
-    if (!search) return options
-    const q = search.toLowerCase()
-    return options.filter((o) => o.label.toLowerCase().includes(q))
-  }, [options, search])
+  const selected = React.useMemo(
+    () => options.find((o) => o.value === value),
+    [options, value],
+  )
 
-  const selected = React.useMemo(() => options.find((o) => o.value === value), [options, value])
-
-  function handleOpenChange(next: boolean) {
-    setOpen(next)
-    if (!next) setSearch('')
-  }
+  /*
+   * Filtro personalizado: pesquisa por LABEL (texto visível) e não pelo
+   * value (UUID). Assim o cmdk gere o estado do input internamente,
+   * evitando o bug de "uma letra por tecla" e garantindo que os items
+   * ficam visíveis correctamente.
+   */
+  const filter = React.useCallback(
+    (itemValue: string, search: string) => {
+      if (!search) return 1
+      const opt = options.find((o) => o.value === itemValue)
+      if (!opt) return 0
+      return opt.label.toLowerCase().includes(search.toLowerCase()) ? 1 : 0
+    },
+    [options],
+  )
 
   return (
-    <Popover open={open} onOpenChange={handleOpenChange}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          type="button"
           variant="outline"
           role="combobox"
           aria-expanded={open}
@@ -66,33 +73,35 @@ export function Combobox({
           className={cn('w-full justify-between font-normal', className)}
         >
           <span className="truncate">
-            {selected ? selected.label : <span className="text-muted-foreground">{placeholder}</span>}
+            {selected ? (
+              selected.label
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
           </span>
           <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-        <Command shouldFilter={false}>
-          <CommandInput
-            placeholder={searchPlaceholder}
-            value={search}
-            onValueChange={setSearch}
-          />
+        <Command filter={filter}>
+          <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
             <CommandEmpty>{emptyText}</CommandEmpty>
             <CommandGroup>
-              {filtered.map((opt) => (
+              {options.map((opt) => (
                 <CommandItem
                   key={opt.value}
                   value={opt.value}
-                  onSelect={() => {
-                    onValueChange(opt.value === value ? '' : opt.value)
+                  onSelect={(current) => {
+                    onValueChange(current === value ? '' : current)
                     setOpen(false)
-                    setSearch('')
                   }}
                 >
                   <Check
-                    className={cn('mr-2 size-4', value === opt.value ? 'opacity-100' : 'opacity-0')}
+                    className={cn(
+                      'mr-2 size-4',
+                      value === opt.value ? 'opacity-100' : 'opacity-0',
+                    )}
                   />
                   {opt.label}
                 </CommandItem>
