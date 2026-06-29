@@ -55,7 +55,7 @@ function renderLogin() {
 
 // jsdom não aplica media queries: mobile + desktop renderizam em simultâneo.
 // Usamos sempre o primeiro elemento encontrado (= instância mobile).
-const getEmail    = () => screen.getAllByPlaceholderText('admin@bisness.com')[0]
+const getEmail    = () => screen.getAllByPlaceholderText('milton@gmail.com')[0]
 const getPassword = () => screen.getAllByPlaceholderText('••••••••')[0]
 const getSubmit   = () => screen.getAllByRole('button', { name: /entrar/i })[0]
 const getForm     = (container: HTMLElement) => container.querySelector('form')!

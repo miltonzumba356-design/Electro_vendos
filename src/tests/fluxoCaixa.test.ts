@@ -203,29 +203,33 @@ describe('fluxoCaixaService.demonstrativo — GET /fluxo-caixa/demonstrativo', (
 
 /* ── POST /fluxo-caixa/sync ──────────────────────────────── */
 describe('fluxoCaixaService.sincronizar — POST /fluxo-caixa/sync', () => {
-  it('chama POST /fluxo-caixa/sync', async () => {
+  const DI = '2026-01-01'
+  const DF = '2026-06-30'
+
+  it('chama POST /fluxo-caixa/sync com data_inicio e data_fim na query string', async () => {
     const spy = mockFetch(SYNC_RESP)
-    await fluxoCaixaService.sincronizar()
-    expect(spy.mock.calls[0][0]).toBe(`${BASE}/fluxo-caixa/sync`)
+    await fluxoCaixaService.sincronizar(DI, DF)
+    expect(spy.mock.calls[0][0]).toContain('/fluxo-caixa/sync')
+    expect(spy.mock.calls[0][0]).toContain(`data_inicio=${DI}`)
+    expect(spy.mock.calls[0][0]).toContain(`data_fim=${DF}`)
     expect((spy.mock.calls[0][1] as RequestInit).method).toBe('POST')
   })
 
-  it('envia body vazio {}', async () => {
+  it('não envia body (sincronizar não tem payload JSON)', async () => {
     const spy = mockFetch(SYNC_RESP)
-    await fluxoCaixaService.sincronizar()
-    const body = JSON.parse((spy.mock.calls[0][1] as RequestInit).body as string)
-    expect(body).toEqual({})
+    await fluxoCaixaService.sincronizar(DI, DF)
+    expect((spy.mock.calls[0][1] as RequestInit).body).toBeUndefined()
   })
 
   it('retorna SyncResult com total_sincronizados', async () => {
     mockFetch(SYNC_RESP)
-    const result = await fluxoCaixaService.sincronizar()
+    const result = await fluxoCaixaService.sincronizar(DI, DF)
     expect(result.total_sincronizados).toBe(45)
   })
 
   it('sincronizados contém vendas, pagamentos_prestacao e compras_stock', async () => {
     mockFetch(SYNC_RESP)
-    const result = await fluxoCaixaService.sincronizar()
+    const result = await fluxoCaixaService.sincronizar(DI, DF)
     expect(result.sincronizados.vendas).toBe(30)
     expect(result.sincronizados.pagamentos_prestacao).toBe(12)
     expect(result.sincronizados.compras_stock).toBe(3)
@@ -233,7 +237,7 @@ describe('fluxoCaixaService.sincronizar — POST /fluxo-caixa/sync', () => {
 
   it('total_sincronizados é a soma de todas as categorias sincronizadas', async () => {
     mockFetch(SYNC_RESP)
-    const result = await fluxoCaixaService.sincronizar()
+    const result = await fluxoCaixaService.sincronizar(DI, DF)
     const soma = Object.values(result.sincronizados).reduce((a, b) => a + b, 0)
     expect(result.total_sincronizados).toBe(soma)
   })
