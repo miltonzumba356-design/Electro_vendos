@@ -4,6 +4,7 @@ import type {
   PrestacaoResponse,
   PagamentoCreate,
   ClienteDividaResponse,
+  VencimentoResponse,
 } from '@/types'
 
 export const prestacoesService = {
@@ -21,4 +22,7 @@ export const prestacoesService = {
 
   dividasCliente: (cliente_id: string) =>
     api.get<ClienteDividaResponse>(`/prestacoes/clientes/${cliente_id}/dividas`),
+
+  vencimentosMes: (ano: number, mes: number) =>
+    api.get<VencimentoResponse[]>(`/prestacoes/vencimentos-mes?ano=${ano}&mes=${mes}`),
 }

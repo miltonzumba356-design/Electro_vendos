@@ -2,11 +2,14 @@ import { useEffect, useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { prestacoesService } from '@/services/prestacoes'
-import { vendasService } from '@/services/vendas'
+import { clientesService } from '@/services/clientes'
+import { produtosService } from '@/services/produtos'
 import type {
   PrestacaoResponse,
-  VendaResponse,
   ClienteDividaResponse,
+  VencimentoResponse,
+  ClienteResponse,
+  ProdutoResponse,
 } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -28,17 +31,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/dialog'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/app/components/ui/select'
 import { Separator } from '@/app/components/ui/separator'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Progress } from '@/app/components/ui/progress'
-import { Plus, Eye, CreditCard, Search, Users } from 'lucide-react'
+import { Combobox } from '@/app/components/ui/combobox'
+import { Plus, Eye, CreditCard, Search, Users, Calendar, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -88,12 +85,20 @@ function DetalhesDialog({
               {situacaoBadge(prestacao.situacao)}
             </div>
             <div>
-              <p className="text-muted-foreground">{t('installments.detailsCount')}</p>
-              <p className="font-medium">{prestacao.numero_prestacoes}</p>
+              <p className="text-muted-foreground">{t('installments.fieldProduct')}</p>
+              <p className="font-medium">{prestacao.produto_nome || '—'}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">{t('installments.detailsCreated')}</p>
-              <p>{format(new Date(prestacao.criado_em), 'dd/MM/yyyy')}</p>
+              <p className="text-muted-foreground">{t('installments.detailsCount')}</p>
+              <p className="font-medium">{prestacao.numero_prestacoes}x</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">{t('installments.fieldStartDate')}</p>
+              <p>{prestacao.data_inicio ? format(new Date(prestacao.data_inicio), 'dd/MM/yyyy') : '—'}</p>
+            </div>
+            <div>
+              <p className="text-muted-foreground">{t('installments.fieldPenaltyRate')}</p>
+              <p>{prestacao.taxa_multa > 0 ? `${prestacao.taxa_multa}%` : '—'}</p>
             </div>
           </div>
 
@@ -141,6 +146,11 @@ function DetalhesDialog({
                       <p className="text-xs text-muted-foreground">
                         {t('installments.due')} {format(new Date(p.data_vencimento), 'dd/MM/yyyy')}
                       </p>
+                      {p.multa > 0 && (
+                        <p className="text-xs text-destructive">
+                          {t('installments.penalty')}: {formatKz(p.multa)}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <div className="text-right">
@@ -256,13 +266,18 @@ function PagamentoDialog({
 /* ── Planos tab ─────────────────────────────────────────────── */
 function PlanosTab({ t }: { t: TFunction }) {
   const [prestacoes, setPrestacoes] = useState<PrestacaoResponse[]>([])
-  const [vendas, setVendas] = useState<VendaResponse[]>([])
+  const [clientes, setClientes] = useState<ClienteResponse[]>([])
+  const [produtos, setProdutos] = useState<ProdutoResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
   const [novoOpen, setNovoOpen] = useState(false)
-  const [vendaId, setVendaId] = useState('')
+  const [clienteId, setClienteId] = useState('')
+  const [produtoId, setProdutoId] = useState('')
+  const [valorTotal, setValorTotal] = useState('')
   const [numPrestacoes, setNumPrestacoes] = useState('6')
+  const [taxaMulta, setTaxaMulta] = useState('')
+  const [dataInicio, setDataInicio] = useState('')
   const [saving, setSaving] = useState(false)
 
   const [detalhes, setDetalhes] = useState<PrestacaoResponse | null>(null)
@@ -270,12 +285,14 @@ function PlanosTab({ t }: { t: TFunction }) {
 
   async function load() {
     try {
-      const [p, v] = await Promise.allSettled([
+      const [p, c, pr] = await Promise.allSettled([
         prestacoesService.listar(),
-        vendasService.listar(),
+        clientesService.listar(),
+        produtosService.listar(),
       ])
       if (p.status === 'fulfilled') setPrestacoes(p.value)
-      if (v.status === 'fulfilled') setVendas(v.value)
+      if (c.status === 'fulfilled') setClientes(c.value)
+      if (pr.status === 'fulfilled') setProdutos(pr.value)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('installments.toasts.loadError'))
     } finally {
@@ -285,19 +302,34 @@ function PlanosTab({ t }: { t: TFunction }) {
 
   useEffect(() => { load() }, [])
 
+  function resetForm() {
+    setClienteId(''); setProdutoId(''); setValorTotal('')
+    setNumPrestacoes('6'); setTaxaMulta(''); setDataInicio('')
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
-    if (!vendaId) { toast.error(t('installments.toasts.selectSale')); return }
+    if (!clienteId) { toast.error(t('installments.toasts.selectClient')); return }
+    if (!produtoId) { toast.error(t('installments.toasts.selectProduct')); return }
+    const vt = Number(valorTotal)
+    if (!valorTotal || vt <= 0) { toast.error(t('installments.toasts.invalidValue')); return }
     const n = Number(numPrestacoes)
     if (n < 1 || n > 48) { toast.error(t('installments.toasts.invalidInstallments')); return }
     setSaving(true)
     try {
-      const novo = await prestacoesService.criar({ venda_id: vendaId, numero_prestacoes: n })
+      const payload = {
+        cliente_id: clienteId,
+        produto_id: produtoId,
+        valor_total: vt,
+        numero_prestacoes: n,
+        ...(taxaMulta ? { taxa_multa: Number(taxaMulta) } : {}),
+        ...(dataInicio ? { data_inicio: new Date(dataInicio).toISOString() } : {}),
+      }
+      const novo = await prestacoesService.criar(payload)
       setPrestacoes((prev) => [novo, ...prev])
       toast.success(t('installments.toasts.planCreated'))
       setNovoOpen(false)
-      setVendaId('')
-      setNumPrestacoes('6')
+      resetForm()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('installments.toasts.planCreateError'))
     } finally {
@@ -398,41 +430,87 @@ function PlanosTab({ t }: { t: TFunction }) {
       </div>
 
       {/* Novo plano dialog */}
-      <Dialog open={novoOpen} onOpenChange={setNovoOpen}>
+      <Dialog open={novoOpen} onOpenChange={(v) => { setNovoOpen(v); if (!v) resetForm() }}>
         <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('installments.newPlanTitle')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleCreate} className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label>{t('installments.fieldSale')} *</Label>
-              <Select value={vendaId} onValueChange={setVendaId}>
-                <SelectTrigger>
-                  <SelectValue placeholder={t('installments.selectSale')} />
-                </SelectTrigger>
-                <SelectContent>
-                  {vendas.map((v) => (
-                    <SelectItem key={v.id} value={v.id}>
-                      {v.cliente_nome} — {formatKz(v.total_final)} ({format(new Date(v.criado_em), 'dd/MM/yyyy')})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="num">{t('installments.fieldNumInstallments')} *</Label>
-              <Input
-                id="num"
-                type="number"
-                min="1"
-                max="48"
-                value={numPrestacoes}
-                onChange={(e) => setNumPrestacoes(e.target.value)}
-                required
+              <Label>{t('common.client')} *</Label>
+              <Combobox
+                options={clientes.map((c) => ({ value: c.id, label: c.nome }))}
+                value={clienteId}
+                onValueChange={setClienteId}
+                placeholder={t('sales.selectClient')}
+                searchPlaceholder={t('common.search')}
+                emptyText={t('clients.empty')}
               />
             </div>
+            <div className="space-y-2">
+              <Label>{t('installments.fieldProduct')} *</Label>
+              <Combobox
+                options={produtos.map((p) => ({ value: p.id, label: `${p.nome} — ${formatKz(p.preco_venda)}` }))}
+                value={produtoId}
+                onValueChange={setProdutoId}
+                placeholder={t('installments.selectProduct')}
+                searchPlaceholder={t('common.search')}
+                emptyText={t('products.empty')}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="vt">{t('installments.fieldTotalValue')} *</Label>
+                <Input
+                  id="vt"
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={valorTotal}
+                  onChange={(e) => setValorTotal(e.target.value)}
+                  placeholder="0"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="num">{t('installments.fieldNumInstallments')} *</Label>
+                <Input
+                  id="num"
+                  type="number"
+                  min="1"
+                  max="48"
+                  value={numPrestacoes}
+                  onChange={(e) => setNumPrestacoes(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="multa">{t('installments.fieldPenaltyRate')}</Label>
+                <Input
+                  id="multa"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={taxaMulta}
+                  onChange={(e) => setTaxaMulta(e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="di">{t('installments.fieldStartDate')}</Label>
+                <Input
+                  id="di"
+                  type="date"
+                  value={dataInicio}
+                  onChange={(e) => setDataInicio(e.target.value)}
+                />
+              </div>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" onClick={() => setNovoOpen(false)} disabled={saving}>
+              <Button type="button" variant="outline" onClick={() => { setNovoOpen(false); resetForm() }} disabled={saving}>
                 {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={saving}>
@@ -653,6 +731,121 @@ function DividasTab({ t }: { t: TFunction }) {
   )
 }
 
+/* ── Vencimentos tab ────────────────────────────────────────── */
+function VencimentosTab({ t }: { t: TFunction }) {
+  const now = new Date()
+  const [ano, setAno] = useState(String(now.getFullYear()))
+  const [mes, setMes] = useState(String(now.getMonth() + 1))
+  const [data, setData] = useState<VencimentoResponse[]>([])
+  const [loading, setLoading] = useState(false)
+
+  async function consultar() {
+    setLoading(true)
+    try {
+      const result = await prestacoesService.vencimentosMes(Number(ano), Number(mes))
+      setData(result)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('common.loadError'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { consultar() }, [])
+
+  const atrasados = data.filter((v) => v.dias_atraso > 0)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1">
+          <Label htmlFor="venc-ano">{t('installments.vencYear')}</Label>
+          <Input
+            id="venc-ano"
+            type="number"
+            className="w-28"
+            value={ano}
+            onChange={(e) => setAno(e.target.value)}
+            min="2020"
+            max="2099"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="venc-mes">{t('installments.vencMonth')}</Label>
+          <Input
+            id="venc-mes"
+            type="number"
+            className="w-20"
+            value={mes}
+            onChange={(e) => setMes(e.target.value)}
+            min="1"
+            max="12"
+          />
+        </div>
+        <Button onClick={consultar} disabled={loading} className="gap-2">
+          <Calendar className="size-4" />
+          {t('installments.consult')}
+        </Button>
+        {atrasados.length > 0 && (
+          <div className="flex items-center gap-1.5 text-sm text-destructive">
+            <AlertTriangle className="size-4" />
+            {atrasados.length} {t('installments.overdue')}
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-md border bg-card overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('common.client')}</TableHead>
+              <TableHead>{t('installments.fieldProduct')}</TableHead>
+              <TableHead className="text-right">{t('installments.fieldTotalValue')}</TableHead>
+              <TableHead>{t('installments.colDueDate')}</TableHead>
+              <TableHead>{t('installments.colDelay')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                  {t('installments.vencEmpty')}
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((v) => (
+                <TableRow key={v.pagamento_id} className={v.dias_atraso > 0 ? 'bg-destructive/5' : ''}>
+                  <TableCell className="font-medium">{v.cliente_nome}</TableCell>
+                  <TableCell>{v.produto_nome}</TableCell>
+                  <TableCell className="text-right">{formatKz(v.valor)}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {format(new Date(v.data_vencimento), 'dd/MM/yyyy')}
+                  </TableCell>
+                  <TableCell>
+                    {v.dias_atraso > 0 ? (
+                      <Badge variant="destructive">{v.dias_atraso}d</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-green-600 border-green-600">OK</Badge>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+}
+
 /* ── Main Page ──────────────────────────────────────────────── */
 export default function PrestacoesPage() {
   const { t } = useTranslation()
@@ -668,10 +861,12 @@ export default function PrestacoesPage() {
         <TabsList>
           <TabsTrigger value="planos">{t('installments.tabPlans')}</TabsTrigger>
           <TabsTrigger value="dividas">{t('installments.tabDebts')}</TabsTrigger>
+          <TabsTrigger value="vencimentos">{t('installments.tabVencimentos')}</TabsTrigger>
         </TabsList>
         <div className="mt-4">
           <TabsContent value="planos"><PlanosTab t={t} /></TabsContent>
           <TabsContent value="dividas"><DividasTab t={t} /></TabsContent>
+          <TabsContent value="vencimentos"><VencimentosTab t={t} /></TabsContent>
         </div>
       </Tabs>
     </div>

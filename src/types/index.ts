@@ -156,8 +156,12 @@ export interface MovimentoResponse {
 
 // ── Prestações ──────────────────────────────────────────────────
 export interface PrestacaoCreate {
-  venda_id: string
+  cliente_id: string
+  produto_id: string
+  valor_total: number
   numero_prestacoes: number
+  data_inicio?: string | null
+  taxa_multa?: number
 }
 
 export interface PagamentoCreate {
@@ -171,20 +175,34 @@ export interface PagamentoResponse {
   data_vencimento: string
   data_pagamento: string | null
   pago: boolean
+  multa: number
 }
 
 export interface PrestacaoResponse {
   id: string
-  venda_id: string
+  produto_id: string
+  produto_nome: string
   cliente_id: string
   cliente_nome: string
   valor_total: number
   valor_pago: number
   saldo: number
   numero_prestacoes: number
+  taxa_multa: number
+  data_inicio: string
   situacao: string
   criado_em: string
   pagamentos: PagamentoResponse[]
+}
+
+export interface VencimentoResponse {
+  prestacao_id: string
+  pagamento_id: string
+  cliente_nome: string
+  produto_nome: string
+  valor: number
+  data_vencimento: string
+  dias_atraso: number
 }
 
 export interface ClienteDividaResponse {
@@ -316,6 +334,100 @@ export interface SyncHistoricoResponse {
   total_compras_stock: number
   total_geral: number
   criado_em: string
+}
+
+// ── Faturas ─────────────────────────────────────────────────────
+export interface FaturaItemCreate {
+  produto_nome: string
+  quantidade: number
+  preco_unitario: number
+  iva?: number
+}
+
+export interface FaturaCreate {
+  cliente_id: string
+  itens: FaturaItemCreate[]
+  desconto_percentual?: number | null
+}
+
+export interface FaturaItemResponse {
+  id: string
+  produto_nome: string
+  quantidade: number
+  preco_unitario: number
+  iva: number
+  subtotal: number
+}
+
+export interface FaturaResponse {
+  id: string
+  numero: string
+  cliente_id: string
+  cliente_nome: string
+  cliente_nif: string | null
+  total_sem_iva: number
+  total_iva: number
+  total_desconto: number
+  total_final: number
+  emitida_em: string
+  cancelada_em: string | null
+  itens: FaturaItemResponse[]
+}
+
+export interface FaturaResumida {
+  id: string
+  numero: string
+  cliente_nome: string
+  total_final: number
+  emitida_em: string
+  cancelada_em: string | null
+  total_itens: number
+}
+
+export interface FaturaListaResponse {
+  total: number
+  faturas: FaturaResumida[]
+}
+
+export interface CancelamentoResponse {
+  id: string
+  numero: string
+  cancelada_em: string | null
+  situacao: string
+}
+
+export interface TendenciaDia {
+  dia: string
+  faturas: number
+  valor: number
+}
+
+export interface TopCliente {
+  cliente_nome: string
+  total_faturado: number
+  faturas: number
+}
+
+export interface ResumoPerformance {
+  total_emitidas: number
+  total_canceladas: number
+  total_ativas: number
+  taxa_cancelamento: number
+}
+
+export interface ValoresPerformance {
+  total_faturado: number
+  total_iva: number
+  total_descontos: number
+  media_por_fatura: number
+  maior_fatura: number
+}
+
+export interface PerformanceResponse {
+  resumo: ResumoPerformance
+  valores: ValoresPerformance
+  top_clientes: TopCliente[]
+  tendencia: TendenciaDia[]
 }
 
 // ── Assistente IA ────────────────────────────────────────────────

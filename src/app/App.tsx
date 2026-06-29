@@ -12,6 +12,7 @@ import PrestacoesPage from '@/app/pages/PrestacoesPage'
 import UtilizadoresPage from '@/app/pages/UtilizadoresPage'
 import RelatoriosPage from '@/app/pages/RelatoriosPage'
 import FluxoCaixaPage from '@/app/pages/FluxoCaixaPage'
+import FaturasPage from '@/app/pages/FaturasPage'
 
 function ProtectedRoute({ children, gestorOnly = false }: {
   children: React.ReactNode
@@ -73,6 +74,10 @@ function AppRoutes() {
       <Route
         path="/fluxo-caixa"
         element={<ProtectedRoute gestorOnly><FluxoCaixaPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/faturas"
+        element={<ProtectedRoute><FaturasPage /></ProtectedRoute>}
       />
       <Route
         path="/relatorios"

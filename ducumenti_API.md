@@ -1256,52 +1256,372 @@
         ]
       }
     },
-    "/prestacoes": {
-      "get": {
+    "/faturas": {
+      "post": {
         "tags": [
-          "Prestações"
+          "Facturação"
         ],
-        "summary": "Listar todos os planos de prestações",
-        "description": "Retorna todos os planos de prestações registados, ordenados do mais recente para o mais antigo.",
-        "operationId": "listar_prestacoes_get",
-        "responses": {
-          "200": {
-            "description": "Lista de planos de prestações com situação, saldo e parcelas",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/PrestacaoResponse"
-                  },
-                  "type": "array",
-                  "title": "Response Listar Prestacoes Get"
-                }
-              }
-            }
-          }
-        },
+        "summary": "Criar nova fatura",
+        "description": "Cria uma fatura com itens literais (sem FK para produto). O número é gerado automaticamente no formato YYYY-MM-SEQ. O desconto é aplicado sobre o total com IVA. Os dados do cliente (nome, NIF) são copiados no momento da emissão.",
+        "operationId": "criar_fatura_faturas_post",
         "security": [
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaturaCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Fatura criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaturaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          },
+          "422": {
+            "description": "Dados inválidos"
+          }
+        }
       },
+      "get": {
+        "tags": [
+          "Facturação"
+        ],
+        "summary": "Listar faturas",
+        "description": "Retorna lista paginada de faturas. Suporta filtros por período e cliente.",
+        "operationId": "listar_faturas_faturas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por data inicial (YYYY-MM-DD)",
+              "title": "Data Inicio"
+            },
+            "description": "Filtrar por data inicial (YYYY-MM-DD)"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por data final (YYYY-MM-DD)",
+              "title": "Data Fim"
+            },
+            "description": "Filtrar por data final (YYYY-MM-DD)"
+          },
+          {
+            "name": "cliente_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por cliente",
+              "title": "Cliente Id"
+            },
+            "description": "Filtrar por cliente"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaturaListaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/faturas/{fatura_id}": {
+      "get": {
+        "tags": [
+          "Facturação"
+        ],
+        "summary": "Buscar fatura por ID",
+        "description": "Retorna uma fatura com todos os seus itens.",
+        "operationId": "buscar_fatura_faturas__fatura_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fatura_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fatura Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaturaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fatura não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/faturas/{fatura_id}/cancelar": {
+      "post": {
+        "tags": [
+          "Facturação"
+        ],
+        "summary": "Cancelar fatura",
+        "description": "Cancela uma fatura ativa. Define a data de cancelamento. Faturas já canceladas não podem ser canceladas novamente.",
+        "operationId": "cancelar_fatura_faturas__fatura_id__cancelar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fatura_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fatura Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fatura cancelada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelamentoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Fatura já está cancelada"
+          },
+          "404": {
+            "description": "Fatura não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/faturas/performance/estatisticas": {
+      "get": {
+        "tags": [
+          "Facturação"
+        ],
+        "summary": "Estatísticas de facturação",
+        "description": "Retorna resumo de facturação com total emitido/cancelado, valores agregados, top 5 clientes e tendência diária. Cache: 60s via Redis.",
+        "operationId": "performance_faturas_performance_estatisticas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Início do período (YYYY-MM-DD)",
+              "title": "Data Inicio"
+            },
+            "description": "Início do período (YYYY-MM-DD)"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Fim do período (YYYY-MM-DD)",
+              "title": "Data Fim"
+            },
+            "description": "Fim do período (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prestacoes": {
       "post": {
         "tags": [
           "Prestações"
         ],
-        "summary": "Criar plano de prestações para uma venda",
-        "description": "Vincula uma venda existente a um plano de pagamento parcelado. Gera automaticamente as parcelas com vencimento mensal a partir da data atual.",
+        "summary": "Criar plano de prestações",
+        "description": "Cria um plano de pagamento parcelado para um cliente com um produto financiado. Gera automaticamente as parcelas com vencimento mensal a partir de data_inicio. Aceita taxa_multa percentual para cálculo de multa por atraso.",
         "operationId": "criar_prestacoes_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PrestacaoCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -1324,12 +1644,144 @@
               }
             }
           }
-        },
+        }
+      },
+      "get": {
+        "tags": [
+          "Prestações"
+        ],
+        "summary": "Listar todos os planos de prestações",
+        "description": "Retorna todos os planos de prestações registados, ordenados do mais recente para o mais antigo.",
+        "operationId": "listar_prestacoes_get",
         "security": [
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Registos a saltar",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Registos a saltar"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Limite de registos",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Limite de registos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de planos de prestações com situação, saldo e parcelas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrestacaoResponse"
+                  },
+                  "title": "Response Listar Prestacoes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prestacoes/vencimentos-mes": {
+      "get": {
+        "tags": [
+          "Prestações"
+        ],
+        "summary": "Vencimentos do mês",
+        "description": "Lista todas as parcelas em aberto (não pagas) com vencimento num determinado mês/ano, incluindo cliente, produto e dias de atraso. Útil para gerar lista de cobranças.",
+        "operationId": "vencimentos_mes_prestacoes_vencimentos_mes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ano",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2100,
+              "minimum": 2020,
+              "description": "Ano",
+              "title": "Ano"
+            },
+            "description": "Ano"
+          },
+          {
+            "name": "mes",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 12,
+              "minimum": 1,
+              "description": "Mês (1-12)",
+              "title": "Mes"
+            },
+            "description": "Mês (1-12)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de parcelas a vencer ou vencidas no período",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VencimentoResponse"
+                  },
+                  "title": "Response Vencimentos Mes Prestacoes Vencimentos Mes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/prestacoes/{id}": {
@@ -1387,7 +1839,7 @@
           "Prestações"
         ],
         "summary": "Registar pagamento de uma prestação",
-        "description": "Regista um pagamento parcial ou total para um plano. Atualiza o saldo e altera a situação para PARCIAL, PAGO ou ATRASADO conforme o caso.",
+        "description": "Regista um pagamento parcial ou total para um plano. Atualiza o saldo e altera a situação para PARCIAL, PAGO ou ATRASADO. Se a parcela paga estiver vencida, calcula automaticamente a multa com base na taxa_multa do plano.",
         "operationId": "pagar_prestacoes__id__pagamentos_post",
         "security": [
           {
@@ -2111,6 +2563,42 @@
   },
   "components": {
     "schemas": {
+      "CancelamentoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          },
+          "cancelada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada Em"
+          },
+          "situacao": {
+            "type": "string",
+            "title": "Situacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "numero",
+          "situacao"
+        ],
+        "title": "CancelamentoResponse"
+      },
       "CategoriaGrupoResponse": {
         "properties": {
           "categoria": {
@@ -2276,6 +2764,7 @@
               "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
               "cliente_nome": "Ana Cristina",
               "criado_em": "2026-06-27T14:30:00Z",
+              "data_inicio": "2026-07-01T00:00:00Z",
               "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
               "numero_prestacoes": 6,
               "pagamentos": [
@@ -2283,15 +2772,18 @@
                   "data_pagamento": "2026-07-01T14:30:00Z",
                   "data_vencimento": "2026-07-01T00:00:00Z",
                   "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                  "multa": 0,
                   "pago": true,
                   "valor": 25000
                 }
               ],
+              "produto_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+              "produto_nome": "Arroz Agulha 5kg",
               "saldo": 100000,
               "situacao": "PARCIAL",
+              "taxa_multa": 5,
               "valor_pago": 50000,
-              "valor_total": 150000,
-              "venda_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+              "valor_total": 150000
             }
           ],
           "saldo_aberto": 200000,
@@ -2525,6 +3017,282 @@
           "total_entradas": 700000,
           "total_saidas": 550000
         }
+      },
+      "FaturaCreate": {
+        "properties": {
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id",
+            "description": "ID do cliente"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/FaturaItemCreate"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Itens",
+            "description": "Itens da fatura"
+          },
+          "desconto_percentual": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desconto Percentual",
+            "description": "Desconto percentual sobre total com IVA",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_id",
+          "itens"
+        ],
+        "title": "FaturaCreate"
+      },
+      "FaturaItemCreate": {
+        "properties": {
+          "produto_nome": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Produto Nome",
+            "description": "Nome do produto (literal, sem FK)"
+          },
+          "quantidade": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Quantidade",
+            "description": "Quantidade"
+          },
+          "preco_unitario": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Preco Unitario",
+            "description": "Preço unitário em Kz"
+          },
+          "iva": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Iva",
+            "description": "Percentual de IVA (0-100)",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_nome",
+          "quantidade",
+          "preco_unitario"
+        ],
+        "title": "FaturaItemCreate"
+      },
+      "FaturaItemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome"
+          },
+          "quantidade": {
+            "type": "number",
+            "title": "Quantidade"
+          },
+          "preco_unitario": {
+            "type": "number",
+            "title": "Preco Unitario"
+          },
+          "iva": {
+            "type": "number",
+            "title": "Iva"
+          },
+          "subtotal": {
+            "type": "number",
+            "title": "Subtotal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_nome",
+          "quantidade",
+          "preco_unitario",
+          "iva",
+          "subtotal"
+        ],
+        "title": "FaturaItemResponse"
+      },
+      "FaturaListaResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "faturas": {
+            "items": {
+              "$ref": "#/components/schemas/FaturaResumida"
+            },
+            "type": "array",
+            "title": "Faturas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "faturas"
+        ],
+        "title": "FaturaListaResponse"
+      },
+      "FaturaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          },
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id"
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "cliente_nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Nif"
+          },
+          "total_sem_iva": {
+            "type": "number",
+            "title": "Total Sem Iva"
+          },
+          "total_iva": {
+            "type": "number",
+            "title": "Total Iva"
+          },
+          "total_desconto": {
+            "type": "number",
+            "title": "Total Desconto"
+          },
+          "total_final": {
+            "type": "number",
+            "title": "Total Final"
+          },
+          "emitida_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Emitida Em"
+          },
+          "cancelada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada Em"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/FaturaItemResponse"
+            },
+            "type": "array",
+            "title": "Itens",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "numero",
+          "cliente_id",
+          "cliente_nome",
+          "total_sem_iva",
+          "total_iva",
+          "total_desconto",
+          "total_final",
+          "emitida_em"
+        ],
+        "title": "FaturaResponse"
+      },
+      "FaturaResumida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "total_final": {
+            "type": "number",
+            "title": "Total Final"
+          },
+          "emitida_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Emitida Em"
+          },
+          "cancelada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada Em"
+          },
+          "total_itens": {
+            "type": "integer",
+            "title": "Total Itens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "numero",
+          "cliente_nome",
+          "total_final",
+          "emitida_em",
+          "total_itens"
+        ],
+        "title": "FaturaResumida"
       },
       "HTTPValidationError": {
         "properties": {
@@ -3055,6 +3823,13 @@
             "type": "boolean",
             "title": "Pago",
             "examples": [true]
+          },
+          "multa": {
+            "type": "number",
+            "title": "Multa",
+            "description": "Multa por atraso aplicada",
+            "default": 0,
+            "examples": [1250]
           }
         },
         "type": "object",
@@ -3066,6 +3841,38 @@
           "pago"
         ],
         "title": "PagamentoResponse"
+      },
+      "PerformanceResponse": {
+        "properties": {
+          "resumo": {
+            "$ref": "#/components/schemas/ResumoPerformance"
+          },
+          "valores": {
+            "$ref": "#/components/schemas/ValoresPerformance"
+          },
+          "top_clientes": {
+            "items": {
+              "$ref": "#/components/schemas/TopCliente"
+            },
+            "type": "array",
+            "title": "Top Clientes",
+            "default": []
+          },
+          "tendencia": {
+            "items": {
+              "$ref": "#/components/schemas/TendenciaDia"
+            },
+            "type": "array",
+            "title": "Tendencia",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "resumo",
+          "valores"
+        ],
+        "title": "PerformanceResponse"
       },
       "PerguntaRequest": {
         "properties": {
@@ -3113,14 +3920,30 @@
       },
       "PrestacaoCreate": {
         "properties": {
-          "venda_id": {
+          "cliente_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Venda Id",
-            "description": "ID da venda",
+            "title": "Cliente Id",
+            "description": "ID do cliente",
+            "examples": [
+              "af11fa27-2bbe-4834-acb3-4a249c0f5ce4"
+            ]
+          },
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "description": "ID do produto financiado",
             "examples": [
               "f47ac10b-58cc-4372-a567-0e02b2c3d479"
             ]
+          },
+          "valor_total": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Valor Total",
+            "description": "Valor total financiado",
+            "examples": [150000]
           },
           "numero_prestacoes": {
             "type": "integer",
@@ -3129,17 +3952,48 @@
             "title": "Numero Prestacoes",
             "description": "Número de prestações",
             "examples": [6]
+          },
+          "data_inicio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Inicio",
+            "description": "Data do primeiro vencimento (omitir para usar data atual)",
+            "examples": [
+              "2026-07-01T00:00:00Z"
+            ]
+          },
+          "taxa_multa": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Taxa Multa",
+            "description": "Percentagem de multa por atraso por parcela",
+            "default": 0,
+            "examples": [5]
           }
         },
         "type": "object",
         "required": [
-          "venda_id",
+          "cliente_id",
+          "produto_id",
+          "valor_total",
           "numero_prestacoes"
         ],
         "title": "PrestacaoCreate",
         "example": {
+          "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+          "data_inicio": "2026-07-01T00:00:00Z",
           "numero_prestacoes": 6,
-          "venda_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          "produto_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+          "taxa_multa": 5,
+          "valor_total": 150000
         }
       },
       "PrestacaoResponse": {
@@ -3152,12 +4006,20 @@
               "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
             ]
           },
-          "venda_id": {
+          "produto_id": {
             "type": "string",
             "format": "uuid",
-            "title": "Venda Id",
+            "title": "Produto Id",
             "examples": [
               "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "default": "",
+            "examples": [
+              "Arroz Agulha 5kg"
             ]
           },
           "cliente_id": {
@@ -3197,6 +4059,22 @@
             "title": "Numero Prestacoes",
             "examples": [6]
           },
+          "taxa_multa": {
+            "type": "number",
+            "title": "Taxa Multa",
+            "description": "Percentagem de multa por atraso",
+            "default": 0,
+            "examples": [5]
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio",
+            "description": "Data do primeiro vencimento",
+            "examples": [
+              "2026-07-01T00:00:00Z"
+            ]
+          },
           "situacao": {
             "type": "string",
             "title": "Situacao",
@@ -3224,12 +4102,13 @@
         "type": "object",
         "required": [
           "id",
-          "venda_id",
+          "produto_id",
           "cliente_id",
           "valor_total",
           "valor_pago",
           "saldo",
           "numero_prestacoes",
+          "data_inicio",
           "situacao",
           "criado_em"
         ],
@@ -3238,6 +4117,7 @@
           "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
           "cliente_nome": "Ana Cristina",
           "criado_em": "2026-06-27T14:30:00Z",
+          "data_inicio": "2026-07-01T00:00:00Z",
           "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
           "numero_prestacoes": 6,
           "pagamentos": [
@@ -3245,21 +4125,25 @@
               "data_pagamento": "2026-07-01T14:30:00Z",
               "data_vencimento": "2026-07-01T00:00:00Z",
               "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+              "multa": 0,
               "pago": true,
               "valor": 25000
             },
             {
               "data_vencimento": "2026-08-01T00:00:00Z",
               "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+              "multa": 0,
               "pago": false,
               "valor": 25000
             }
           ],
+          "produto_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+          "produto_nome": "Arroz Agulha 5kg",
           "saldo": 100000,
           "situacao": "PARCIAL",
+          "taxa_multa": 5,
           "valor_pago": 50000,
-          "valor_total": 150000,
-          "venda_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+          "valor_total": 150000
         }
       },
       "ProdutoCreate": {
@@ -3948,6 +4832,34 @@
           "total_vendas": 42
         }
       },
+      "ResumoPerformance": {
+        "properties": {
+          "total_emitidas": {
+            "type": "integer",
+            "title": "Total Emitidas"
+          },
+          "total_canceladas": {
+            "type": "integer",
+            "title": "Total Canceladas"
+          },
+          "total_ativas": {
+            "type": "integer",
+            "title": "Total Ativas"
+          },
+          "taxa_cancelamento": {
+            "type": "number",
+            "title": "Taxa Cancelamento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_emitidas",
+          "total_canceladas",
+          "total_ativas",
+          "taxa_cancelamento"
+        ],
+        "title": "ResumoPerformance"
+      },
       "SaldoResponse": {
         "properties": {
           "saldo_atual": {
@@ -4184,6 +5096,29 @@
           "total_sincronizados": 45
         }
       },
+      "TendenciaDia": {
+        "properties": {
+          "dia": {
+            "type": "string",
+            "title": "Dia"
+          },
+          "faturas": {
+            "type": "integer",
+            "title": "Faturas"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dia",
+          "faturas",
+          "valor"
+        ],
+        "title": "TendenciaDia"
+      },
       "TokenResponse": {
         "properties": {
           "access_token": {
@@ -4214,6 +5149,29 @@
           "role"
         ],
         "title": "TokenResponse"
+      },
+      "TopCliente": {
+        "properties": {
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "total_faturado": {
+            "type": "number",
+            "title": "Total Faturado"
+          },
+          "faturas": {
+            "type": "integer",
+            "title": "Faturas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_nome",
+          "total_faturado",
+          "faturas"
+        ],
+        "title": "TopCliente"
       },
       "UtilizadorResponse": {
         "properties": {
@@ -4281,6 +5239,112 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "ValoresPerformance": {
+        "properties": {
+          "total_faturado": {
+            "type": "number",
+            "title": "Total Faturado"
+          },
+          "total_iva": {
+            "type": "number",
+            "title": "Total Iva"
+          },
+          "total_descontos": {
+            "type": "number",
+            "title": "Total Descontos"
+          },
+          "media_por_fatura": {
+            "type": "number",
+            "title": "Media Por Fatura"
+          },
+          "maior_fatura": {
+            "type": "number",
+            "title": "Maior Fatura"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_faturado",
+          "total_iva",
+          "total_descontos",
+          "media_por_fatura",
+          "maior_fatura"
+        ],
+        "title": "ValoresPerformance"
+      },
+      "VencimentoResponse": {
+        "properties": {
+          "prestacao_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Prestacao Id",
+            "examples": [
+              "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            ]
+          },
+          "pagamento_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Pagamento Id",
+            "examples": [
+              "c3d4e5f6-a7b8-9012-cdef-123456789012"
+            ]
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome",
+            "examples": [
+              "Ana Cristina"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "examples": [25000]
+          },
+          "data_vencimento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Vencimento",
+            "examples": [
+              "2026-08-01T00:00:00Z"
+            ]
+          },
+          "dias_atraso": {
+            "type": "integer",
+            "title": "Dias Atraso",
+            "description": "Dias de atraso (0 se dentro do prazo)",
+            "examples": [0]
+          }
+        },
+        "type": "object",
+        "required": [
+          "prestacao_id",
+          "pagamento_id",
+          "cliente_nome",
+          "produto_nome",
+          "valor",
+          "data_vencimento",
+          "dias_atraso"
+        ],
+        "title": "VencimentoResponse",
+        "example": {
+          "cliente_nome": "Ana Cristina",
+          "data_vencimento": "2026-08-01T00:00:00Z",
+          "dias_atraso": 0,
+          "pagamento_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+          "prestacao_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          "produto_nome": "Arroz Agulha 5kg",
+          "valor": 25000
+        }
       },
       "VendaCreate": {
         "properties": {
