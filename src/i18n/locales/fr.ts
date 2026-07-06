@@ -8,7 +8,7 @@ const fr = {
     email: 'Email', phone: 'Téléphone', address: 'Adresse', date: 'Date', total: 'Total',
     balance: 'Solde', paid: 'Payé', pending: 'En attente', status: 'Statut', active: 'Actif',
     inactive: 'Inactif', yes: 'Oui', no: 'Non', optional: 'Facultatif', more: '+{{count}} de plus...',
-    client: 'Client', filter: 'Filtrer', loadError: 'Erreur de chargement des données',
+    client: 'Client', filter: 'Filtrer', loadError: 'Erreur de chargement des données', back: 'Retour',
   },
   nav: {
     dashboard: 'Tableau de bord', products: 'Produits', clients: 'Clients', sales: 'Ventes',

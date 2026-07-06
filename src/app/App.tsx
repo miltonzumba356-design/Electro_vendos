@@ -8,6 +8,7 @@ import ProdutosPage from '@/app/pages/ProdutosPage'
 import ClientesPage from '@/app/pages/ClientesPage'
 import VendasPage from '@/app/pages/VendasPage'
 import StockPage from '@/app/pages/StockPage'
+import StockProdutoPage from '@/app/pages/StockProdutoPage'
 import UtilizadoresPage from '@/app/pages/UtilizadoresPage'
 import RelatoriosPage from '@/app/pages/RelatoriosPage'
 import FluxoCaixaPage from '@/app/pages/FluxoCaixaPage'
@@ -65,6 +66,10 @@ function AppRoutes() {
       <Route
         path="/stock"
         element={<ProtectedRoute gestorOnly><StockPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/stock/:id"
+        element={<ProtectedRoute gestorOnly><StockProdutoPage /></ProtectedRoute>}
       />
       <Route
         path="/utilizadores"

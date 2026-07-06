@@ -8,7 +8,7 @@ const ar = {
     email: 'البريد الإلكتروني', phone: 'الهاتف', address: 'العنوان', date: 'التاريخ', total: 'الإجمالي',
     balance: 'الرصيد', paid: 'مدفوع', pending: 'معلق', status: 'الحالة', active: 'نشط',
     inactive: 'غير نشط', yes: 'نعم', no: 'لا', optional: 'اختياري', more: '+{{count}} المزيد...',
-    client: 'العميل', filter: 'تصفية', loadError: 'خطأ في تحميل البيانات',
+    client: 'العميل', filter: 'تصفية', loadError: 'خطأ في تحميل البيانات', back: 'رجوع',
   },
   nav: {
     dashboard: 'لوحة التحكم', products: 'المنتجات', clients: 'العملاء', sales: 'المبيعات',

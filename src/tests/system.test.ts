@@ -28,6 +28,6 @@ describe('systemService.health — GET /health', () => {
 
   it('lança erro quando backend não está disponível', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new TypeError('fetch failed'))
-    await expect(systemService.health()).rejects.toThrow('fetch failed')
+    await expect(systemService.health()).rejects.toThrow('Não foi possível ligar ao servidor')
   })
 })

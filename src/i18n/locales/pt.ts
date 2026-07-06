@@ -8,7 +8,7 @@ const pt = {
     email: 'Email', phone: 'Telefone', address: 'Endereço', date: 'Data', total: 'Total',
     balance: 'Saldo', paid: 'Pago', pending: 'Pendente', status: 'Estado', active: 'Ativo',
     inactive: 'Inativo', yes: 'Sim', no: 'Não', optional: 'Opcional', more: '+{{count}} mais...',
-    client: 'Cliente', filter: 'Filtrar', loadError: 'Erro ao carregar dados',
+    client: 'Cliente', filter: 'Filtrar', loadError: 'Erro ao carregar dados', back: 'Voltar',
   },
   nav: {
     dashboard: 'Dashboard', products: 'Produtos', clients: 'Clientes', sales: 'Vendas',

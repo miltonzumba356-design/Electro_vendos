@@ -8,7 +8,7 @@ const en = {
     email: 'Email', phone: 'Phone', address: 'Address', date: 'Date', total: 'Total',
     balance: 'Balance', paid: 'Paid', pending: 'Pending', status: 'Status', active: 'Active',
     inactive: 'Inactive', yes: 'Yes', no: 'No', optional: 'Optional', more: '+{{count}} more...',
-    client: 'Client', filter: 'Filter', loadError: 'Error loading data',
+    client: 'Client', filter: 'Filter', loadError: 'Error loading data', back: 'Back',
   },
   nav: {
     dashboard: 'Dashboard', products: 'Products', clients: 'Clients', sales: 'Sales',
