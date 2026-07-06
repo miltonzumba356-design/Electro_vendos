@@ -105,6 +105,9 @@ export interface VendaCreate {
   cliente_id?: string | null
   cliente?: Record<string, unknown> | null
   itens: ItemVendaInput[]
+  desconto_percentual?: number | null
+  credito?: boolean
+  desconto_divida?: number | null
 }
 
 export interface VendaItemResponse {
@@ -129,6 +132,8 @@ export interface VendaResponse {
   desconto_percentual: number
   total_desconto: number
   total_final: number
+  credito: boolean
+  credito_pago: boolean
   criado_em: string
   itens: VendaItemResponse[]
 }
@@ -213,6 +218,32 @@ export interface ClienteDividaResponse {
   valor_total_pago: number
   saldo_aberto: number
   prestacoes: PrestacaoResponse[]
+}
+
+// ── Dívidas (vendas a crédito) ─────────────────────────────────
+export interface DividaResponse {
+  id: string
+  cliente_id: string
+  cliente_nome: string | null
+  venda_id: string | null
+  produto_nome: string | null
+  valor_total: number
+  valor_pago: number
+  saldo: number
+  status: string
+  criado_em: string
+  pago_em: string | null
+}
+
+export interface DividaCheckResponse {
+  tem_divida: boolean
+  dividas: DividaResponse[]
+  total_devido: number
+  mensagem: string | null
+}
+
+export interface PagarDividaRequest {
+  valor: number
 }
 
 // ── Relatórios ──────────────────────────────────────────────────

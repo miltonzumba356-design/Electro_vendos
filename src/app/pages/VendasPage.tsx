@@ -1,13 +1,26 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { vendasService } from '@/services/vendas'
 import { produtosService } from '@/services/produtos'
 import { clientesService } from '@/services/clientes'
-import type { VendaResponse, ProdutoResponse, ClienteResponse, ItemVendaInput } from '@/types'
+import { dividasService } from '@/services/dividas'
+import type {
+  VendaResponse,
+  ProdutoResponse,
+  ClienteResponse,
+  ItemVendaInput,
+  VendaCreate,
+  DividaCheckResponse,
+  DividaResponse,
+} from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { Badge } from '@/app/components/ui/badge'
+import { Checkbox } from '@/app/components/ui/checkbox'
+import { Alert, AlertTitle, AlertDescription } from '@/app/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
 import {
   Table,
   TableBody,
@@ -25,10 +38,11 @@ import {
 import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
-import { Plus, Eye, Trash2, Search, Printer } from 'lucide-react'
+import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { imprimirVenda } from '@/lib/recibo'
+import PrestacoesPage from '@/app/pages/PrestacoesPage'
 
 function formatKz(value: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -43,8 +57,8 @@ interface ItemForm {
   quantidade: number
 }
 
-export default function VendasPage() {
-  const { t } = useTranslation()
+/* ── Tab: Vendas ──────────────────────────────────────────────── */
+function VendasTab({ t }: { t: TFunction }) {
   const [vendas, setVendas] = useState<VendaResponse[]>([])
   const [produtos, setProdutos] = useState<ProdutoResponse[]>([])
   const [clientes, setClientes] = useState<ClienteResponse[]>([])
@@ -59,7 +73,13 @@ export default function VendasPage() {
   const [novoClienteNome, setNovoClienteNome] = useState('')
   const [novoClienteTelefone, setNovoClienteTelefone] = useState('')
   const [itens, setItens] = useState<ItemForm[]>([{ produto_id: '', quantidade: 1 }])
+  const [credito, setCredito] = useState(false)
+  const [descontoPercentual, setDescontoPercentual] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const [dividaCheck, setDividaCheck] = useState<DividaCheckResponse | null>(null)
+  const [confirmarDivida, setConfirmarDivida] = useState(false)
+  const [descontoDivida, setDescontoDivida] = useState('')
 
   async function load() {
     try {
@@ -80,12 +100,29 @@ export default function VendasPage() {
 
   useEffect(() => { load() }, [])
 
+  useEffect(() => {
+    if (clienteMode === 'existente' && clienteId) {
+      dividasService.verificarCliente(clienteId)
+        .then(setDividaCheck)
+        .catch(() => setDividaCheck(null))
+    } else {
+      setDividaCheck(null)
+    }
+    setConfirmarDivida(false)
+    setDescontoDivida('')
+  }, [clienteMode, clienteId])
+
   function openNovaVenda() {
     setClienteMode('nenhum')
     setClienteId('')
     setNovoClienteNome('')
     setNovoClienteTelefone('')
     setItens([{ produto_id: '', quantidade: 1 }])
+    setCredito(false)
+    setDescontoPercentual('')
+    setDividaCheck(null)
+    setConfirmarDivida(false)
+    setDescontoDivida('')
     setNovaVendaOpen(true)
   }
 
@@ -118,19 +155,28 @@ export default function VendasPage() {
       toast.error(t('sales.toasts.minOneProduct'))
       return
     }
+    if (dividaCheck?.tem_divida && !confirmarDivida) {
+      toast.error(t('sales.toasts.debtConfirmRequired'))
+      return
+    }
     const vendaItens: ItemVendaInput[] = validItens.map((i) => ({
       produto_id: i.produto_id,
       quantidade: i.quantidade,
     }))
     setSaving(true)
     try {
-      const payload = {
+      const payload: VendaCreate = {
         itens: vendaItens,
         cliente_id: clienteMode === 'existente' && clienteId ? clienteId : null,
         cliente:
           clienteMode === 'novo' && novoClienteNome
             ? { nome: novoClienteNome, telefone: novoClienteTelefone || undefined }
             : null,
+        credito,
+        ...(descontoPercentual ? { desconto_percentual: Number(descontoPercentual) } : {}),
+        ...(dividaCheck?.tem_divida && confirmarDivida
+          ? { desconto_divida: descontoDivida ? Number(descontoDivida) : 0 }
+          : {}),
       }
       const nova = await vendasService.criar(payload)
       setVendas((prev) => [nova, ...prev])
@@ -162,7 +208,6 @@ export default function VendasPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('sales.title')}</h1>
           <p className="text-muted-foreground text-sm">{t('sales.count', { count: vendas.length })}</p>
         </div>
         <Button onClick={openNovaVenda} className="gap-2 shrink-0">
@@ -191,6 +236,7 @@ export default function VendasPage() {
               <TableHead className="text-right">{t('sales.colItems')}</TableHead>
               <TableHead className="text-right">{t('sales.colNetTotal')}</TableHead>
               <TableHead className="text-right">{t('sales.colFinalTotal')}</TableHead>
+              <TableHead>{t('sales.colType')}</TableHead>
               <TableHead className="text-right">{t('sales.colActions')}</TableHead>
             </TableRow>
           </TableHeader>
@@ -198,14 +244,14 @@ export default function VendasPage() {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
+                  {Array.from({ length: 8 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   {t('sales.empty')}
                 </TableCell>
               </TableRow>
@@ -222,6 +268,15 @@ export default function VendasPage() {
                   </TableCell>
                   <TableCell className="text-right">{formatKz(v.total_sem_iva)}</TableCell>
                   <TableCell className="text-right font-semibold">{formatKz(v.total_final)}</TableCell>
+                  <TableCell>
+                    {v.credito ? (
+                      <Badge variant={v.credito_pago ? 'default' : 'destructive'}>
+                        {v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">{t('sales.cash')}</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => setDetalhesVenda(v)}>
                       <Eye className="size-4" />
@@ -292,6 +347,43 @@ export default function VendasPage() {
                   </div>
                 </div>
               )}
+
+              {dividaCheck?.tem_divida && (
+                <Alert variant="destructive">
+                  <AlertTriangle />
+                  <AlertTitle>{t('sales.debtWarningTitle')}</AlertTitle>
+                  <AlertDescription>
+                    <p>
+                      {dividaCheck.mensagem ?? t('sales.debtWarningDesc', { value: formatKz(dividaCheck.total_devido) })}
+                    </p>
+                    <div className="flex items-center gap-2 pt-1">
+                      <Checkbox
+                        id="confirmar-divida"
+                        checked={confirmarDivida}
+                        onCheckedChange={(v) => setConfirmarDivida(v === true)}
+                      />
+                      <Label htmlFor="confirmar-divida" className="font-normal cursor-pointer">
+                        {t('sales.debtConfirmLabel')}
+                      </Label>
+                    </div>
+                    {confirmarDivida && (
+                      <div className="w-full sm:w-48 pt-1 space-y-1">
+                        <Label htmlFor="desconto-divida" className="text-xs">{t('sales.debtDiscountLabel')}</Label>
+                        <Input
+                          id="desconto-divida"
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.1"
+                          value={descontoDivida}
+                          onChange={(e) => setDescontoDivida(e.target.value)}
+                          placeholder="0"
+                        />
+                      </div>
+                    )}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
 
             <Separator />
@@ -355,6 +447,32 @@ export default function VendasPage() {
                 })}
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-center gap-2 pt-2">
+                  <Checkbox
+                    id="venda-credito"
+                    checked={credito}
+                    onCheckedChange={(v) => setCredito(v === true)}
+                  />
+                  <Label htmlFor="venda-credito" className="font-normal cursor-pointer">
+                    {t('sales.creditSaleLabel')}
+                  </Label>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="desconto-pct" className="text-xs">{t('sales.discountLabel')}</Label>
+                  <Input
+                    id="desconto-pct"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={descontoPercentual}
+                    onChange={(e) => setDescontoPercentual(e.target.value)}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
               <div className="flex justify-end">
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">{t('sales.estimatedTotal')}</p>
@@ -404,6 +522,14 @@ export default function VendasPage() {
                   <p className="text-muted-foreground">{t('sales.detailsDate')}</p>
                   <p>{format(new Date(detalhesVenda.criado_em), 'dd/MM/yyyy HH:mm')}</p>
                 </div>
+                {detalhesVenda.credito && (
+                  <div>
+                    <p className="text-muted-foreground">{t('sales.colType')}</p>
+                    <Badge variant={detalhesVenda.credito_pago ? 'default' : 'destructive'}>
+                      {detalhesVenda.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
+                    </Badge>
+                  </div>
+                )}
               </div>
 
               <Separator />
@@ -444,6 +570,230 @@ export default function VendasPage() {
           )}
         </DialogContent>
       </Dialog>
+    </div>
+  )
+}
+
+/* ── Pagar dívida dialog (dívidas de crédito) ────────────────────── */
+function PagarDividaDialog({
+  divida, onSuccess, onClose, t,
+}: {
+  divida: DividaResponse | null
+  onSuccess: (updated: DividaResponse) => void
+  onClose: () => void
+  t: TFunction
+}) {
+  const [valor, setValor] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (divida) setValor(String(divida.saldo))
+  }, [divida])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!divida || !valor || Number(valor) <= 0) {
+      toast.error(t('installments.toasts.invalidValue'))
+      return
+    }
+    setSaving(true)
+    try {
+      const updated = await dividasService.pagar(divida.id, { valor: Number(valor) })
+      onSuccess(updated)
+      toast.success(t('sales.toasts.debtPaymentRegistered'))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('sales.toasts.debtPaymentError'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open={!!divida} onOpenChange={onClose}>
+      <DialogContent className="max-w-[95vw] sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t('sales.payDebtTitle')}</DialogTitle>
+        </DialogHeader>
+        {divida && (
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            <p className="text-sm text-muted-foreground">
+              {divida.cliente_nome ?? '—'} · {t('installments.colBalance')}{' '}
+              <span className="font-semibold text-foreground">{formatKz(divida.saldo)}</span>
+            </p>
+            <div className="space-y-2">
+              <Label htmlFor="valor-divida">{t('installments.fieldValue')} *</Label>
+              <Input
+                id="valor-divida"
+                type="number"
+                min="0.01"
+                max={divida.saldo}
+                step="0.01"
+                value={valor}
+                onChange={(e) => setValor(e.target.value)}
+                required
+              />
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={saving}>
+                {saving ? t('common.registering') : t('common.register')}
+              </Button>
+            </div>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/* ── Tab: Dívidas (vendas a crédito) ─────────────────────────────── */
+function DividasCreditoTab({ t }: { t: TFunction }) {
+  const [dividas, setDividas] = useState<DividaResponse[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [statusFiltro, setStatusFiltro] = useState<'DIVIDA' | 'PAGA' | 'TODAS'>('DIVIDA')
+  const [pagarDivida, setPagarDivida] = useState<DividaResponse | null>(null)
+
+  async function load(status: 'DIVIDA' | 'PAGA' | 'TODAS') {
+    setLoading(true)
+    try {
+      const data = await dividasService.listar(status === 'TODAS' ? undefined : { status })
+      setDividas(data)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('common.loadError'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => { load(statusFiltro) }, [statusFiltro])
+
+  function handlePago(updated: DividaResponse) {
+    setDividas((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
+    setPagarDivida(null)
+  }
+
+  const filtered = dividas.filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative w-full max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder={t('sales.searchPlaceholder')}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <div className="flex gap-2">
+          {(['DIVIDA', 'PAGA', 'TODAS'] as const).map((s) => (
+            <Button
+              key={s}
+              type="button"
+              variant={statusFiltro === s ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFiltro(s)}
+            >
+              {t(`sales.debtStatus.${s}`)}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-md border bg-card overflow-x-auto">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>{t('sales.colClient')}</TableHead>
+              <TableHead>{t('sales.debtProduct')}</TableHead>
+              <TableHead className="text-right">{t('installments.colTotal')}</TableHead>
+              <TableHead className="text-right">{t('installments.colPaid')}</TableHead>
+              <TableHead className="text-right">{t('installments.colBalance')}</TableHead>
+              <TableHead>{t('installments.colStatus')}</TableHead>
+              <TableHead>{t('installments.colDate')}</TableHead>
+              <TableHead className="text-right">{t('installments.colActions')}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <TableRow key={i}>
+                  {Array.from({ length: 8 }).map((_, j) => (
+                    <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                  {t('sales.debtEmpty')}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((d) => (
+                <TableRow key={d.id}>
+                  <TableCell className="font-medium">{d.cliente_nome ?? '—'}</TableCell>
+                  <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
+                  <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
+                  <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
+                  <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
+                  <TableCell>
+                    <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-sm">
+                    {format(new Date(d.criado_em), 'dd/MM/yyyy')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {d.status !== 'PAGA' && (
+                      <Button variant="ghost" size="icon" onClick={() => setPagarDivida(d)}>
+                        <Wallet className="size-4 text-primary" />
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <PagarDividaDialog
+        divida={pagarDivida}
+        onSuccess={handlePago}
+        onClose={() => setPagarDivida(null)}
+        t={t}
+      />
+    </div>
+  )
+}
+
+/* ── Main Page ────────────────────────────────────────────────── */
+export default function VendasPage() {
+  const { t } = useTranslation()
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{t('sales.title')}</h1>
+        <p className="text-muted-foreground text-sm">{t('sales.moduleSubtitle')}</p>
+      </div>
+
+      <Tabs defaultValue="vendas">
+        <TabsList>
+          <TabsTrigger value="vendas">{t('sales.tabSales')}</TabsTrigger>
+          <TabsTrigger value="prestacoes">{t('sales.tabInstallments')}</TabsTrigger>
+          <TabsTrigger value="dividas">{t('sales.tabDebts')}</TabsTrigger>
+        </TabsList>
+        <div className="mt-4">
+          <TabsContent value="vendas"><VendasTab t={t} /></TabsContent>
+          <TabsContent value="prestacoes"><PrestacoesPage /></TabsContent>
+          <TabsContent value="dividas"><DividasCreditoTab t={t} /></TabsContent>
+        </div>
+      </Tabs>
     </div>
   )
 }

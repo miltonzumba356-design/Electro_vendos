@@ -8,7 +8,6 @@ import ProdutosPage from '@/app/pages/ProdutosPage'
 import ClientesPage from '@/app/pages/ClientesPage'
 import VendasPage from '@/app/pages/VendasPage'
 import StockPage from '@/app/pages/StockPage'
-import PrestacoesPage from '@/app/pages/PrestacoesPage'
 import UtilizadoresPage from '@/app/pages/UtilizadoresPage'
 import RelatoriosPage from '@/app/pages/RelatoriosPage'
 import FluxoCaixaPage from '@/app/pages/FluxoCaixaPage'
@@ -61,7 +60,7 @@ function AppRoutes() {
       />
       <Route
         path="/prestacoes"
-        element={<ProtectedRoute><PrestacoesPage /></ProtectedRoute>}
+        element={<Navigate to="/vendas" replace />}
       />
       <Route
         path="/stock"

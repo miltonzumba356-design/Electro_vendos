@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { stockService } from '@/services/stock'
 import { produtosService } from '@/services/produtos'
@@ -8,6 +8,7 @@ import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { Badge } from '@/app/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
 import {
   Table,
   TableBody,
@@ -24,7 +25,8 @@ import {
 } from '@/app/components/ui/dialog'
 import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { Plus, Filter, ArrowUpCircle, ArrowDownCircle, Printer } from 'lucide-react'
+import { Separator } from '@/app/components/ui/separator'
+import { Plus, Search, Eye, ArrowUpCircle, ArrowDownCircle, Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { imprimirEntradaStock } from '@/lib/recibo'
@@ -43,7 +45,9 @@ export default function StockPage() {
   const [movimentos, setMovimentos] = useState<MovimentoResponse[]>([])
   const [produtos, setProdutos] = useState<ProdutoResponse[]>([])
   const [loading, setLoading] = useState(true)
-  const [filterProduto, setFilterProduto] = useState<string>('all')
+  const [search, setSearch] = useState('')
+
+  const [detalheProduto, setDetalheProduto] = useState<ProdutoResponse | null>(null)
 
   const [dialogOpen, setDialogOpen] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -55,11 +59,11 @@ export default function StockPage() {
     preco_unitario: '',
   })
 
-  async function load(produto_id?: string) {
+  async function load() {
     setLoading(true)
     try {
       const [m, p] = await Promise.allSettled([
-        stockService.listarMovimentos(produto_id === 'all' ? undefined : produto_id),
+        stockService.listarMovimentos(),
         produtosService.listar(),
       ])
       if (m.status === 'fulfilled') setMovimentos(m.value)
@@ -107,14 +111,31 @@ export default function StockPage() {
     }
   }
 
-  function handleFilterChange(value: string) {
-    setFilterProduto(value)
-    load(value)
-  }
+  const resumoPorProduto = useMemo(() => {
+    return produtos
+      .map((p) => {
+        const movs = movimentos.filter((m) => m.produto_id === p.id)
+        const entradas = movs
+          .filter((m) => m.tipo === 'ENTRADA')
+          .reduce((sum, m) => sum + m.quantidade, 0)
+        const saidas = movs
+          .filter((m) => m.tipo === 'SAIDA')
+          .reduce((sum, m) => sum + m.quantidade, 0)
+        return { produto: p, entradas, saidas, movimentos: movs.length }
+      })
+      .filter((r) => r.produto.nome.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => a.produto.nome.localeCompare(b.produto.nome))
+  }, [produtos, movimentos, search])
 
-  const sorted = [...movimentos].sort(
-    (a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime()
-  )
+  const movimentosDoProduto = detalheProduto
+    ? [...movimentos]
+        .filter((m) => m.produto_id === detalheProduto.id)
+        .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
+    : []
+
+  const resumoDetalhe = detalheProduto
+    ? resumoPorProduto.find((r) => r.produto.id === detalheProduto.id)
+    : undefined
 
   return (
     <div className="space-y-4">
@@ -131,89 +152,66 @@ export default function StockPage() {
         )}
       </div>
 
-      {/* Filter */}
-      <div className="flex flex-wrap items-center gap-2">
-        <Filter className="size-4 text-muted-foreground shrink-0" />
-        <Combobox
-          options={[
-            { value: 'all', label: t('stock.allProducts') },
-            ...produtos.map((p) => ({ value: p.id, label: p.nome })),
-          ]}
-          value={filterProduto}
-          onValueChange={(v) => handleFilterChange(v || 'all')}
-          placeholder={t('stock.filterByProduct')}
-          searchPlaceholder={t('common.search')}
-          emptyText={t('products.empty')}
-          className="w-full sm:w-64"
+      <div className="relative w-full max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+        <Input
+          placeholder={t('stock.searchPlaceholder')}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="pl-9"
         />
       </div>
 
-      {/* Table */}
+      {/* Table — um produto por linha */}
       <div className="rounded-md border bg-card overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('stock.colDate')}</TableHead>
               <TableHead>{t('stock.colProduct')}</TableHead>
-              <TableHead>{t('stock.colType')}</TableHead>
-              <TableHead className="text-right">{t('stock.colQuantity')}</TableHead>
-              <TableHead className="text-right">{t('stock.colUnitPrice')}</TableHead>
-              <TableHead>{t('stock.colReason')}</TableHead>
-              <TableHead>{t('stock.colUser')}</TableHead>
-              <TableHead></TableHead>
+              <TableHead className="text-right">{t('stock.colCurrentStock')}</TableHead>
+              <TableHead className="text-right">{t('stock.colTotalIn')}</TableHead>
+              <TableHead className="text-right">{t('stock.colTotalOut')}</TableHead>
+              <TableHead className="text-right">{t('stock.colMovements')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
+                  {Array.from({ length: 6 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : sorted.length === 0 ? (
+            ) : resumoPorProduto.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                  {t('stock.empty')}
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                  {t('stock.emptyProducts')}
                 </TableCell>
               </TableRow>
             ) : (
-              sorted.map((m) => (
-                <TableRow key={m.id}>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {format(new Date(m.criado_em), 'dd/MM/yyyy HH:mm')}
-                  </TableCell>
-                  <TableCell className="font-medium">{m.produto_nome}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={m.tipo === 'ENTRADA' ? 'default' : 'destructive'}
-                      className="gap-1"
-                    >
-                      {m.tipo === 'ENTRADA' ? (
-                        <ArrowUpCircle className="size-3" />
-                      ) : (
-                        <ArrowDownCircle className="size-3" />
-                      )}
-                      {m.tipo}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {m.tipo === 'SAIDA' ? '-' : '+'}{m.quantidade}
+              resumoPorProduto.map(({ produto, entradas, saidas, movimentos: count }) => (
+                <TableRow
+                  key={produto.id}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => setDetalheProduto(produto)}
+                >
+                  <TableCell className="font-medium">{produto.nome}</TableCell>
+                  <TableCell className="text-right">{produto.stock_atual}</TableCell>
+                  <TableCell className="text-right text-green-600">+{entradas}</TableCell>
+                  <TableCell className="text-right text-destructive">-{saidas}</TableCell>
+                  <TableCell className="text-right">
+                    <Badge variant="secondary">{count}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {m.preco_unitario != null ? formatKz(m.preco_unitario) : '—'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground max-w-40 truncate">
-                    {m.motivo ?? '—'}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{m.utilizador_nome}</TableCell>
-                  <TableCell>
-                    {m.tipo === 'ENTRADA' && (
-                      <Button variant="ghost" size="icon" title="Imprimir nota de entrada" onClick={() => imprimirEntradaStock(m)}>
-                        <Printer className="size-4 text-muted-foreground" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={(e) => { e.stopPropagation(); setDetalheProduto(produto) }}
+                    >
+                      <Eye className="size-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -221,6 +219,113 @@ export default function StockPage() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Detalhes do produto — entradas, saídas e histórico */}
+      <Dialog open={!!detalheProduto} onOpenChange={() => setDetalheProduto(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{detalheProduto?.nome}</DialogTitle>
+          </DialogHeader>
+          {detalheProduto && (
+            <div className="space-y-4 pt-2">
+              <div className="grid grid-cols-3 gap-3">
+                <Card>
+                  <CardHeader className="pb-1 pt-4 px-4">
+                    <CardTitle className="text-xs text-muted-foreground">{t('stock.colCurrentStock')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-4 px-4">
+                    <p className="text-lg font-bold">{detalheProduto.stock_atual}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-1 pt-4 px-4">
+                    <CardTitle className="text-xs text-muted-foreground">{t('stock.colTotalIn')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-4 px-4">
+                    <p className="text-lg font-bold text-green-600">+{resumoDetalhe?.entradas ?? 0}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-1 pt-4 px-4">
+                    <CardTitle className="text-xs text-muted-foreground">{t('stock.colTotalOut')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pb-4 px-4">
+                    <p className="text-lg font-bold text-destructive">-{resumoDetalhe?.saidas ?? 0}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">{t('stock.detailsHistory')}</p>
+                <div className="rounded-md border overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('stock.colDate')}</TableHead>
+                        <TableHead>{t('stock.colType')}</TableHead>
+                        <TableHead className="text-right">{t('stock.colQuantity')}</TableHead>
+                        <TableHead className="text-right">{t('stock.colUnitPrice')}</TableHead>
+                        <TableHead>{t('stock.colReason')}</TableHead>
+                        <TableHead>{t('stock.colUser')}</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {movimentosDoProduto.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className="text-center text-muted-foreground py-6">
+                            {t('stock.detailsEmpty')}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        movimentosDoProduto.map((m) => (
+                          <TableRow key={m.id}>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {format(new Date(m.criado_em), 'dd/MM/yyyy HH:mm')}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={m.tipo === 'ENTRADA' ? 'default' : 'destructive'}
+                                className="gap-1"
+                              >
+                                {m.tipo === 'ENTRADA' ? (
+                                  <ArrowUpCircle className="size-3" />
+                                ) : (
+                                  <ArrowDownCircle className="size-3" />
+                                )}
+                                {m.tipo}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right font-medium">
+                              {m.tipo === 'SAIDA' ? '-' : '+'}{m.quantidade}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {m.preco_unitario != null ? formatKz(m.preco_unitario) : '—'}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground max-w-40 truncate">
+                              {m.motivo ?? '—'}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">{m.utilizador_nome}</TableCell>
+                            <TableCell>
+                              {m.tipo === 'ENTRADA' && (
+                                <Button variant="ghost" size="icon" title="Imprimir nota de entrada" onClick={() => imprimirEntradaStock(m)}>
+                                  <Printer className="size-4 text-muted-foreground" />
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Registar movimento dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

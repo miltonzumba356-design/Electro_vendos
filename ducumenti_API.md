@@ -581,53 +581,31 @@
       }
     },
     "/vendas": {
-      "get": {
-        "tags": [
-          "Vendas"
-        ],
-        "summary": "Listar vendas",
-        "operationId": "listar_vendas_get",
-        "responses": {
-          "200": {
-            "description": "Gestor vê todas, Operador vê apenas as suas",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/VendaResponse"
-                  },
-                  "type": "array",
-                  "title": "Response Listar Vendas Get"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      },
       "post": {
         "tags": [
           "Vendas"
         ],
         "summary": "Registar nova venda",
+        "description": "Cria uma venda com cálculo de IVA, atualização de stock e fidelidade. Suporta `desconto_percentual` manual (substitui automático da fidelidade), `credito` para venda a crédito (gera dívida automaticamente) e `desconto_divida` para prosseguir com desconto quando cliente tem dívida pendente.",
         "operationId": "criar_vendas_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/VendaCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
-            "description": "Venda criada com cálculo de IVA, desconto e atualização de stock",
+            "description": "Venda criada. Se `credito=true`, uma `Divida` é gerada automaticamente.",
             "content": {
               "application/json": {
                 "schema": {
@@ -646,12 +624,74 @@
               }
             }
           }
-        },
+        }
+      },
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Listar vendas",
+        "operationId": "listar_vendas_get",
         "security": [
           {
             "HTTPBearer": []
           }
-        ]
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Registos a saltar",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Registos a saltar"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Limite de registos",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Limite de registos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gestor vê todas, Operador vê apenas as suas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VendaResponse"
+                  },
+                  "title": "Response Listar Vendas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/vendas/{id}": {
@@ -779,6 +819,33 @@
               "title": "Produto Id"
             },
             "description": "Filtrar por produto"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Registos a saltar",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Registos a saltar"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Limite de registos",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Limite de registos"
           }
         ],
         "responses": {
@@ -1254,6 +1321,254 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/dividas/clientes/{cliente_id}": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Verificar dívidas do cliente",
+        "description": "Retorna todas as dívidas pendentes de um cliente. Usado antes de criar uma venda para verificar se o cliente tem débito.",
+        "operationId": "verificar_dividas_cliente_dividas_clientes__cliente_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cliente_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cliente Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaCheckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dividas": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Listar dívidas",
+        "description": "Lista paginada de dívidas. Filtro opcional por status (DIVIDA/PAGA).",
+        "operationId": "listar_dividas_dividas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(DIVIDA|PAGA)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DividaResponse"
+                  },
+                  "title": "Response Listar Dividas Dividas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dividas/{divida_id}": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Buscar dívida por ID",
+        "operationId": "buscar_divida_dividas__divida_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "divida_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Divida Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dívida não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dividas/{divida_id}/pagar": {
+      "post": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Pagar dívida",
+        "description": "Regista um pagamento para a dívida. Aceita pagamento parcial ou total. Se o valor total for atingido, a dívida é marcada como PAGA e a venda associada (se existir) tem `credito_pago=true`.",
+        "operationId": "pagar_divida_dividas__divida_id__pagar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "divida_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Divida Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagarDividaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pagamento registado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dívida já está paga ou valor excede saldo"
+          },
+          "404": {
+            "description": "Dívida não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/faturas": {
@@ -2077,6 +2392,33 @@
               "title": "Incluir Substituidos"
             },
             "description": "Incluir lançamentos substituídos por re-sincronização"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Registos a saltar",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Registos a saltar"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Limite de registos",
+              "default": 200,
+              "title": "Limit"
+            },
+            "description": "Limite de registos"
           }
         ],
         "responses": {
@@ -3018,6 +3360,135 @@
           "total_saidas": 550000
         }
       },
+      "DividaCheckResponse": {
+        "properties": {
+          "tem_divida": {
+            "type": "boolean",
+            "title": "Tem Divida"
+          },
+          "dividas": {
+            "items": {
+              "$ref": "#/components/schemas/DividaResponse"
+            },
+            "type": "array",
+            "title": "Dividas",
+            "default": []
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido",
+            "default": 0
+          },
+          "mensagem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mensagem"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tem_divida"
+        ],
+        "title": "DividaCheckResponse"
+      },
+      "DividaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id"
+          },
+          "cliente_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Nome"
+          },
+          "venda_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Venda Id"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "valor_total": {
+            "type": "number",
+            "title": "Valor Total"
+          },
+          "valor_pago": {
+            "type": "number",
+            "title": "Valor Pago"
+          },
+          "saldo": {
+            "type": "number",
+            "title": "Saldo",
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "pago_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pago Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "cliente_id",
+          "valor_total",
+          "valor_pago",
+          "status",
+          "criado_em"
+        ],
+        "title": "DividaResponse"
+      },
       "FaturaCreate": {
         "properties": {
           "cliente_id": {
@@ -3841,6 +4312,21 @@
           "pago"
         ],
         "title": "PagamentoResponse"
+      },
+      "PagarDividaRequest": {
+        "properties": {
+          "valor": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Valor",
+            "description": "Valor a pagar"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valor"
+        ],
+        "title": "PagarDividaRequest"
       },
       "PerformanceResponse": {
         "properties": {
@@ -5387,6 +5873,40 @@
             "minItems": 1,
             "title": "Itens",
             "description": "Itens da venda"
+          },
+          "desconto_percentual": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desconto Percentual",
+            "description": "Desconto manual (%) a aplicar sobre o total com IVA. Substitui o desconto automático da fidelidade."
+          },
+          "credito": {
+            "type": "boolean",
+            "title": "Credito",
+            "description": "Se true, a venda é a crédito e gera uma dívida",
+            "default": false
+          },
+          "desconto_divida": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desconto Divida",
+            "description": "Desconto adicional (%) aplicado quando cliente tem dívida pendente. Enviar para confirmar que deseja prosseguir com a venda."
           }
         },
         "type": "object",
@@ -5499,6 +6019,16 @@
             "title": "Total Final",
             "description": "Total a pagar"
           },
+          "credito": {
+            "type": "boolean",
+            "title": "Credito",
+            "description": "Se true, venda foi a crédito"
+          },
+          "credito_pago": {
+            "type": "boolean",
+            "title": "Credito Pago",
+            "description": "Se true, dívida do crédito foi paga"
+          },
           "criado_em": {
             "type": "string",
             "format": "date-time",
@@ -5524,6 +6054,8 @@
           "desconto_percentual",
           "total_desconto",
           "total_final",
+          "credito",
+          "credito_pago",
           "criado_em",
           "itens"
         ],
