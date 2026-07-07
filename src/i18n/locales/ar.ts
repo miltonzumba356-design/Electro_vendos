@@ -82,6 +82,8 @@ const ar = {
     detailsDate: 'التاريخ', detailsItems: 'العناصر', detailsNetSubtotal: 'المجموع الفرعي بدون ضريبة',
     detailsVat: 'ضريبة القيمة المضافة', detailsDiscount: 'خصم ({{pct}}%)', detailsFinalTotal: 'الإجمالي النهائي',
     printReceipt: 'طباعة الإيصال',
+    doneTitle: 'تم تسجيل البيع!', doneDesc: 'الإجمالي: {{total}}. ماذا تريد أن تفعل بعد ذلك؟',
+    preview: 'معاينة', shareWhatsapp: 'مشاركة عبر واتساب',
     cash: 'نقدًا', creditPaid: 'ائتمان مسدد', creditPending: 'ائتمان مستحق',
     creditSaleLabel: 'بيع بالائتمان (ينشئ دينًا)', discountLabel: 'خصم يدوي (%)',
     debtWarningTitle: 'عميل لديه دين مستحق',

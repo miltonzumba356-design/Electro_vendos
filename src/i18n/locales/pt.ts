@@ -85,6 +85,8 @@ const pt = {
     detailsDate: 'Data', detailsItems: 'Itens', detailsNetSubtotal: 'Subtotal s/ IVA',
     detailsVat: 'IVA', detailsDiscount: 'Desconto ({{pct}}%)', detailsFinalTotal: 'Total Final',
     printReceipt: 'Imprimir Recibo',
+    doneTitle: 'Venda registada!', doneDesc: 'Total: {{total}}. O que deseja fazer a seguir?',
+    preview: 'Pré-visualizar', shareWhatsapp: 'Partilhar via WhatsApp',
     cash: 'A pronto', creditPaid: 'Crédito pago', creditPending: 'Crédito em dívida',
     creditSaleLabel: 'Venda a crédito (gera dívida)', discountLabel: 'Desconto manual (%)',
     debtWarningTitle: 'Cliente com dívida pendente',

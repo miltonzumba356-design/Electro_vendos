@@ -38,10 +38,10 @@ import {
 import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
-import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet } from 'lucide-react'
+import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { imprimirVenda } from '@/lib/recibo'
+import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp } from '@/lib/recibo'
 import PrestacoesPage from '@/app/pages/PrestacoesPage'
 
 function formatKz(value: number) {
@@ -67,6 +67,7 @@ function VendasTab({ t }: { t: TFunction }) {
 
   const [novaVendaOpen, setNovaVendaOpen] = useState(false)
   const [detalhesVenda, setDetalhesVenda] = useState<VendaResponse | null>(null)
+  const [vendaConcluida, setVendaConcluida] = useState<{ venda: VendaResponse; telefone: string | null } | null>(null)
 
   const [clienteMode, setClienteMode] = useState<'existente' | 'novo' | 'nenhum'>('nenhum')
   const [clienteId, setClienteId] = useState('')
@@ -178,11 +179,18 @@ function VendasTab({ t }: { t: TFunction }) {
           ? { desconto_divida: descontoDivida ? Number(descontoDivida) : 0 }
           : {}),
       }
+      const telefoneCliente =
+        clienteMode === 'existente' && clienteId
+          ? clientes.find((c) => c.id === clienteId)?.telefone ?? null
+          : clienteMode === 'novo'
+            ? novoClienteTelefone || null
+            : null
+
       const nova = await vendasService.criar(payload)
       setVendas((prev) => [nova, ...prev])
       toast.success(t('sales.toasts.registered'))
       setNovaVendaOpen(false)
-      imprimirVenda(nova)
+      setVendaConcluida({ venda: nova, telefone: telefoneCliente })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.registerError'))
     } finally {
@@ -490,6 +498,52 @@ function VendasTab({ t }: { t: TFunction }) {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Venda registada — o que fazer a seguir */}
+      <Dialog open={!!vendaConcluida} onOpenChange={() => setVendaConcluida(null)}>
+        <DialogContent className="max-w-[95vw] sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('sales.doneTitle')}</DialogTitle>
+          </DialogHeader>
+          {vendaConcluida && (
+            <div className="space-y-3 pt-2">
+              <p className="text-sm text-muted-foreground">
+                {t('sales.doneDesc', { total: formatKz(vendaConcluida.venda.total_final) })}
+              </p>
+              <div className="grid gap-2">
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2"
+                  onClick={() => visualizarVenda(vendaConcluida.venda)}
+                >
+                  <Eye className="size-4" />
+                  {t('sales.preview')}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2"
+                  onClick={() => imprimirVenda(vendaConcluida.venda)}
+                >
+                  <Printer className="size-4" />
+                  {t('sales.printReceipt')}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                  onClick={() => partilharVendaWhatsapp(vendaConcluida.venda, vendaConcluida.telefone)}
+                >
+                  <MessageCircle className="size-4" />
+                  {t('sales.shareWhatsapp')}
+                </Button>
+              </div>
+              <Button variant="ghost" className="w-full gap-2" onClick={() => setVendaConcluida(null)}>
+                <X className="size-4" />
+                {t('common.close')}
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

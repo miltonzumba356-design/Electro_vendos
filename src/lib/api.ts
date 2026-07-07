@@ -1,3 +1,5 @@
+import { authStorage } from '@/lib/authStorage'
+
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) ?? 'http://localhost:8000'
 
 if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
@@ -12,12 +14,8 @@ if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
 
 type Params = Record<string, string | number | boolean | undefined | null>
 
-function getToken(): string | null {
-  return localStorage.getItem('token')
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getToken()
+  const token = authStorage.getToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),

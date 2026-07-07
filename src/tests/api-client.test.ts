@@ -15,8 +15,8 @@ describe('API client — autenticação Bearer', () => {
     expect(headers['Authorization']).toBeUndefined()
   })
 
-  it('envia Authorization: Bearer <token> quando token existe no localStorage', async () => {
-    localStorage.setItem('token', 'abc123')
+  it('envia Authorization: Bearer <token> quando token existe na sessão', async () => {
+    sessionStorage.setItem('token', 'abc123')
     const spy = mockFetch({ ok: true })
     const { api } = await import('@/lib/api')
     await api.get('/health')

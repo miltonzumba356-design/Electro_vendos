@@ -1,12 +1,15 @@
 import { afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom'
+import { authStorage } from '@/lib/authStorage'
 
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()    // limpa call history de vi.fn() hoisted
   vi.restoreAllMocks()  // restaura spyOn ao original
   localStorage.clear()
+  sessionStorage.clear()
+  authStorage.clear()   // reinicia também o cache em memória do token
 })
 
 // Radix UI usa ResizeObserver (não existente no jsdom)

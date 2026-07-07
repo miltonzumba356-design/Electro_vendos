@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { authService } from '@/services/auth'
+import { authStorage } from '@/lib/authStorage'
 import type { LoginRequest } from '@/types'
 
 interface AuthUser {
@@ -23,27 +24,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem('token')
-    const nome = localStorage.getItem('user_nome')
-    const role = localStorage.getItem('user_role')
-    if (token && nome && role) {
-      setUser({ token, nome, role })
+    const token = authStorage.getToken()
+    const stored = authStorage.getUser()
+    if (token && stored) {
+      setUser({ token, nome: stored.nome, role: stored.role })
     }
     setIsLoading(false)
   }, [])
 
   async function login(data: LoginRequest) {
     const res = await authService.login(data)
-    localStorage.setItem('token', res.access_token)
-    localStorage.setItem('user_nome', res.nome)
-    localStorage.setItem('user_role', res.role)
+    authStorage.set(res.access_token, res.nome, res.role)
     setUser({ token: res.access_token, nome: res.nome, role: res.role })
   }
 
   function logout() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user_nome')
-    localStorage.removeItem('user_role')
+    authStorage.clear()
     setUser(null)
   }
 

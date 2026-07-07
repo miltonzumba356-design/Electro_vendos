@@ -82,6 +82,8 @@ const zh = {
     detailsDate: '日期', detailsItems: '商品', detailsNetSubtotal: '不含税小计',
     detailsVat: '增值税', detailsDiscount: '折扣 ({{pct}}%)', detailsFinalTotal: '最终合计',
     printReceipt: '打印收据',
+    doneTitle: '销售已登记！', doneDesc: '合计：{{total}}。接下来要做什么？',
+    preview: '预览', shareWhatsapp: '通过WhatsApp分享',
     cash: '现金', creditPaid: '信用已还', creditPending: '信用欠款',
     creditSaleLabel: '信用销售（产生债务）', discountLabel: '手动折扣 (%)',
     debtWarningTitle: '客户有未结债务',

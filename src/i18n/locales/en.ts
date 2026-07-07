@@ -84,6 +84,8 @@ const en = {
     detailsDate: 'Date', detailsItems: 'Items', detailsNetSubtotal: 'Net subtotal',
     detailsVat: 'VAT', detailsDiscount: 'Discount ({{pct}}%)', detailsFinalTotal: 'Final Total',
     printReceipt: 'Print Receipt',
+    doneTitle: 'Sale registered!', doneDesc: 'Total: {{total}}. What would you like to do next?',
+    preview: 'Preview', shareWhatsapp: 'Share via WhatsApp',
     cash: 'Cash', creditPaid: 'Credit paid', creditPending: 'Credit pending',
     creditSaleLabel: 'Credit sale (generates debt)', discountLabel: 'Manual discount (%)',
     debtWarningTitle: 'Client with pending debt',

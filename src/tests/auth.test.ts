@@ -56,7 +56,7 @@ describe('authService.register — POST /auth/register', () => {
   })
 
   it('envia Authorization header quando token presente', async () => {
-    localStorage.setItem('token', 'gestor-token')
+    sessionStorage.setItem('token', 'gestor-token')
     const spy = mockFetch(UTILIZADOR)
     await authService.register({ nome: 'X', email: 'x@x.com', password: '123' })
     const headers = (spy.mock.calls[0][1] as RequestInit).headers as Record<string, string>

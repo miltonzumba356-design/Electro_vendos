@@ -1,5 +1,16 @@
 import type { VendaResponse, MovimentoResponse } from '@/types'
 
+const HTML_ESCAPES: Record<string, string> = {
+  '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+}
+
+// Nomes de clientes/produtos/motivos vêm de dados inseridos pelo utilizador;
+// escapamos antes de injetar via document.write para evitar que um nome como
+// "<script>...</script>" execute no popup de impressão.
+function esc(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c])
+}
+
 function fmtKz(v: number): string {
   return new Intl.NumberFormat('pt-AO', {
     style: 'currency', currency: 'AOA', maximumFractionDigits: 0,
@@ -29,21 +40,34 @@ const CSS = `
   @media print{@page{margin:5mm}button{display:none!important}}
 `
 
-function openPrint(html: string) {
+function abrirJanela(html: string, autoPrint: boolean) {
   const win = window.open('', '_blank', 'width=380,height=680,toolbar=no,menubar=no,location=no,scrollbars=yes')
   if (!win) { alert('Por favor, permita pop-ups para imprimir.'); return }
   win.document.write(html)
   win.document.close()
-  win.addEventListener('load', () => {
-    win.print()
-    win.addEventListener('afterprint', () => win.close())
-  })
+  if (autoPrint) {
+    win.addEventListener('load', () => {
+      win.print()
+      win.addEventListener('afterprint', () => win.close())
+    })
+  } else {
+    // O botão não usa onclick inline — o CSP do site (script-src 'self') pode
+    // ser herdado por este popup about:blank e bloquear handlers inline. O
+    // listener é ligado aqui, a partir do script já carregado da app.
+    win.document.getElementById('btn-imprimir')?.addEventListener('click', () => win.print())
+  }
 }
 
-export function imprimirVenda(venda: VendaResponse) {
+const BOTAO_IMPRIMIR = `
+  <button id="btn-imprimir" style="display:block;width:100%;margin-top:14px;padding:10px;border:none;border-radius:8px;background:#111;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">
+    Imprimir
+  </button>
+`
+
+function gerarReciboVendaHtml(venda: VendaResponse, comBotaoImprimir: boolean): string {
   const linhas = venda.itens.map((item) => `
     <tr>
-      <td style="padding-right:4px">${item.produto_nome}</td>
+      <td style="padding-right:4px">${esc(item.produto_nome)}</td>
       <td class="r">${item.quantidade}</td>
       <td class="r">${fmtKz(item.preco_unitario)}</td>
       <td class="r">${fmtKz(item.subtotal)}</td>
@@ -53,15 +77,15 @@ export function imprimirVenda(venda: VendaResponse) {
     ? `<div class="row"><span>Desconto (${venda.desconto_percentual}%):</span><span>-${fmtKz(venda.total_desconto)}</span></div>`
     : ''
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Recibo</title><style>${CSS}</style></head>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Recibo</title><style>${CSS}</style></head>
 <body>
   <h1>ELECTRO VENDOS</h1>
   <p class="sub">Recibo de Venda</p>
   <hr>
   <div class="row"><span>Data:</span><span>${fmtData(venda.criado_em)}</span></div>
   <div class="row"><span>Ref.:</span><span>${venda.id.slice(0, 8).toUpperCase()}</span></div>
-  <div class="row"><span>Cliente:</span><span>${venda.cliente_nome}</span></div>
-  <div class="row"><span>Operador:</span><span>${venda.utilizador_nome}</span></div>
+  <div class="row"><span>Cliente:</span><span>${esc(venda.cliente_nome)}</span></div>
+  <div class="row"><span>Operador:</span><span>${esc(venda.utilizador_nome)}</span></div>
   <hr>
   <table>
     <thead><tr><th>Produto</th><th class="r">Qtd</th><th class="r">Preço</th><th class="r">Total</th></tr></thead>
@@ -73,9 +97,37 @@ export function imprimirVenda(venda: VendaResponse) {
   ${descontoHtml}
   <div class="row bold"><span>TOTAL:</span><span>${fmtKz(venda.total_final)}</span></div>
   <div class="footer"><p>Obrigado pela sua preferência!</p><p>${new Date().getFullYear()} &copy; Electro Vendos</p></div>
+  ${comBotaoImprimir ? BOTAO_IMPRIMIR : ''}
 </body></html>`
+}
 
-  openPrint(html)
+export function imprimirVenda(venda: VendaResponse) {
+  abrirJanela(gerarReciboVendaHtml(venda, false), true)
+}
+
+export function visualizarVenda(venda: VendaResponse) {
+  abrirJanela(gerarReciboVendaHtml(venda, true), false)
+}
+
+// Constrói o link wa.me com um resumo em texto da venda. Sem número de
+// telefone do cliente, o WhatsApp mostra o seletor de contactos do utilizador.
+export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string | null) {
+  const linhas = venda.itens.map((item) => `• ${item.produto_nome} x${item.quantidade} — ${fmtKz(item.subtotal)}`)
+  const mensagem = [
+    `*ELECTRO VENDOS* — Recibo de Venda`,
+    `Cliente: ${venda.cliente_nome}`,
+    `Data: ${fmtData(venda.criado_em)}`,
+    '',
+    ...linhas,
+    '',
+    `Total: ${fmtKz(venda.total_final)}`,
+    '',
+    'Obrigado pela sua preferência!',
+  ].join('\n')
+
+  const numero = telefone ? telefone.replace(/[^0-9]/g, '') : ''
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`
+  window.open(url, '_blank')
 }
 
 export function imprimirEntradaStock(m: MovimentoResponse) {
@@ -85,7 +137,7 @@ export function imprimirEntradaStock(m: MovimentoResponse) {
     : ''
 
   const motivoHtml = m.motivo
-    ? `<hr><div class="row"><span>Motivo:</span><span>${m.motivo}</span></div>`
+    ? `<hr><div class="row"><span>Motivo:</span><span>${esc(m.motivo)}</span></div>`
     : ''
 
   const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nota de Entrada</title><style>${CSS}</style></head>
@@ -95,14 +147,14 @@ export function imprimirEntradaStock(m: MovimentoResponse) {
   <hr>
   <div class="row"><span>Data:</span><span>${fmtData(m.criado_em)}</span></div>
   <div class="row"><span>Ref.:</span><span>${m.id.slice(0, 8).toUpperCase()}</span></div>
-  <div class="row"><span>Operador:</span><span>${m.utilizador_nome}</span></div>
+  <div class="row"><span>Operador:</span><span>${esc(m.utilizador_nome)}</span></div>
   <hr>
-  <div class="row"><span>Produto:</span><span>${m.produto_nome}</span></div>
+  <div class="row"><span>Produto:</span><span>${esc(m.produto_nome)}</span></div>
   <div class="row"><span>Quantidade:</span><span>${m.quantidade}</span></div>
   ${totalHtml}
   ${motivoHtml}
   <div class="footer"><p>Documento de uso interno</p><p>${new Date().getFullYear()} &copy; Electro Vendos</p></div>
 </body></html>`
 
-  openPrint(html)
+  abrirJanela(html, true)
 }
