@@ -4,17 +4,12 @@ import type { TFunction } from 'i18next'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import {
-  TrendingUp, TrendingDown, Wallet, RefreshCw, Plus, BarChart2,
-  Clock, Link2
+  TrendingUp, TrendingDown, Wallet, RefreshCw, Plus,
 } from 'lucide-react'
 import { fluxoCaixaService } from '@/services/fluxoCaixa'
 import type {
   LancamentoResponse,
   SaldoResponse,
-  DemonstrativoResponse,
-  CategoriaGrupoResponse,
-  SyncResult,
-  SyncHistoricoResponse,
 } from '@/types'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
@@ -41,7 +36,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/app/components/ui/table'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
 
 const formatKz = (v: number) =>
@@ -58,61 +52,37 @@ function tipoVariant(tipo: string): 'default' | 'destructive' {
 function SaldoCards({ saldo, t }: { saldo: SaldoResponse | null; t: TFunction }) {
   if (!saldo) return null
   return (
-    <div className="space-y-3 mb-6">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Wallet className="size-4" /> {t('cashflow.currentBalance')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold">{formatKz(saldo.saldo_atual)}</p>
-            <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-              <span>↑ {t('cashflow.synced')}: {formatKz(saldo.saldo_sincronizado ?? 0)}</span>
-              <span>✎ {t('cashflow.manual')}: {formatKz(saldo.saldo_manual ?? 0)}</span>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp className="size-4 text-green-500" /> {t('cashflow.totalIn')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-green-600">{formatKz(saldo.total_entradas)}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingDown className="size-4 text-red-500" /> {t('cashflow.totalOut')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-2xl font-bold text-red-600">{formatKz(saldo.total_saidas)}</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Period / last sync info bar */}
-      {(saldo.data_inicio || saldo.ultima_sincronizacao) && (
-        <div className="flex flex-wrap gap-4 text-xs text-muted-foreground bg-muted/40 rounded-lg px-4 py-2">
-          {(saldo.data_inicio || saldo.data_fim) && (
-            <span className="flex items-center gap-1">
-              <Clock className="size-3" />
-              {t('cashflow.period')}: {saldo.data_inicio ?? '—'} → {saldo.data_fim ?? '—'}
-            </span>
-          )}
-          {saldo.ultima_sincronizacao && (
-            <span className="flex items-center gap-1">
-              <Link2 className="size-3" />
-              {t('cashflow.lastSync')}: {format(new Date(saldo.ultima_sincronizacao), 'dd/MM/yyyy HH:mm')}
-            </span>
-          )}
-        </div>
-      )}
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <Wallet className="size-4" /> {t('cashflow.currentBalance')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold">{formatKz(saldo.saldo_atual)}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <TrendingUp className="size-4 text-green-500" /> {t('cashflow.totalIn')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold text-green-600">{formatKz(saldo.total_entradas)}</p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <TrendingDown className="size-4 text-red-500" /> {t('cashflow.totalOut')}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold text-red-600">{formatKz(saldo.total_saidas)}</p>
+        </CardContent>
+      </Card>
     </div>
   )
 }
@@ -229,12 +199,11 @@ function NovoLancamentoDialog({
   )
 }
 
-/* ── Aba Extrato ──────────────────────────────────────────── */
+/* ── Extrato ──────────────────────────────────────────────── */
 function ExtratoTab({ t }: { t: TFunction }) {
   const [dataInicio, setDataInicio]         = useState('')
   const [dataFim, setDataFim]               = useState('')
   const [categoria, setCategoria]           = useState('')
-  const [incluirSubst, setIncluirSubst]     = useState(false)
   const [lancamentos, setLancamentos]       = useState<LancamentoResponse[]>([])
   const [totais, setTotais] = useState({
     total_lancamentos: 0, total_entradas: 0, total_saidas: 0, saldo_periodo: 0,
@@ -249,7 +218,6 @@ function ExtratoTab({ t }: { t: TFunction }) {
         data_inicio: dataInicio || undefined,
         data_fim:    dataFim    || undefined,
         categoria:   categoria  || undefined,
-        incluir_substituidos: incluirSubst || undefined,
       })
       setLancamentos(res.lancamentos)
       setTotais({
@@ -263,7 +231,7 @@ function ExtratoTab({ t }: { t: TFunction }) {
     } finally {
       setLoading(false)
     }
-  }, [dataInicio, dataFim, categoria, incluirSubst])
+  }, [dataInicio, dataFim, categoria])
 
   useEffect(() => { carregar() }, [carregar])
 
@@ -290,15 +258,6 @@ function ExtratoTab({ t }: { t: TFunction }) {
             </SelectContent>
           </Select>
         </div>
-        <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={incluirSubst}
-            onChange={(e) => setIncluirSubst(e.target.checked)}
-            className="rounded"
-          />
-          {t('cashflow.includeReplaced')}
-        </label>
         <Button variant="outline" size="sm" onClick={carregar} disabled={loading}>
           <RefreshCw className="size-4 mr-1" /> {t('cashflow.refresh')}
         </Button>
@@ -381,264 +340,6 @@ function ExtratoTab({ t }: { t: TFunction }) {
   )
 }
 
-/* ── Aba Demonstrativo ───────────────────────────────────── */
-function CategoriaTable({ title, rows, t }: { title: string; rows: CategoriaGrupoResponse[]; t: TFunction }) {
-  return (
-    <div>
-      <h4 className="text-sm font-semibold mb-2 text-muted-foreground uppercase tracking-wide">{title}</h4>
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t('cashflow.colCategory')}</TableHead>
-              <TableHead className="text-center">{t('cashflow.colQty')}</TableHead>
-              <TableHead className="text-right">{t('common.total')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3} className="text-center text-muted-foreground py-4">
-                  {t('cashflow.empty')}
-                </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((r) => (
-                <TableRow key={r.categoria}>
-                  <TableCell className="font-medium text-sm">{r.categoria.replace(/_/g, ' ')}</TableCell>
-                  <TableCell className="text-center text-sm">{r.quantidade}</TableCell>
-                  <TableCell className="text-right text-sm font-medium">{formatKz(r.total)}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
-  )
-}
-
-function DemonstrativoTab({ t }: { t: TFunction }) {
-  const hoje = format(new Date(), 'yyyy-MM-dd')
-  const inicioMes = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd')
-  const [dataInicio, setDataInicio] = useState(inicioMes)
-  const [dataFim, setDataFim]       = useState(hoje)
-  const [demo, setDemo]             = useState<DemonstrativoResponse | null>(null)
-  const [loading, setLoading]       = useState(false)
-
-  async function carregar() {
-    if (!dataInicio || !dataFim) {
-      toast.error(t('cashflow.toasts.selectPeriod'))
-      return
-    }
-    setLoading(true)
-    try {
-      const res = await fluxoCaixaService.demonstrativo(dataInicio, dataFim)
-      setDemo(res)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('cashflow.toasts.statementError'))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => { carregar() }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-3 items-end">
-        <div className="space-y-1">
-          <Label className="text-xs">{t('cashflow.filterStart')}</Label>
-          <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-full sm:w-40" />
-        </div>
-        <div className="space-y-1">
-          <Label className="text-xs">{t('cashflow.filterEnd')}</Label>
-          <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-full sm:w-40" />
-        </div>
-        <Button variant="outline" size="sm" onClick={carregar} disabled={loading}>
-          <BarChart2 className="size-4 mr-1" /> {t('cashflow.generate')}
-        </Button>
-      </div>
-
-      {demo && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-              <p className="text-xs text-green-700 font-medium">{t('cashflow.statementIn')}</p>
-              <p className="text-xl font-bold text-green-700 mt-1">{formatKz(demo.total_entradas)}</p>
-            </div>
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-center">
-              <p className="text-xs text-red-700 font-medium">{t('cashflow.statementOut')}</p>
-              <p className="text-xl font-bold text-red-700 mt-1">{formatKz(demo.total_saidas)}</p>
-            </div>
-            <div className={`border rounded-lg p-4 text-center ${demo.saldo_final >= 0 ? 'bg-blue-50 border-blue-200' : 'bg-orange-50 border-orange-200'}`}>
-              <p className={`text-xs font-medium ${demo.saldo_final >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
-                {t('cashflow.statementBalance')}
-              </p>
-              <p className={`text-xl font-bold mt-1 ${demo.saldo_final >= 0 ? 'text-blue-700' : 'text-orange-700'}`}>
-                {formatKz(demo.saldo_final)}
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <CategoriaTable title={t('cashflow.inByCategory')} rows={demo.entradas} t={t} />
-            <CategoriaTable title={t('cashflow.outByCategory')} rows={demo.saidas} t={t} />
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
-/* ── Aba Sincronizar ─────────────────────────────────────── */
-function SincronizarTab({ t }: { t: TFunction }) {
-  const hoje      = format(new Date(), 'yyyy-MM-dd')
-  const inicioMes = format(new Date(new Date().getFullYear(), new Date().getMonth(), 1), 'yyyy-MM-dd')
-
-  const [loading, setLoading]       = useState(false)
-  const [dataInicio, setDataInicio] = useState(inicioMes)
-  const [dataFim, setDataFim]       = useState(hoje)
-  const [resultado, setResultado]   = useState<SyncResult | null>(null)
-  const [historico, setHistorico]   = useState<SyncHistoricoResponse[]>([])
-  const [loadingHist, setLoadingHist] = useState(false)
-
-  async function carregarHistorico() {
-    setLoadingHist(true)
-    try {
-      const res = await fluxoCaixaService.listarHistoricoSync()
-      setHistorico(res)
-    } catch {
-      // histórico opcional
-    } finally {
-      setLoadingHist(false)
-    }
-  }
-
-  useEffect(() => { carregarHistorico() }, [])
-
-  async function handleSync() {
-    if (!dataInicio || !dataFim) {
-      toast.error(t('cashflow.toasts.selectPeriod'))
-      return
-    }
-    setLoading(true)
-    try {
-      const res = await fluxoCaixaService.sincronizar(dataInicio, dataFim)
-      setResultado(res)
-      toast.success(t('cashflow.syncResult', { count: res.total_sincronizados }))
-      carregarHistorico()
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('cashflow.toasts.syncError'))
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <div className="space-y-6 max-w-2xl">
-      <div className="bg-muted/40 rounded-lg p-4 text-sm text-muted-foreground leading-relaxed">
-        <p className="font-medium text-foreground mb-1">{t('cashflow.syncWhat')}</p>
-        {t('cashflow.syncInfo')}
-      </div>
-
-      {/* Required date range */}
-      <div className="space-y-3">
-        <p className="text-sm font-medium">{t('cashflow.filterStart')} / {t('cashflow.filterEnd')} <span className="text-destructive">*</span></p>
-        <div className="flex flex-wrap gap-3">
-          <div className="space-y-1">
-            <Label className="text-xs">{t('cashflow.filterStart')}</Label>
-            <Input
-              type="date"
-              value={dataInicio}
-              onChange={(e) => setDataInicio(e.target.value)}
-              className="w-full sm:w-40"
-              required
-            />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs">{t('cashflow.filterEnd')}</Label>
-            <Input
-              type="date"
-              value={dataFim}
-              onChange={(e) => setDataFim(e.target.value)}
-              className="w-full sm:w-40"
-              required
-            />
-          </div>
-        </div>
-      </div>
-
-      <Button onClick={handleSync} disabled={loading || !dataInicio || !dataFim} className="w-full sm:w-auto">
-        <RefreshCw className={`size-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-        {loading ? t('cashflow.syncing') : t('cashflow.syncButton')}
-      </Button>
-
-      {resultado && (
-        <div className="border rounded-lg p-4 space-y-3 bg-green-50/60 border-green-200">
-          <div className="flex items-center justify-between gap-4">
-            <p className="font-semibold text-sm text-green-800">
-              {t('cashflow.syncResult', { count: resultado.total_sincronizados })}
-            </p>
-            <p className="text-xs text-muted-foreground shrink-0">
-              {resultado.data_inicio ?? '—'} → {resultado.data_fim ?? '—'}
-            </p>
-          </div>
-          {(resultado.substituidos ?? 0) > 0 && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-1.5">
-              {t('cashflow.syncReplaced', { count: resultado.substituidos })}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Sync history */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">{t('cashflow.syncHistory')}</h3>
-          <Button variant="ghost" size="sm" onClick={carregarHistorico} disabled={loadingHist}>
-            <RefreshCw className={`size-3.5 ${loadingHist ? 'animate-spin' : ''}`} />
-          </Button>
-        </div>
-        {historico.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('cashflow.syncHistoryEmpty')}</p>
-        ) : (
-          <div className="rounded-md border overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('cashflow.filterStart')}</TableHead>
-                  <TableHead>{t('cashflow.filterEnd')}</TableHead>
-                  <TableHead className="text-right">{t('sales.title')}</TableHead>
-                  <TableHead className="text-right">{t('installments.title')}</TableHead>
-                  <TableHead className="text-right">{t('stock.title')}</TableHead>
-                  <TableHead className="text-right">{t('common.total')}</TableHead>
-                  <TableHead>{t('cashflow.colDate')}</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {historico.map((h) => (
-                  <TableRow key={h.id}>
-                    <TableCell className="text-sm">{h.data_inicio}</TableCell>
-                    <TableCell className="text-sm">{h.data_fim}</TableCell>
-                    <TableCell className="text-right text-sm">{h.total_vendas}</TableCell>
-                    <TableCell className="text-right text-sm">{h.total_pagamentos}</TableCell>
-                    <TableCell className="text-right text-sm">{h.total_compras_stock}</TableCell>
-                    <TableCell className="text-right font-medium text-sm">{h.total_geral}</TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {format(new Date(h.criado_em), 'dd/MM/yyyy HH:mm')}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
 /* ── Page ────────────────────────────────────────────────── */
 export default function FluxoCaixaPage() {
   const { t } = useTranslation()
@@ -659,23 +360,7 @@ export default function FluxoCaixaPage() {
 
       <SaldoCards saldo={saldo} t={t} />
 
-      <Tabs defaultValue="extrato">
-        <TabsList>
-          <TabsTrigger value="extrato">{t('cashflow.tabExtract')}</TabsTrigger>
-          <TabsTrigger value="demonstrativo">{t('cashflow.tabStatement')}</TabsTrigger>
-          <TabsTrigger value="sincronizar">{t('cashflow.tabSync')}</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="extrato" className="mt-4">
-          <ExtratoTab t={t} />
-        </TabsContent>
-        <TabsContent value="demonstrativo" className="mt-4">
-          <DemonstrativoTab t={t} />
-        </TabsContent>
-        <TabsContent value="sincronizar" className="mt-4">
-          <SincronizarTab t={t} />
-        </TabsContent>
-      </Tabs>
+      <ExtratoTab t={t} />
     </div>
   )
 }

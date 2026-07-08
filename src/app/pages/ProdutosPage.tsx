@@ -306,6 +306,7 @@ export default function ProdutosPage() {
                 value={form.nome}
                 onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
                 placeholder={t('products.namePlaceholder')}
+                maxLength={100}
                 required
               />
             </div>

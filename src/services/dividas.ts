@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import type { DividaResponse, DividaCheckResponse, PagarDividaRequest } from '@/types'
+import type { DividaResponse, DividaCheckResponse, PagarDividaRequest, TotalDividasResponse } from '@/types'
 
 export const dividasService = {
   verificarCliente: (clienteId: string) =>
@@ -7,6 +7,9 @@ export const dividasService = {
 
   listar: (params?: { skip?: number; limit?: number; status?: 'DIVIDA' | 'PAGA' }) =>
     api.get<DividaResponse[]>('/dividas', params),
+
+  total: () =>
+    api.get<TotalDividasResponse>('/dividas/total'),
 
   buscar: (id: string) =>
     api.get<DividaResponse>(`/dividas/${id}`),

@@ -14,8 +14,9 @@ import {
 import { produtosService } from '@/services/produtos'
 import { clientesService } from '@/services/clientes'
 import { vendasService } from '@/services/vendas'
-import type { ProdutoStockBaixo, VendaResponse, ClienteResponse } from '@/types'
-import { ShoppingCart, Users, AlertTriangle, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { dividasService } from '@/services/dividas'
+import type { ProdutoStockBaixo, VendaResponse, ClienteResponse, TotalDividasResponse } from '@/types'
+import { ShoppingCart, Users, AlertTriangle, TrendingUp, TrendingDown, Minus, Wallet } from 'lucide-react'
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -121,19 +122,22 @@ export default function DashboardPage() {
   const [vendas,     setVendas]     = useState<VendaResponse[]>([])
   const [clientes,   setClientes]   = useState<ClienteResponse[]>([])
   const [stockBaixo, setStockBaixo] = useState<ProdutoStockBaixo[]>([])
+  const [dividas,    setDividas]    = useState<TotalDividasResponse | null>(null)
   const [loading,    setLoading]    = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const [v, c, s] = await Promise.allSettled([
+        const [v, c, s, d] = await Promise.allSettled([
           vendasService.listar(),
           clientesService.listar(),
           produtosService.stockBaixo(),
+          dividasService.total(),
         ])
         if (v.status === 'fulfilled') setVendas(v.value)
         if (c.status === 'fulfilled') setClientes(c.value)
         if (s.status === 'fulfilled') setStockBaixo(s.value)
+        if (d.status === 'fulfilled') setDividas(d.value)
       } finally {
         setLoading(false)
       }
@@ -211,7 +215,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Stat cards ── */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
         <StatCard
           title={t('dashboard.todaySales')}
           value={loading ? '—' : vendasHoje.length}
@@ -237,6 +241,13 @@ export default function DashboardPage() {
           subtitle={t('dashboard.productsBelow')}
           icon={AlertTriangle} loading={loading}
           accent={stockBaixo.length > 0 ? '#ef4444' : C_CYAN}
+        />
+        <StatCard
+          title={t('dashboard.pendingDebts')}
+          value={loading ? '—' : formatKz(dividas?.total_devido ?? 0)}
+          subtitle={t('dashboard.pendingDebtsCount', { count: (dividas?.quantidade_dividas ?? 0) + (dividas?.quantidade_prestacoes ?? 0) })}
+          icon={Wallet} loading={loading}
+          accent={(dividas?.total_devido ?? 0) > 0 ? '#ef4444' : C_CYAN}
         />
       </div>
 

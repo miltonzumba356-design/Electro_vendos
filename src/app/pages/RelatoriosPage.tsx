@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { relatoriosService } from '@/services/relatorios'
@@ -48,14 +48,42 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
 
 function PeriodoStats({ data, t }: { data: RelatorioVendasPeriodo; t: TFunction }) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-      <StatCard label={t('reports.totalSales')}   value={data.total_vendas} />
-      <StatCard label={t('reports.totalRevenue')} value={formatKz(data.total_receita)} />
-      <StatCard label={t('reports.netRevenue')}   value={formatKz(data.total_sem_iva)} />
-      <StatCard label={t('reports.totalVat')}     value={formatKz(data.total_iva)} />
-      <StatCard label={t('reports.discounts')}    value={formatKz(data.total_descontos)} />
-      <StatCard label={t('reports.grossProfit')}  value={formatKz(data.lucro_bruto)} />
-      <StatCard label={t('reports.avgTicket')}    value={formatKz(data.ticket_medio)} />
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        <StatCard label={t('reports.totalSales')}   value={data.total_vendas} />
+        <StatCard label={t('reports.totalRevenue')} value={formatKz(data.total_receita)} />
+        <StatCard label={t('reports.totalPending')} value={formatKz(data.total_pendente)} />
+        <StatCard label={t('reports.netRevenue')}   value={formatKz(data.total_sem_iva)} />
+        <StatCard label={t('reports.totalVat')}     value={formatKz(data.total_iva)} />
+        <StatCard label={t('reports.discounts')}    value={formatKz(data.total_descontos)} />
+        <StatCard label={t('reports.grossProfit')}  value={formatKz(data.lucro_bruto)} />
+        <StatCard label={t('reports.avgTicket')}    value={formatKz(data.ticket_medio)} />
+      </div>
+      {data.produtos_mais_vendidos.length > 0 && (
+        <div>
+          <h4 className="text-sm font-semibold mb-2 text-muted-foreground">{t('reports.topProducts')}</h4>
+          <div className="rounded-md border bg-card overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('reports.colProduct')}</TableHead>
+                  <TableHead className="text-right">{t('reports.soldQty')}</TableHead>
+                  <TableHead className="text-right">{t('reports.totalIncome')}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {data.produtos_mais_vendidos.map((p) => (
+                  <TableRow key={p.produto_id}>
+                    <TableCell className="font-medium">{p.produto_nome}</TableCell>
+                    <TableCell className="text-right">{p.quantidade_vendida}</TableCell>
+                    <TableCell className="text-right font-semibold">{formatKz(p.total_receita)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -67,14 +95,13 @@ function VendasPeriodo({ t }: { t: TFunction }) {
   const [inicio, setInicio] = useState('')
   const [fim, setFim] = useState('')
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!inicio || !fim) { toast.error(t('reports.fillDates')); return }
+  async function carregar(e?: React.FormEvent) {
+    e?.preventDefault()
     setLoading(true)
     try {
       const data = await relatoriosService.vendasPeriodo(
-        new Date(inicio).toISOString(),
-        new Date(fim + 'T23:59:59').toISOString()
+        inicio ? new Date(inicio).toISOString() : undefined,
+        fim ? new Date(fim + 'T23:59:59').toISOString() : undefined
       )
       setResult(data)
     } catch (err) {
@@ -82,90 +109,18 @@ function VendasPeriodo({ t }: { t: TFunction }) {
     } finally { setLoading(false) }
   }
 
-  return (
-    <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1">
-          <Label>{t('reports.startDate')}</Label>
-          <Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} required />
-        </div>
-        <div className="space-y-1">
-          <Label>{t('reports.endDate')}</Label>
-          <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} required />
-        </div>
-        <Button type="submit" disabled={loading}>
-          {loading ? t('reports.loading') : t('reports.consult')}
-        </Button>
-      </form>
-      {loading && <Skeleton className="h-32 w-full" />}
-      {result && <PeriodoStats data={result} t={t} />}
-    </div>
-  )
-}
-
-/* ── Vendas diárias ─────────────────────────────────────────── */
-function VendasDiario({ t }: { t: TFunction }) {
-  const [result, setResult] = useState<RelatorioVendasPeriodo | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [data, setData] = useState('')
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      const res = await relatoriosService.vendasDiario(data || undefined)
-      setResult(res)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro')
-    } finally { setLoading(false) }
-  }
+  useEffect(() => { carregar() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
+      <form onSubmit={carregar} className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <Label>{t('common.date')} <span className="text-muted-foreground text-xs">(vazio = hoje)</span></Label>
-          <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
-        </div>
-        <Button type="submit" disabled={loading}>
-          {loading ? t('reports.loading') : t('reports.consult')}
-        </Button>
-      </form>
-      {loading && <Skeleton className="h-32 w-full" />}
-      {result && <PeriodoStats data={result} t={t} />}
-    </div>
-  )
-}
-
-/* ── Vendas mensais ─────────────────────────────────────────── */
-function VendasMensal({ t }: { t: TFunction }) {
-  const [result, setResult] = useState<RelatorioVendasPeriodo | null>(null)
-  const [loading, setLoading] = useState(false)
-  const now = new Date()
-  const [ano, setAno] = useState(String(now.getFullYear()))
-  const [mes, setMes] = useState(String(now.getMonth() + 1))
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      const res = await relatoriosService.vendasMensal(Number(ano), Number(mes))
-      setResult(res)
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Erro')
-    } finally { setLoading(false) }
-  }
-
-  return (
-    <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1">
-          <Label>{t('reports.year')}</Label>
-          <Input type="number" value={ano} onChange={(e) => setAno(e.target.value)} className="w-24" min="2020" max="2099" />
+          <Label>{t('reports.startDate')} <span className="text-muted-foreground text-xs">({t('reports.emptyIsToday')})</span></Label>
+          <Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} />
         </div>
         <div className="space-y-1">
-          <Label>{t('reports.month')}</Label>
-          <Input type="number" value={mes} onChange={(e) => setMes(e.target.value)} className="w-20" min="1" max="12" />
+          <Label>{t('reports.endDate')} <span className="text-muted-foreground text-xs">({t('reports.emptyIsToday')})</span></Label>
+          <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} />
         </div>
         <Button type="submit" disabled={loading}>
           {loading ? t('reports.loading') : t('reports.consult')}
@@ -491,8 +446,6 @@ export default function RelatoriosPage() {
       <Tabs defaultValue="vendas-periodo">
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="vendas-periodo">{t('reports.tabPeriod')}</TabsTrigger>
-          <TabsTrigger value="vendas-diario">{t('reports.tabDaily')}</TabsTrigger>
-          <TabsTrigger value="vendas-mensal">{t('reports.tabMonthly')}</TabsTrigger>
           <TabsTrigger value="vendas-por-cliente">{t('reports.tabByClient')}</TabsTrigger>
           <TabsTrigger value="clientes-fieis">{t('reports.tabLoyal')}</TabsTrigger>
           <TabsTrigger value="clientes-inativos">{t('reports.tabInactive')}</TabsTrigger>
@@ -504,14 +457,6 @@ export default function RelatoriosPage() {
           <TabsContent value="vendas-periodo">
             <Card><CardHeader><CardTitle className="text-base">{t('reports.cardPeriod')}</CardTitle></CardHeader>
               <CardContent><VendasPeriodo t={t} /></CardContent></Card>
-          </TabsContent>
-          <TabsContent value="vendas-diario">
-            <Card><CardHeader><CardTitle className="text-base">{t('reports.cardDaily')}</CardTitle></CardHeader>
-              <CardContent><VendasDiario t={t} /></CardContent></Card>
-          </TabsContent>
-          <TabsContent value="vendas-mensal">
-            <Card><CardHeader><CardTitle className="text-base">{t('reports.cardMonthly')}</CardTitle></CardHeader>
-              <CardContent><VendasMensal t={t} /></CardContent></Card>
           </TabsContent>
           <TabsContent value="vendas-por-cliente">
             <Card><CardHeader><CardTitle className="text-base">{t('reports.cardByClient')}</CardTitle></CardHeader>

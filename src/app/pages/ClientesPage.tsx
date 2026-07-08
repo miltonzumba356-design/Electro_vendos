@@ -217,6 +217,7 @@ export default function ClientesPage() {
                 value={form.nome}
                 onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
                 placeholder={t('clients.namePlaceholder')}
+                maxLength={100}
                 required
               />
             </div>
@@ -227,6 +228,7 @@ export default function ClientesPage() {
                 value={form.telefone}
                 onChange={(e) => setForm((f) => ({ ...f, telefone: e.target.value }))}
                 placeholder={t('clients.phonePlaceholder')}
+                maxLength={20}
               />
             </div>
             <div className="space-y-2">

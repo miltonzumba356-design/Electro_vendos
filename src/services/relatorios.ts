@@ -9,14 +9,9 @@ import type {
 } from '@/types'
 
 export const relatoriosService = {
-  vendasPeriodo: (data_inicio: string, data_fim: string) =>
+  // Sem data_inicio/data_fim, o backend traz sempre os dados de hoje.
+  vendasPeriodo: (data_inicio?: string, data_fim?: string) =>
     api.get<RelatorioVendasPeriodo>('/relatorios/vendas/periodo', { data_inicio, data_fim }),
-
-  vendasDiario: (data?: string) =>
-    api.get<RelatorioVendasPeriodo>('/relatorios/vendas/diario', data ? { data } : undefined),
-
-  vendasMensal: (ano: number, mes: number) =>
-    api.get<RelatorioVendasPeriodo>('/relatorios/vendas/mensal', { ano, mes }),
 
   clientesFieis: (limite = 10) =>
     api.get<RelatorioClienteFiel[]>('/relatorios/clientes/fieis', { limite }),

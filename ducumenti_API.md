@@ -882,6 +882,7 @@
           "Relatórios"
         ],
         "summary": "Vendas por período",
+        "description": "Sem data_inicio/data_fim, traz sempre os dados de hoje.",
         "operationId": "vendas_periodo_relatorios_vendas_periodo_get",
         "security": [
           {
@@ -892,161 +893,51 @@
           {
             "name": "data_inicio",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string",
-              "format": "date-time",
-              "description": "Data início",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para hoje",
               "examples": [
                 "2026-01-01T00:00:00Z"
               ],
               "title": "Data Inicio"
             },
-            "description": "Data início"
+            "description": "Data início. Omite para hoje"
           },
           {
             "name": "data_fim",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date-time",
-              "description": "Data fim",
-              "examples": [
-                "2026-12-31T23:59:59Z"
-              ],
-              "title": "Data Fim"
-            },
-            "description": "Data fim"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Totais de vendas, receita, IVA, descontos e lucro no período",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RelatorioVendasPeriodo"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/relatorios/vendas/diario": {
-      "get": {
-        "tags": [
-          "Relatórios"
-        ],
-        "summary": "Vendas do dia",
-        "operationId": "vendas_diario_relatorios_vendas_diario_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "data",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
                   "type": "string",
-                  "format": "date"
+                  "format": "date-time"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Dia. Omite para hoje",
+              "description": "Data fim. Omite para hoje",
               "examples": [
-                "2026-06-27"
+                "2026-12-31T23:59:59Z"
               ],
-              "title": "Data"
+              "title": "Data Fim"
             },
-            "description": "Dia. Omite para hoje"
+            "description": "Data fim. Omite para hoje"
           }
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/RelatorioVendasPeriodo"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/relatorios/vendas/mensal": {
-      "get": {
-        "tags": [
-          "Relatórios"
-        ],
-        "summary": "Vendas do mês",
-        "operationId": "vendas_mensal_relatorios_vendas_mensal_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "ano",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "description": "Ano",
-              "examples": [2026],
-              "title": "Ano"
-            },
-            "description": "Ano"
-          },
-          {
-            "name": "mes",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 12,
-              "minimum": 1,
-              "description": "Mês (1-12)",
-              "examples": [6],
-              "title": "Mes"
-            },
-            "description": "Mês (1-12)"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
+            "description": "Totais de vendas, receita recebida vs pendente, IVA, descontos, lucro e top produtos no período",
             "content": {
               "application/json": {
                 "schema": {
@@ -1453,6 +1344,33 @@
             }
           }
         }
+      }
+    },
+    "/dividas/total": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Total de dívidas pendentes",
+        "description": "Retorna a quantidade e o valor total pendente, somando vendas a crédito (dívidas) e prestações ainda não pagas, entre todos os clientes.",
+        "operationId": "total_dividas_dividas_total_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotalDividasResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/dividas/{divida_id}": {
@@ -2262,7 +2180,7 @@
           "Fluxo de Caixa"
         ],
         "summary": "Registar lançamento manual",
-        "description": "Regista uma entrada ou saída manual (salário, renda, energia, etc.). Lançamentos manuais não são afetados por sincronizações.",
+        "description": "Regista uma entrada ou saída manual (salário, renda, energia, etc.).",
         "operationId": "criar_lancamento_fluxo_caixa_lancamentos_post",
         "security": [
           {
@@ -2307,7 +2225,7 @@
           "Fluxo de Caixa"
         ],
         "summary": "Extrato de fluxo de caixa",
-        "description": "Lista lançamentos com filtros opcionais por período e categoria. Por defeito oculta lançamentos substituídos por re-sincronização. Use incluir_substituidos=true para os incluir.",
+        "description": "Lista lançamentos com filtros opcionais por período e categoria.",
         "operationId": "listar_lancamentos_fluxo_caixa_lancamentos_get",
         "security": [
           {
@@ -2382,18 +2300,6 @@
             "description": "Filtrar por categoria"
           },
           {
-            "name": "incluir_substituidos",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "description": "Incluir lançamentos substituídos por re-sincronização",
-              "default": false,
-              "title": "Incluir Substituidos"
-            },
-            "description": "Incluir lançamentos substituídos por re-sincronização"
-          },
-          {
             "name": "skip",
             "in": "query",
             "required": false,
@@ -2451,11 +2357,11 @@
           "Fluxo de Caixa"
         ],
         "summary": "Saldo atual do caixa",
-        "description": "Retorna o saldo atual com total de entradas, saídas, saldo sincronizado vs manual, período dos lançamentos e data da última sincronização",
+        "description": "Retorna o saldo atual: total de entradas, total de saídas e saldo (entradas - saídas)",
         "operationId": "saldo_fluxo_caixa_saldo_get",
         "responses": {
           "200": {
-            "description": "Saldo atual, entradas, saídas, saldo sincronizado/manual, data_inicio, data_fim e última sincronização",
+            "description": "Saldo atual, total de entradas e total de saídas",
             "content": {
               "application/json": {
                 "schema": {
@@ -2470,173 +2376,6 @@
             "HTTPBearer": []
           }
         ]
-      }
-    },
-    "/fluxo-caixa/demonstrativo": {
-      "get": {
-        "tags": [
-          "Fluxo de Caixa"
-        ],
-        "summary": "Demonstrativo financeiro por período",
-        "description": "Retorna entradas e saídas agrupadas por categoria num período, com saldo final",
-        "operationId": "demonstrativo_fluxo_caixa_demonstrativo_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "data_inicio",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "description": "Data início",
-              "examples": [
-                "2026-01-01"
-              ],
-              "title": "Data Inicio"
-            },
-            "description": "Data início"
-          },
-          {
-            "name": "data_fim",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "description": "Data fim",
-              "examples": [
-                "2026-12-31"
-              ],
-              "title": "Data Fim"
-            },
-            "description": "Data fim"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Demonstrativo com totais por categoria e saldo final",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DemonstrativoResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/fluxo-caixa/sync": {
-      "post": {
-        "tags": [
-          "Fluxo de Caixa"
-        ],
-        "summary": "Sincronizar histórico por período",
-        "description": "Importa vendas, pagamentos e compras de stock num intervalo de datas como lançamentos de fluxo de caixa. Re-sincronizar o mesmo período substitui os lançamentos anteriores (marca como substituídos) e recria-os.",
-        "operationId": "sincronizar_fluxo_caixa_sync_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "data_inicio",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "description": "Data início",
-              "examples": [
-                "2026-06-01"
-              ],
-              "title": "Data Inicio"
-            },
-            "description": "Data início"
-          },
-          {
-            "name": "data_fim",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "date",
-              "description": "Data fim",
-              "examples": [
-                "2026-06-30"
-              ],
-              "title": "Data Fim"
-            },
-            "description": "Data fim"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Total de lançamentos sincronizados, período e quantidade de substituídos",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SyncResult"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "Fluxo de Caixa"
-        ],
-        "summary": "Histórico de sincronizações",
-        "description": "Lista todas as sincronizações executadas, ordenadas da mais recente para a mais antiga",
-        "operationId": "listar_syncs_fluxo_caixa_sync_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Lista de sincronizações com totais por período",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SyncHistoricoResponse"
-                  },
-                  "title": "Response Listar Syncs Fluxo Caixa Sync Get"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/ia/sessoes": {
@@ -2899,7 +2638,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     }
   },
@@ -2941,33 +2685,11 @@
         ],
         "title": "CancelamentoResponse"
       },
-      "CategoriaGrupoResponse": {
-        "properties": {
-          "categoria": {
-            "type": "string",
-            "title": "Categoria"
-          },
-          "total": {
-            "type": "number",
-            "title": "Total"
-          },
-          "quantidade": {
-            "type": "integer",
-            "title": "Quantidade"
-          }
-        },
-        "type": "object",
-        "required": [
-          "categoria",
-          "total",
-          "quantidade"
-        ],
-        "title": "CategoriaGrupoResponse"
-      },
       "ClienteCreate": {
         "properties": {
           "nome": {
             "type": "string",
+            "maxLength": 100,
             "title": "Nome",
             "description": "Nome do cliente",
             "examples": [
@@ -2977,7 +2699,8 @@
           "telefone": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 20
               },
               {
                 "type": "null"
@@ -3212,7 +2935,8 @@
           "nome": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 100
               },
               {
                 "type": "null"
@@ -3223,7 +2947,8 @@
           "telefone": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 20
               },
               {
                 "type": "null"
@@ -3267,98 +2992,6 @@
         },
         "type": "object",
         "title": "ClienteUpdate"
-      },
-      "DemonstrativoResponse": {
-        "properties": {
-          "data_inicio": {
-            "type": "string",
-            "format": "date",
-            "title": "Data Inicio"
-          },
-          "data_fim": {
-            "type": "string",
-            "format": "date",
-            "title": "Data Fim"
-          },
-          "total_entradas": {
-            "type": "number",
-            "title": "Total Entradas"
-          },
-          "total_saidas": {
-            "type": "number",
-            "title": "Total Saidas"
-          },
-          "saldo_final": {
-            "type": "number",
-            "title": "Saldo Final"
-          },
-          "entradas": {
-            "items": {
-              "$ref": "#/components/schemas/CategoriaGrupoResponse"
-            },
-            "type": "array",
-            "title": "Entradas"
-          },
-          "saidas": {
-            "items": {
-              "$ref": "#/components/schemas/CategoriaGrupoResponse"
-            },
-            "type": "array",
-            "title": "Saidas"
-          }
-        },
-        "type": "object",
-        "required": [
-          "data_inicio",
-          "data_fim",
-          "total_entradas",
-          "total_saidas",
-          "saldo_final",
-          "entradas",
-          "saidas"
-        ],
-        "title": "DemonstrativoResponse",
-        "example": {
-          "data_fim": "2026-06-30",
-          "data_inicio": "2026-06-01",
-          "entradas": [
-            {
-              "categoria": "VENDA",
-              "quantidade": 15,
-              "total": 500000
-            },
-            {
-              "categoria": "RECEBIMENTO_PRESTACAO",
-              "quantidade": 4,
-              "total": 200000
-            }
-          ],
-          "saidas": [
-            {
-              "categoria": "SALARIO",
-              "quantidade": 1,
-              "total": 250000
-            },
-            {
-              "categoria": "RENDA",
-              "quantidade": 1,
-              "total": 100000
-            },
-            {
-              "categoria": "ENERGIA",
-              "quantidade": 1,
-              "total": 50000
-            },
-            {
-              "categoria": "COMPRA_STOCK",
-              "quantidade": 3,
-              "total": 150000
-            }
-          ],
-          "saldo_final": 150000,
-          "total_entradas": 700000,
-          "total_saidas": 550000
-        }
       },
       "DividaCheckResponse": {
         "properties": {
@@ -3982,6 +3615,18 @@
               }
             ],
             "title": "Pagamento Prestacao Id"
+          },
+          "divida_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Divida Id"
           },
           "movimento_stock_id": {
             "anyOf": [
@@ -4636,6 +4281,7 @@
         "properties": {
           "nome": {
             "type": "string",
+            "maxLength": 100,
             "title": "Nome",
             "description": "Nome do produto",
             "examples": [
@@ -4671,6 +4317,7 @@
           },
           "preco_custo": {
             "type": "number",
+            "minimum": 0,
             "title": "Preco Custo",
             "description": "Preço de compra (Kz)",
             "default": 0,
@@ -4678,6 +4325,7 @@
           },
           "preco_venda": {
             "type": "number",
+            "minimum": 0,
             "title": "Preco Venda",
             "description": "Preço de venda (Kz)",
             "default": 0,
@@ -4692,6 +4340,7 @@
           },
           "stock_atual": {
             "type": "integer",
+            "minimum": 0,
             "title": "Stock Atual",
             "description": "Quantidade em stock",
             "default": 0,
@@ -4699,6 +4348,7 @@
           },
           "stock_minimo": {
             "type": "integer",
+            "minimum": 0,
             "title": "Stock Minimo",
             "description": "Stock mínimo para alerta",
             "default": 0,
@@ -4904,7 +4554,8 @@
           "nome": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 100
               },
               {
                 "type": "null"
@@ -4937,7 +4588,8 @@
           "preco_custo": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "number",
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -4948,7 +4600,8 @@
           "preco_venda": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "number",
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -4970,7 +4623,8 @@
           "stock_minimo": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "integer",
+                "minimum": 0
               },
               {
                 "type": "null"
@@ -5260,6 +4914,16 @@
       },
       "RelatorioVendasPeriodo": {
         "properties": {
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio"
+          },
+          "data_fim": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Fim"
+          },
           "total_vendas": {
             "type": "integer",
             "title": "Total Vendas",
@@ -5268,7 +4932,14 @@
           "total_receita": {
             "type": "number",
             "title": "Total Receita",
+            "description": "Recebido de facto: vendas à vista + crédito já pago",
             "examples": [158000.5]
+          },
+          "total_pendente": {
+            "type": "number",
+            "title": "Total Pendente",
+            "description": "Vendas a crédito ainda não pagas (dívida em aberto)",
+            "examples": [12000]
           },
           "total_sem_iva": {
             "type": "number",
@@ -5293,14 +4964,25 @@
           "ticket_medio": {
             "type": "number",
             "title": "Ticket Medio",
-            "description": "Valor médio por venda",
+            "description": "Valor médio por venda (recebido + pendente)",
             "examples": [3761.92]
+          },
+          "produtos_mais_vendidos": {
+            "items": {
+              "$ref": "#/components/schemas/RelatorioProdutoVendido"
+            },
+            "type": "array",
+            "title": "Produtos Mais Vendidos",
+            "description": "Top 5 produtos mais vendidos no período"
           }
         },
         "type": "object",
         "required": [
+          "data_inicio",
+          "data_fim",
           "total_vendas",
           "total_receita",
+          "total_pendente",
           "total_sem_iva",
           "total_iva",
           "total_descontos",
@@ -5309,10 +4991,21 @@
         ],
         "title": "RelatorioVendasPeriodo",
         "example": {
+          "data_fim": "2026-06-30T23:59:59Z",
+          "data_inicio": "2026-06-01T00:00:00Z",
           "lucro_bruto": 45000,
+          "produtos_mais_vendidos": [
+            {
+              "produto_id": "1edca05e-c4e7-490f-a90a-164a28ade8ad",
+              "produto_nome": "Arroz Agulha 5kg",
+              "quantidade_vendida": 120,
+              "total_receita": 384000
+            }
+          ],
           "ticket_medio": 3761.92,
           "total_descontos": 5200,
           "total_iva": 28800,
+          "total_pendente": 12000,
           "total_receita": 158000.5,
           "total_sem_iva": 120000,
           "total_vendas": 42
@@ -5359,52 +5052,6 @@
           "total_saidas": {
             "type": "number",
             "title": "Total Saidas"
-          },
-          "saldo_sincronizado": {
-            "type": "number",
-            "title": "Saldo Sincronizado",
-            "default": 0
-          },
-          "saldo_manual": {
-            "type": "number",
-            "title": "Saldo Manual",
-            "default": 0
-          },
-          "data_inicio": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data Inicio"
-          },
-          "data_fim": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data Fim"
-          },
-          "ultima_sincronizacao": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ultima Sincronizacao"
           }
         },
         "type": "object",
@@ -5415,14 +5062,9 @@
         ],
         "title": "SaldoResponse",
         "example": {
-          "data_fim": "2026-06-30",
-          "data_inicio": "2026-01-15",
           "saldo_atual": 150000,
-          "saldo_manual": 30000,
-          "saldo_sincronizado": 120000,
           "total_entradas": 700000,
-          "total_saidas": 550000,
-          "ultima_sincronizacao": "2026-06-28T14:30:00Z"
+          "total_saidas": 550000
         }
       },
       "SessaoIaCreate": {
@@ -5475,111 +5117,6 @@
           "criado_em": "2026-06-27T12:00:00Z",
           "id": "550e8400-e29b-41d4-a716-446655440000",
           "titulo": "Análise de vendas junho"
-        }
-      },
-      "SyncHistoricoResponse": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Id"
-          },
-          "periodo": {
-            "type": "string",
-            "title": "Periodo"
-          },
-          "data_inicio": {
-            "type": "string",
-            "format": "date",
-            "title": "Data Inicio"
-          },
-          "data_fim": {
-            "type": "string",
-            "format": "date",
-            "title": "Data Fim"
-          },
-          "total_vendas": {
-            "type": "integer",
-            "title": "Total Vendas"
-          },
-          "total_pagamentos": {
-            "type": "integer",
-            "title": "Total Pagamentos"
-          },
-          "total_compras_stock": {
-            "type": "integer",
-            "title": "Total Compras Stock"
-          },
-          "total_geral": {
-            "type": "integer",
-            "title": "Total Geral"
-          },
-          "criado_em": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Criado Em"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "periodo",
-          "data_inicio",
-          "data_fim",
-          "total_vendas",
-          "total_pagamentos",
-          "total_compras_stock",
-          "total_geral",
-          "criado_em"
-        ],
-        "title": "SyncHistoricoResponse"
-      },
-      "SyncResult": {
-        "properties": {
-          "total_sincronizados": {
-            "type": "integer",
-            "title": "Total Sincronizados"
-          },
-          "data_inicio": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data Inicio"
-          },
-          "data_fim": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Data Fim"
-          },
-          "substituidos": {
-            "type": "integer",
-            "title": "Substituidos",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "required": [
-          "total_sincronizados"
-        ],
-        "title": "SyncResult",
-        "example": {
-          "data_fim": "2026-06-30",
-          "data_inicio": "2026-06-01",
-          "substituidos": 0,
-          "total_sincronizados": 45
         }
       },
       "TendenciaDia": {
@@ -5658,6 +5195,39 @@
           "faturas"
         ],
         "title": "TopCliente"
+      },
+      "TotalDividasResponse": {
+        "properties": {
+          "quantidade_dividas": {
+            "type": "integer",
+            "title": "Quantidade Dividas"
+          },
+          "total_devido_dividas": {
+            "type": "number",
+            "title": "Total Devido Dividas"
+          },
+          "quantidade_prestacoes": {
+            "type": "integer",
+            "title": "Quantidade Prestacoes"
+          },
+          "total_devido_prestacoes": {
+            "type": "number",
+            "title": "Total Devido Prestacoes"
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade_dividas",
+          "total_devido_dividas",
+          "quantidade_prestacoes",
+          "total_devido_prestacoes",
+          "total_devido"
+        ],
+        "title": "TotalDividasResponse"
       },
       "UtilizadorResponse": {
         "properties": {

@@ -342,6 +342,7 @@ function VendasTab({ t }: { t: TFunction }) {
                       value={novoClienteNome}
                       onChange={(e) => setNovoClienteNome(e.target.value)}
                       placeholder={t('sales.clientName')}
+                      maxLength={100}
                       required={clienteMode === 'novo'}
                     />
                   </div>
@@ -351,6 +352,7 @@ function VendasTab({ t }: { t: TFunction }) {
                       value={novoClienteTelefone}
                       onChange={(e) => setNovoClienteTelefone(e.target.value)}
                       placeholder="923456789"
+                      maxLength={20}
                     />
                   </div>
                 </div>
