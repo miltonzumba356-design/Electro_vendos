@@ -206,6 +206,7 @@ const fr = {
     refresh: 'Actualiser', newEntry: 'Nouvelle écriture', totalEntries: 'Écritures',
     periodIn: 'Entrées', periodOut: 'Sorties', periodBalance: 'Solde période', colDate: 'Date',
     colDescription: 'Description', colCategory: 'Catégorie', colType: 'Type', colValue: 'Montant',
+    colClient: 'Client', noClient: 'Sans client', colBalance: 'Solde',
     empty: 'Aucune écriture trouvée', loading: 'Chargement...', newEntryTitle: 'Nouvelle écriture',
     fieldType: 'Type', typeIn: 'Entrée', typeOut: 'Sortie', fieldDate: 'Date',
     fieldCategory: 'Catégorie', categorySelect: 'Sélectionner...', fieldDesc: 'Description',

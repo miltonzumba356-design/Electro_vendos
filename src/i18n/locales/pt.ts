@@ -204,6 +204,7 @@ const pt = {
     refresh: 'Actualizar', newEntry: 'Novo Lançamento', totalEntries: 'Lançamentos',
     periodIn: 'Entradas', periodOut: 'Saídas', periodBalance: 'Saldo Período', colDate: 'Data',
     colDescription: 'Descrição', colCategory: 'Categoria', colType: 'Tipo', colValue: 'Valor',
+    colClient: 'Cliente', noClient: 'Sem cliente', colBalance: 'Saldo',
     empty: 'Nenhum lançamento encontrado', loading: 'A carregar...', newEntryTitle: 'Novo Lançamento',
     fieldType: 'Tipo', typeIn: 'Entrada', typeOut: 'Saída', fieldDate: 'Data',
     fieldCategory: 'Categoria', categorySelect: 'Seleccionar...', fieldDesc: 'Descrição',

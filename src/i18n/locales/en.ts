@@ -201,6 +201,7 @@ const en = {
     refresh: 'Refresh', newEntry: 'New Entry', totalEntries: 'Entries',
     periodIn: 'Income', periodOut: 'Expenses', periodBalance: 'Period Balance', colDate: 'Date',
     colDescription: 'Description', colCategory: 'Category', colType: 'Type', colValue: 'Amount',
+    colClient: 'Client', noClient: 'No client', colBalance: 'Balance',
     empty: 'No entry found', loading: 'Loading...', newEntryTitle: 'New Entry',
     fieldType: 'Type', typeIn: 'Income', typeOut: 'Expense', fieldDate: 'Date',
     fieldCategory: 'Category', categorySelect: 'Select...', fieldDesc: 'Description',

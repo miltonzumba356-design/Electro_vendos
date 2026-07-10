@@ -1,15 +1,17 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, Fragment } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import {
-  TrendingUp, TrendingDown, Wallet, RefreshCw, Plus,
+  TrendingUp, TrendingDown, Wallet, RefreshCw, Plus, ChevronDown, ChevronRight,
 } from 'lucide-react'
 import { fluxoCaixaService } from '@/services/fluxoCaixa'
+import { vendasService } from '@/services/vendas'
 import type {
   LancamentoResponse,
   SaldoResponse,
+  VendaResponse,
 } from '@/types'
 import { Badge } from '@/app/components/ui/badge'
 import { Button } from '@/app/components/ui/button'
@@ -199,17 +201,29 @@ function NovoLancamentoDialog({
   )
 }
 
+const SEM_CLIENTE = '__sem_cliente__'
+
+interface GrupoCliente {
+  chave: string
+  nome: string
+  lancamentos: LancamentoResponse[]
+  totalEntradas: number
+  totalSaidas: number
+}
+
 /* ── Extrato ──────────────────────────────────────────────── */
 function ExtratoTab({ t }: { t: TFunction }) {
   const [dataInicio, setDataInicio]         = useState('')
   const [dataFim, setDataFim]               = useState('')
   const [categoria, setCategoria]           = useState('')
   const [lancamentos, setLancamentos]       = useState<LancamentoResponse[]>([])
+  const [vendas, setVendas]                 = useState<VendaResponse[]>([])
   const [totais, setTotais] = useState({
     total_lancamentos: 0, total_entradas: 0, total_saidas: 0, saldo_periodo: 0,
   })
   const [loading, setLoading]   = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [expandidos, setExpandidos] = useState<Set<string>>(new Set())
 
   const carregar = useCallback(async () => {
     setLoading(true)
@@ -234,6 +248,73 @@ function ExtratoTab({ t }: { t: TFunction }) {
   }, [dataInicio, dataFim, categoria])
 
   useEffect(() => { carregar() }, [carregar])
+
+  useEffect(() => {
+    vendasService.listar().then(setVendas).catch(() => {})
+  }, [])
+
+  function toggleExpandido(chave: string) {
+    setExpandidos((prev) => {
+      const next = new Set(prev)
+      if (next.has(chave)) next.delete(chave)
+      else next.add(chave)
+      return next
+    })
+  }
+
+  const vendaClienteMap = useMemo(() => {
+    const map = new Map<string, { id: string; nome: string }>()
+    for (const v of vendas) map.set(v.id, { id: v.cliente_id, nome: v.cliente_nome })
+    return map
+  }, [vendas])
+
+  const grupos = useMemo<GrupoCliente[]>(() => {
+    const mapa = new Map<string, GrupoCliente>()
+    for (const l of lancamentos) {
+      const venda = l.categoria === 'VENDA' && l.venda_id ? vendaClienteMap.get(l.venda_id) : undefined
+      const chave = venda ? venda.id : SEM_CLIENTE
+      const nome = venda ? venda.nome : t('cashflow.noClient')
+      let grupo = mapa.get(chave)
+      if (!grupo) {
+        grupo = { chave, nome, lancamentos: [], totalEntradas: 0, totalSaidas: 0 }
+        mapa.set(chave, grupo)
+      }
+      grupo.lancamentos.push(l)
+      if (l.tipo === 'ENTRADA') grupo.totalEntradas += l.valor
+      else grupo.totalSaidas += l.valor
+    }
+    const lista = Array.from(mapa.values())
+    lista.sort((a, b) => {
+      if (a.chave === SEM_CLIENTE) return 1
+      if (b.chave === SEM_CLIENTE) return -1
+      return a.nome.localeCompare(b.nome)
+    })
+    return lista
+  }, [lancamentos, vendaClienteMap, t])
+
+  const ordemCategorias = [...CATEGORIAS_ENTRADA, ...CATEGORIAS_SAIDA]
+
+  function subgruposPorCategoria(itens: LancamentoResponse[]) {
+    const mapa = new Map<string, LancamentoResponse[]>()
+    for (const l of itens) {
+      const arr = mapa.get(l.categoria) ?? []
+      arr.push(l)
+      mapa.set(l.categoria, arr)
+    }
+    const chaves = Array.from(mapa.keys()).sort((a, b) => {
+      const ia = ordemCategorias.indexOf(a)
+      const ib = ordemCategorias.indexOf(b)
+      if (ia === -1 && ib === -1) return a.localeCompare(b)
+      if (ia === -1) return 1
+      if (ib === -1) return -1
+      return ia - ib
+    })
+    return chaves.map((cat) => {
+      const itensCat = mapa.get(cat)!
+      const subtotal = itensCat.reduce((sum, l) => sum + (l.tipo === 'ENTRADA' ? l.valor : -l.valor), 0)
+      return { categoria: cat, itens: itensCat, subtotal }
+    })
+  }
 
   return (
     <div className="space-y-4">
@@ -284,11 +365,11 @@ function ExtratoTab({ t }: { t: TFunction }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('cashflow.colDate')}</TableHead>
-              <TableHead>{t('cashflow.colDescription')}</TableHead>
-              <TableHead>{t('cashflow.colCategory')}</TableHead>
-              <TableHead>{t('cashflow.colType')}</TableHead>
-              <TableHead className="text-right">{t('cashflow.colValue')}</TableHead>
+              <TableHead>{t('cashflow.colClient')}</TableHead>
+              <TableHead className="text-right">{t('cashflow.totalEntries')}</TableHead>
+              <TableHead className="text-right">{t('cashflow.periodIn')}</TableHead>
+              <TableHead className="text-right">{t('cashflow.periodOut')}</TableHead>
+              <TableHead className="text-right">{t('cashflow.colBalance')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -298,33 +379,85 @@ function ExtratoTab({ t }: { t: TFunction }) {
                   {t('cashflow.loading')}
                 </TableCell>
               </TableRow>
-            ) : lancamentos.length === 0 ? (
+            ) : grupos.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                   {t('cashflow.empty')}
                 </TableCell>
               </TableRow>
             ) : (
-              lancamentos.map((l) => (
-                <TableRow key={l.id}>
-                  <TableCell className="text-sm">{l.data_movimento}</TableCell>
-                  <TableCell className="max-w-xs truncate">
-                    {l.descricao}
-                    {l.periodo_referencia && (
-                      <span className="ml-1 text-xs text-muted-foreground">({l.periodo_referencia})</span>
+              grupos.map((grupo) => {
+                const expandido = expandidos.has(grupo.chave)
+                const saldo = grupo.totalEntradas - grupo.totalSaidas
+                return (
+                  <Fragment key={grupo.chave}>
+                    <TableRow
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => toggleExpandido(grupo.chave)}
+                    >
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-1.5">
+                          {expandido
+                            ? <ChevronDown className="size-4 text-muted-foreground shrink-0" />
+                            : <ChevronRight className="size-4 text-muted-foreground shrink-0" />}
+                          {grupo.nome}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant="secondary">{grupo.lancamentos.length}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-medium text-green-600">
+                        {formatKz(grupo.totalEntradas)}
+                      </TableCell>
+                      <TableCell className="text-right text-sm font-medium text-red-600">
+                        {formatKz(grupo.totalSaidas)}
+                      </TableCell>
+                      <TableCell className={`text-right font-semibold text-sm ${saldo >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {formatKz(saldo)}
+                      </TableCell>
+                    </TableRow>
+                    {expandido && (
+                      <TableRow>
+                        <TableCell colSpan={5} className="bg-muted/20 p-0">
+                          <div className="p-3 space-y-3">
+                            {subgruposPorCategoria(grupo.lancamentos).map((sub) => (
+                              <div key={sub.categoria} className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs bg-muted px-2 py-0.5 rounded-full">
+                                    {sub.categoria.replace(/_/g, ' ')}
+                                  </span>
+                                  <span className={`text-xs font-medium ${sub.subtotal >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                    {formatKz(sub.subtotal)}
+                                  </span>
+                                </div>
+                                <div className="space-y-1 pl-1">
+                                  {sub.itens.map((l) => (
+                                    <div key={l.id} className="flex justify-between items-center gap-3 text-sm">
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <span className="text-xs text-muted-foreground shrink-0">{l.data_movimento}</span>
+                                        <span className="truncate">
+                                          {l.descricao}
+                                          {l.periodo_referencia && (
+                                            <span className="ml-1 text-xs text-muted-foreground">({l.periodo_referencia})</span>
+                                          )}
+                                        </span>
+                                        <Badge variant={tipoVariant(l.tipo)} className="text-xs shrink-0">{l.tipo}</Badge>
+                                      </div>
+                                      <span className={`shrink-0 font-medium ${l.tipo === 'ENTRADA' ? 'text-green-600' : 'text-red-600'}`}>
+                                        {l.tipo === 'SAIDA' ? '-' : ''}{formatKz(l.valor)}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </TableCell>
+                      </TableRow>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{l.categoria.replace(/_/g, ' ')}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={tipoVariant(l.tipo)} className="text-xs">{l.tipo}</Badge>
-                  </TableCell>
-                  <TableCell className={`text-right font-medium text-sm ${l.tipo === 'ENTRADA' ? 'text-green-600' : 'text-red-600'}`}>
-                    {l.tipo === 'SAIDA' ? '-' : ''}{formatKz(l.valor)}
-                  </TableCell>
-                </TableRow>
-              ))
+                  </Fragment>
+                )
+              })
             )}
           </TableBody>
         </Table>

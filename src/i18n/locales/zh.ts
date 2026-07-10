@@ -197,6 +197,7 @@ const zh = {
     refresh: '刷新', newEntry: '新建条目', totalEntries: '条目数',
     periodIn: '收入', periodOut: '支出', periodBalance: '期间余额', colDate: '日期',
     colDescription: '描述', colCategory: '类别', colType: '类型', colValue: '金额',
+    colClient: '客户', noClient: '无客户', colBalance: '余额',
     empty: '未找到条目', loading: '加载中...', newEntryTitle: '新建条目',
     fieldType: '类型', typeIn: '收入', typeOut: '支出', fieldDate: '日期',
     fieldCategory: '类别', categorySelect: '选择...', fieldDesc: '描述',

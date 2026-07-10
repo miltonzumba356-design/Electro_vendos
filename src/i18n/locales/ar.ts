@@ -198,6 +198,7 @@ const ar = {
     refresh: 'تحديث', newEntry: 'قيد جديد', totalEntries: 'القيود',
     periodIn: 'الدخل', periodOut: 'المصروفات', periodBalance: 'رصيد الفترة', colDate: 'التاريخ',
     colDescription: 'الوصف', colCategory: 'الفئة', colType: 'النوع', colValue: 'المبلغ',
+    colClient: 'العميل', noClient: 'بدون عميل', colBalance: 'الرصيد',
     empty: 'لم يتم العثور على قيد', loading: 'جاري التحميل...', newEntryTitle: 'قيد جديد',
     fieldType: 'النوع', typeIn: 'دخل', typeOut: 'مصروف', fieldDate: 'التاريخ',
     fieldCategory: 'الفئة', categorySelect: 'اختر...', fieldDesc: 'الوصف',
