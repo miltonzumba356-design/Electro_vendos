@@ -38,6 +38,8 @@ import {
 import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -205,6 +207,7 @@ function VendasTab({ t }: { t: TFunction }) {
         v.cliente_nome.toLowerCase().includes(search.toLowerCase()) ||
         v.utilizador_nome.toLowerCase().includes(search.toLowerCase())
     )
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
 
   const clienteModeLabel = (m: 'nenhum' | 'existente' | 'novo') => {
     if (m === 'nenhum')    return t('sales.noClient')
@@ -229,7 +232,7 @@ function VendasTab({ t }: { t: TFunction }) {
         <Input
           placeholder={t('sales.searchPlaceholder')}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); resetPage() }}
           className="pl-9"
         />
       </div>
@@ -264,7 +267,7 @@ function VendasTab({ t }: { t: TFunction }) {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((v) => (
+              pageItems.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell className="text-sm text-muted-foreground">
                     {format(new Date(v.criado_em), 'dd/MM/yyyy HH:mm')}
@@ -296,6 +299,7 @@ function VendasTab({ t }: { t: TFunction }) {
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Nova venda dialog */}
       <Dialog open={novaVendaOpen} onOpenChange={setNovaVendaOpen}>
@@ -712,6 +716,9 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   const [statusFiltro, setStatusFiltro] = useState<'DIVIDA' | 'PAGA' | 'TODAS'>('DIVIDA')
   const [pagarDivida, setPagarDivida] = useState<DividaResponse | null>(null)
 
+  const filtered = dividas.filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
+
   async function load(status: 'DIVIDA' | 'PAGA' | 'TODAS') {
     setLoading(true)
     try {
@@ -724,14 +731,12 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
     }
   }
 
-  useEffect(() => { load(statusFiltro) }, [statusFiltro])
+  useEffect(() => { load(statusFiltro); resetPage() }, [statusFiltro])
 
   function handlePago(updated: DividaResponse) {
     setDividas((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
     setPagarDivida(null)
   }
-
-  const filtered = dividas.filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
 
   return (
     <div className="space-y-4">
@@ -741,7 +746,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
           <Input
             placeholder={t('sales.searchPlaceholder')}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); resetPage() }}
             className="pl-9"
           />
         </div>
@@ -790,7 +795,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((d) => (
+              pageItems.map((d) => (
                 <TableRow key={d.id}>
                   <TableCell className="font-medium">{d.cliente_nome ?? '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
@@ -816,6 +821,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <PagarDividaDialog
         divida={pagarDivida}

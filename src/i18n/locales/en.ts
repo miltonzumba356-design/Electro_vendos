@@ -9,6 +9,7 @@ const en = {
     balance: 'Balance', paid: 'Paid', pending: 'Pending', status: 'Status', active: 'Active',
     inactive: 'Inactive', yes: 'Yes', no: 'No', optional: 'Optional', more: '+{{count}} more...',
     client: 'Client', filter: 'Filter', loadError: 'Error loading data', back: 'Back',
+    previousPage: 'Previous page', nextPage: 'Next page', pageIndicator: 'Page {{page}} of {{total}}',
   },
   nav: {
     dashboard: 'Dashboard', products: 'Products', clients: 'Clients', sales: 'Sales',

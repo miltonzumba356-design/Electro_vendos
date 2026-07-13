@@ -17,6 +17,8 @@ import {
 } from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 import { ArrowLeft, ArrowUpCircle, ArrowDownCircle, Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -53,6 +55,7 @@ export default function StockProdutoPage() {
 
   const entradas = movimentos.filter((m) => m.tipo === 'ENTRADA').reduce((sum, m) => sum + m.quantidade, 0)
   const saidas = movimentos.filter((m) => m.tipo === 'SAIDA').reduce((sum, m) => sum + m.quantidade, 0)
+  const { page, pageItems, totalPages, setPage } = usePagination(movimentos)
 
   return (
     <div className="space-y-4">
@@ -138,7 +141,7 @@ export default function StockProdutoPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                movimentos.map((m) => (
+                pageItems.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell className="text-sm text-muted-foreground">
                       {format(new Date(m.criado_em), 'dd/MM/yyyy HH:mm')}
@@ -176,6 +179,7 @@ export default function StockProdutoPage() {
             </TableBody>
           </Table>
         </div>
+        <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
     </div>
   )

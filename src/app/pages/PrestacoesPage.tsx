@@ -35,6 +35,8 @@ import { Separator } from '@/app/components/ui/separator'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Progress } from '@/app/components/ui/progress'
 import { Combobox } from '@/app/components/ui/combobox'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 import { Plus, Eye, CreditCard, Search, Users, Calendar, AlertTriangle } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -346,6 +348,7 @@ function PlanosTab({ t }: { t: TFunction }) {
   const filtered = prestacoes
     .filter((p) => p.cliente_nome.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
 
   return (
     <div className="space-y-4">
@@ -355,7 +358,7 @@ function PlanosTab({ t }: { t: TFunction }) {
           <Input
             placeholder={t('installments.searchPlaceholder')}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); resetPage() }}
             className="pl-9"
           />
         </div>
@@ -395,7 +398,7 @@ function PlanosTab({ t }: { t: TFunction }) {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((p) => (
+              pageItems.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.cliente_nome}</TableCell>
                   <TableCell>
@@ -428,6 +431,7 @@ function PlanosTab({ t }: { t: TFunction }) {
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Novo plano dialog */}
       <Dialog open={novoOpen} onOpenChange={(v) => { setNovoOpen(v); if (!v) resetForm() }}>
@@ -579,6 +583,7 @@ function DividasTab({ t }: { t: TFunction }) {
     const q = search.toLowerCase()
     return clientesComDivida.filter(c => c.nome.toLowerCase().includes(q))
   }, [clientesComDivida, search])
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtrados)
 
   async function handleVerDetalhe(clienteId: string) {
     setLoadingDetalhe(true)
@@ -600,7 +605,7 @@ function DividasTab({ t }: { t: TFunction }) {
         <Input
           placeholder={t('installments.searchPlaceholder')}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); resetPage() }}
           className="pl-9"
         />
       </div>
@@ -637,7 +642,7 @@ function DividasTab({ t }: { t: TFunction }) {
                 </TableCell>
               </TableRow>
             ) : (
-              filtrados.map((c) => (
+              pageItems.map((c) => (
                 <TableRow
                   key={c.id}
                   className="cursor-pointer hover:bg-muted/40"
@@ -661,6 +666,7 @@ function DividasTab({ t }: { t: TFunction }) {
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Dialog detalhe do cliente seleccionado */}
       <Dialog open={!!detalhe} onOpenChange={() => setDetalhe(null)}>
@@ -738,12 +744,14 @@ function VencimentosTab({ t }: { t: TFunction }) {
   const [mes, setMes] = useState(String(now.getMonth() + 1))
   const [data, setData] = useState<VencimentoResponse[]>([])
   const [loading, setLoading] = useState(false)
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(data)
 
   async function consultar() {
     setLoading(true)
     try {
       const result = await prestacoesService.vencimentosMes(Number(ano), Number(mes))
       setData(result)
+      resetPage()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('common.loadError'))
     } finally {
@@ -821,7 +829,7 @@ function VencimentosTab({ t }: { t: TFunction }) {
                 </TableCell>
               </TableRow>
             ) : (
-              data.map((v) => (
+              pageItems.map((v) => (
                 <TableRow key={v.pagamento_id} className={v.dias_atraso > 0 ? 'bg-destructive/5' : ''}>
                   <TableCell className="font-medium">{v.cliente_nome}</TableCell>
                   <TableCell>{v.produto_nome}</TableCell>
@@ -842,6 +850,7 @@ function VencimentosTab({ t }: { t: TFunction }) {
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
     </div>
   )
 }

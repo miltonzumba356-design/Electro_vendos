@@ -9,6 +9,7 @@ const pt = {
     balance: 'Saldo', paid: 'Pago', pending: 'Pendente', status: 'Estado', active: 'Ativo',
     inactive: 'Inativo', yes: 'Sim', no: 'Não', optional: 'Opcional', more: '+{{count}} mais...',
     client: 'Cliente', filter: 'Filtrar', loadError: 'Erro ao carregar dados', back: 'Voltar',
+    previousPage: 'Página anterior', nextPage: 'Página seguinte', pageIndicator: 'Página {{page}} de {{total}}',
   },
   nav: {
     dashboard: 'Dashboard', products: 'Produtos', clients: 'Clientes', sales: 'Vendas',

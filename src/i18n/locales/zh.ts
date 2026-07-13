@@ -9,6 +9,7 @@ const zh = {
     balance: '余额', paid: '已付', pending: '待处理', status: '状态', active: '启用',
     inactive: '停用', yes: '是', no: '否', optional: '可选', more: '+{{count}} 更多...',
     client: '客户', filter: '筛选', loadError: '加载数据出错', back: '返回',
+    previousPage: '上一页', nextPage: '下一页', pageIndicator: '第 {{page}} / {{total}} 页',
   },
   nav: {
     dashboard: '仪表板', products: '产品', clients: '客户', sales: '销售',

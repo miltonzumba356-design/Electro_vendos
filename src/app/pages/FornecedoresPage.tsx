@@ -35,6 +35,8 @@ import {
 import { Separator } from '@/app/components/ui/separator'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Combobox } from '@/app/components/ui/combobox'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -367,6 +369,7 @@ function FornecedoresTab({
     (f.telefone ?? '').includes(search) ||
     (f.nif ?? '').includes(search)
   )
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
 
   return (
     <div className="space-y-4">
@@ -376,7 +379,7 @@ function FornecedoresTab({
           <Input
             placeholder={t('suppliers.searchPlaceholder')}
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); resetPage() }}
             className="pl-9"
           />
         </div>
@@ -416,7 +419,7 @@ function FornecedoresTab({
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((f) => (
+              pageItems.map((f) => (
                 <TableRow key={f.id}>
                   <TableCell className="font-medium">{f.nome}</TableCell>
                   <TableCell>{f.telefone ?? '—'}</TableCell>
@@ -438,6 +441,7 @@ function FornecedoresTab({
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {novoOpen && (
         <NovoFornecedorDialog
@@ -478,6 +482,8 @@ function DividasFornecedorTab({
   const [pagarDivida, setPagarDivida] = useState<DividaFornecedorResponse | null>(null)
   const [novaCompraOpen, setNovaCompraOpen] = useState(false)
 
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(dividas)
+
   async function load() {
     setLoading(true)
     try {
@@ -497,7 +503,7 @@ function DividasFornecedorTab({
     }
   }
 
-  useEffect(() => { load() }, [statusFiltro, fornecedorFiltro])
+  useEffect(() => { load(); resetPage() }, [statusFiltro, fornecedorFiltro])
 
   function handlePago(updated: DividaFornecedorResponse) {
     setDividas((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
@@ -595,7 +601,7 @@ function DividasFornecedorTab({
                 </TableCell>
               </TableRow>
             ) : (
-              dividas.map((d) => (
+              pageItems.map((d) => (
                 <TableRow key={d.id}>
                   <TableCell className="font-medium">{d.fornecedor_nome ?? '—'}</TableCell>
                   <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
@@ -624,6 +630,7 @@ function DividasFornecedorTab({
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <PagarDividaFornecedorDialog
         divida={pagarDivida}

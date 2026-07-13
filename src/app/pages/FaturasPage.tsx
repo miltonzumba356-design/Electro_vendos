@@ -33,6 +33,8 @@ import {
 import { Separator } from '@/app/components/ui/separator'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Combobox } from '@/app/components/ui/combobox'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 import {
   Plus,
   Eye,
@@ -369,6 +371,8 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
 
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(faturas)
+
   async function load() {
     setLoading(true)
     try {
@@ -380,6 +384,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
       })
       setFaturas(res.faturas)
       setTotal(res.total)
+      resetPage()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('common.loadError'))
     } finally {
@@ -487,7 +492,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
                 </TableCell>
               </TableRow>
             ) : (
-              faturas.map((f) => (
+              pageItems.map((f) => (
                 <TableRow key={f.id}>
                   <TableCell className="font-mono font-medium">{f.numero}</TableCell>
                   <TableCell className="font-medium">{f.cliente_nome}</TableCell>
@@ -515,6 +520,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {novaOpen && (
         <NovaFaturaDialog

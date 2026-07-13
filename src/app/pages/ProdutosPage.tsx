@@ -32,6 +32,8 @@ import {
   AlertDialogTitle,
 } from '@/app/components/ui/alert-dialog'
 import { Skeleton } from '@/app/components/ui/skeleton'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 import { Plus, Pencil, Trash2, AlertTriangle, Search } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -174,6 +176,7 @@ export default function ProdutosPage() {
     p.nome.toLowerCase().includes(search.toLowerCase()) ||
     (p.codigo_barras ?? '').toLowerCase().includes(search.toLowerCase())
   )
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
 
   return (
     <div className="space-y-4">
@@ -196,7 +199,7 @@ export default function ProdutosPage() {
         <Input
           placeholder={t('products.searchPlaceholder')}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); resetPage() }}
           className="pl-9"
         />
       </div>
@@ -232,7 +235,7 @@ export default function ProdutosPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((p) => {
+              pageItems.map((p) => {
                 const lowStock = p.stock_atual <= p.stock_minimo
                 return (
                   <TableRow key={p.id}>
@@ -291,6 +294,7 @@ export default function ProdutosPage() {
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Create / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

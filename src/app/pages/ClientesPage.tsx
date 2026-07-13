@@ -20,6 +20,8 @@ import {
   DialogTitle,
 } from '@/app/components/ui/dialog'
 import { Skeleton } from '@/app/components/ui/skeleton'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 import { Plus, Pencil, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -126,6 +128,7 @@ export default function ClientesPage() {
     (c.email ?? '').toLowerCase().includes(search.toLowerCase()) ||
     (c.nif ?? '').includes(search)
   )
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
 
   return (
     <div className="space-y-4">
@@ -146,7 +149,7 @@ export default function ClientesPage() {
         <Input
           placeholder={t('clients.searchPlaceholder')}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); resetPage() }}
           className="pl-9"
         />
       </div>
@@ -181,7 +184,7 @@ export default function ClientesPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              filtered.map((c) => (
+              pageItems.map((c) => (
                 <TableRow key={c.id}>
                   <TableCell className="font-medium">{c.nome}</TableCell>
                   <TableCell>{c.telefone ?? '—'}</TableCell>
@@ -202,6 +205,7 @@ export default function ClientesPage() {
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Create / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

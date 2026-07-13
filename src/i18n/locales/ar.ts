@@ -9,6 +9,7 @@ const ar = {
     balance: 'الرصيد', paid: 'مدفوع', pending: 'معلق', status: 'الحالة', active: 'نشط',
     inactive: 'غير نشط', yes: 'نعم', no: 'لا', optional: 'اختياري', more: '+{{count}} المزيد...',
     client: 'العميل', filter: 'تصفية', loadError: 'خطأ في تحميل البيانات', back: 'رجوع',
+    previousPage: 'الصفحة السابقة', nextPage: 'الصفحة التالية', pageIndicator: 'صفحة {{page}} من {{total}}',
   },
   nav: {
     dashboard: 'لوحة التحكم', products: 'المنتجات', clients: 'العملاء', sales: 'المبيعات',

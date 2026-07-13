@@ -25,6 +25,8 @@ import {
 } from '@/app/components/ui/dialog'
 import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 import { Plus, Search, Eye, ArrowUpCircle, ArrowDownCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -114,6 +116,7 @@ export default function StockPage() {
       .filter((r) => r.produto.nome.toLowerCase().includes(search.toLowerCase()))
       .sort((a, b) => a.produto.nome.localeCompare(b.produto.nome))
   }, [produtos, movimentos, search])
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(resumoPorProduto)
 
   return (
     <div className="space-y-4">
@@ -135,7 +138,7 @@ export default function StockPage() {
         <Input
           placeholder={t('stock.searchPlaceholder')}
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => { setSearch(e.target.value); resetPage() }}
           className="pl-9"
         />
       </div>
@@ -169,7 +172,7 @@ export default function StockPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              resumoPorProduto.map(({ produto, entradas, saidas, movimentos: count }) => (
+              pageItems.map(({ produto, entradas, saidas, movimentos: count }) => (
                 <TableRow
                   key={produto.id}
                   className="cursor-pointer hover:bg-muted/40"
@@ -197,6 +200,7 @@ export default function StockPage() {
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       {/* Registar movimento dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

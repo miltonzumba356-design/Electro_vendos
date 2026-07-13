@@ -39,6 +39,8 @@ import {
   TableRow,
 } from '@/app/components/ui/table'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 
 const formatKz = (v: number) =>
   new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA' }).format(v)
@@ -240,6 +242,7 @@ function ExtratoTab({ t }: { t: TFunction }) {
         total_saidas:      res.total_saidas,
         saldo_periodo:     res.saldo_periodo,
       })
+      resetPage()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('cashflow.toasts.loadError'))
     } finally {
@@ -291,6 +294,7 @@ function ExtratoTab({ t }: { t: TFunction }) {
     })
     return lista
   }, [lancamentos, vendaClienteMap, t])
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(grupos)
 
   const ordemCategorias = [...CATEGORIAS_ENTRADA, ...CATEGORIAS_SAIDA]
 
@@ -386,7 +390,7 @@ function ExtratoTab({ t }: { t: TFunction }) {
                 </TableCell>
               </TableRow>
             ) : (
-              grupos.map((grupo) => {
+              pageItems.map((grupo) => {
                 const expandido = expandidos.has(grupo.chave)
                 const saldo = grupo.totalEntradas - grupo.totalSaidas
                 return (
@@ -462,6 +466,7 @@ function ExtratoTab({ t }: { t: TFunction }) {
           </TableBody>
         </Table>
       </div>
+      <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
 
       <NovoLancamentoDialog
         open={dialogOpen}
