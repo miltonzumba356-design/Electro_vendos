@@ -97,7 +97,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -109,7 +109,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-30 w-64 bg-card border-r flex flex-col transition-transform duration-200 md:relative md:translate-x-0',
+          'fixed inset-y-0 left-0 z-30 w-64 bg-card border-r flex flex-col transition-transform duration-200 md:relative md:translate-x-0 pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -171,7 +171,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Content area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile topbar */}
-        <header className="flex items-center gap-2 px-4 py-3 border-b bg-card md:hidden">
+        <header className="flex items-center gap-2 px-4 py-3 border-b bg-card md:hidden pt-[calc(0.75rem+env(safe-area-inset-top))]">
           <Button
             variant="ghost"
             size="icon"
@@ -186,7 +186,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-[calc(1rem+env(safe-area-inset-bottom))]">
           {children}
         </main>
       </div>
