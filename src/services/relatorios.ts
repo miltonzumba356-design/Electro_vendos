@@ -6,6 +6,7 @@ import type {
   RelatorioProdutoVendido,
   RelatorioVendaCliente,
   ProdutoStockBaixo,
+  ExtratoCliente,
 } from '@/types'
 
 export const relatoriosService = {
@@ -27,4 +28,7 @@ export const relatoriosService = {
 
   stockBaixo: () =>
     api.get<ProdutoStockBaixo[]>('/relatorios/stock/baixo'),
+
+  extratoCliente: (clienteId: string) =>
+    api.get<ExtratoCliente>(`/relatorios/clientes/${clienteId}/extrato`),
 }

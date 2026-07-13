@@ -13,7 +13,7 @@ const ar = {
   },
   nav: {
     dashboard: 'لوحة التحكم', products: 'المنتجات', clients: 'العملاء', sales: 'المبيعات',
-    invoices: 'الفواتير', deliveryNotes: 'إشعارات التسليم', suppliers: 'الموردون', stock: 'المخزون', users: 'المستخدمون',
+    invoices: 'الفواتير', suppliers: 'الموردون', stock: 'المخزون', users: 'المستخدمون',
     cashFlow: 'التدفق النقدي', reports: 'التقارير', logout: 'تسجيل الخروج',
   },
   login: {
@@ -173,18 +173,12 @@ const ar = {
     },
   },
   deliveryNotes: {
-    title: 'إشعارات التسليم', subtitle: 'مستند نقل يتم إنشاؤه من عملية بيع أو فاتورة موجودة',
-    sourceSale: 'عملية بيع', sourceInvoice: 'فاتورة',
-    selectSale: 'اختر عملية بيع...', selectInvoice: 'اختر فاتورة...',
-    emptySource: 'لم يتم العثور على شيء', itemsTitle: 'المنتجات المراد نقلها',
-    colDate: 'التاريخ', colProduct: 'المنتج', colDescription: 'الوصف', colQuantity: 'الكمية',
+    buttonLabel: 'إشعار التسليم', dialogTitle: 'إشعار التسليم',
+    colProduct: 'المنتج', colDescription: 'الوصف', colQuantity: 'الكمية',
     fieldDriver: 'السائق', driverPlaceholder: 'مثال: أحمد محمد',
     fieldPlate: 'رقم لوحة المركبة', platePlaceholder: 'مثال: LD-12-34-AB',
     fieldNotes: 'ملاحظات', notesPlaceholder: 'ملاحظات إضافية حول النقل',
     preview: 'معاينة', printOrDownload: 'طباعة / تنزيل',
-    toasts: {
-      loadError: 'خطأ في تحميل بيانات البيع/الفاتورة', selectSource: 'اختر عملية بيع أو فاتورة',
-    },
   },
   suppliers: {
     title: 'الموردون', subtitle: 'الموردون، المشتريات الآجلة والديون',
@@ -217,7 +211,7 @@ const ar = {
   },
   reports: {
     title: 'التقارير', subtitle: 'تحليلات وإحصاءات الأعمال',
-    tabPeriod: 'حسب الفترة', tabByClient: 'حسب العميل',
+    tabPeriod: 'حسب الفترة', tabByClient: 'حسب العميل', tabClientHistory: 'سجل العميل',
     tabLoyal: 'العملاء الأوفياء', tabInactive: 'غير نشط', tabBestSelling: 'الأكثر مبيعًا',
     tabCritical: 'مخزون حرج', cardPeriod: 'المبيعات حسب الفترة',
     cardByClient: 'المبيعات حسب العميل', cardLoyal: 'العملاء الأوفياء',
@@ -234,6 +228,11 @@ const ar = {
     totalIncome: 'إجمالي الإيرادات', totalPurchases: 'إجمالي المشتريات', colPhone: 'الهاتف',
     colEmail: 'البريد الإلكتروني', currentStock: 'المخزون الحالي', minStock: 'الحد الأدنى', missing: 'ناقص',
     consultCritical: 'استعلام عن المخزون الحرج', fillDates: 'أدخل التواريخ',
+    cardClientHistory: 'سجل العميل', selectClientPlaceholder: 'اختر عميلاً...',
+    clientSince: 'عميل منذ', sectionSales: 'المبيعات', sectionCreditDebts: 'ديون البيع بالائتمان',
+    sectionInstallments: 'الأقساط', emptySales: 'لا توجد مبيعات لهذا العميل',
+    emptyDebts: 'لا توجد ديون ائتمانية', emptyInstallments: 'لا توجد أقساط',
+    colType: 'النوع', totalOwed: 'إجمالي المستحق',
   },
   cashflow: {
     title: 'التدفق النقدي', subtitle: 'إدارة الدخل والمصروفات والرصيد النقدي',

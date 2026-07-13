@@ -14,7 +14,6 @@ import RelatoriosPage from '@/app/pages/RelatoriosPage'
 import FluxoCaixaPage from '@/app/pages/FluxoCaixaPage'
 import FaturasPage from '@/app/pages/FaturasPage'
 import FornecedoresPage from '@/app/pages/FornecedoresPage'
-import NotasEntregaPage from '@/app/pages/NotasEntregaPage'
 
 function ProtectedRoute({ children, gestorOnly = false }: {
   children: React.ReactNode
@@ -88,10 +87,6 @@ function AppRoutes() {
       <Route
         path="/fornecedores"
         element={<ProtectedRoute><FornecedoresPage /></ProtectedRoute>}
-      />
-      <Route
-        path="/notas-entrega"
-        element={<ProtectedRoute><NotasEntregaPage /></ProtectedRoute>}
       />
       <Route
         path="/relatorios"

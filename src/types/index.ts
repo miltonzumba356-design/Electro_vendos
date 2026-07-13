@@ -349,6 +349,36 @@ export interface RelatorioVendaCliente {
   media_por_venda: number
 }
 
+export interface DividaExtratoItem {
+  divida_id: string
+  produto_nome: string | null
+  data_compra: string
+  valor_total: number
+  valor_pago: number
+  saldo: number
+  status: string
+}
+
+export interface PrestacaoExtratoItem {
+  prestacao_id: string
+  produto_nome: string | null
+  data_compra: string
+  valor_total: number
+  valor_pago: number
+  saldo: number
+  situacao: string
+}
+
+export interface ExtratoCliente {
+  cliente_id: string
+  cliente_nome: string
+  telefone: string | null
+  nif: string | null
+  total_devido: number
+  dividas: DividaExtratoItem[]
+  prestacoes: PrestacaoExtratoItem[]
+}
+
 // ── Fluxo de Caixa ──────────────────────────────────────────────
 export interface LancamentoCreate {
   data_movimento: string

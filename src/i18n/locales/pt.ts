@@ -13,7 +13,7 @@ const pt = {
   },
   nav: {
     dashboard: 'Dashboard', products: 'Produtos', clients: 'Clientes', sales: 'Vendas',
-    invoices: 'Faturas', deliveryNotes: 'Notas de Entrega', suppliers: 'Fornecedores', stock: 'Stock', users: 'Utilizadores',
+    invoices: 'Faturas', suppliers: 'Fornecedores', stock: 'Stock', users: 'Utilizadores',
     cashFlow: 'Fluxo de Caixa', reports: 'Relatórios', logout: 'Terminar sessão',
   },
   login: {
@@ -179,18 +179,12 @@ const pt = {
     },
   },
   deliveryNotes: {
-    title: 'Notas de Entrega', subtitle: 'Documento de transporte gerado a partir de uma venda ou fatura',
-    sourceSale: 'Venda', sourceInvoice: 'Fatura',
-    selectSale: 'Selecionar venda...', selectInvoice: 'Selecionar fatura...',
-    emptySource: 'Nada encontrado', itemsTitle: 'Produtos a transportar',
-    colDate: 'Data', colProduct: 'Produto', colDescription: 'Descrição', colQuantity: 'Quantidade',
+    buttonLabel: 'Nota de Entrega', dialogTitle: 'Nota de Entrega',
+    colProduct: 'Produto', colDescription: 'Descrição', colQuantity: 'Quantidade',
     fieldDriver: 'Motorista/Camionista', driverPlaceholder: 'Ex: João Manuel',
     fieldPlate: 'Matrícula do veículo', platePlaceholder: 'Ex: LD-12-34-AB',
     fieldNotes: 'Observações', notesPlaceholder: 'Notas adicionais sobre o transporte',
     preview: 'Pré-visualizar', printOrDownload: 'Imprimir / Baixar',
-    toasts: {
-      loadError: 'Erro ao carregar dados da venda/fatura', selectSource: 'Selecione uma venda ou fatura',
-    },
   },
   suppliers: {
     title: 'Fornecedores', subtitle: 'Fornecedores, compras a crédito e dívidas',
@@ -223,7 +217,7 @@ const pt = {
   },
   reports: {
     title: 'Relatórios', subtitle: 'Análises e estatísticas do negócio',
-    tabPeriod: 'Por Período', tabByClient: 'Por Cliente',
+    tabPeriod: 'Por Período', tabByClient: 'Por Cliente', tabClientHistory: 'Histórico do Cliente',
     tabLoyal: 'Clientes Fiéis', tabInactive: 'Inativos', tabBestSelling: 'Mais Vendidos',
     tabCritical: 'Stock Crítico', cardPeriod: 'Vendas por período',
     cardByClient: 'Vendas por cliente', cardLoyal: 'Clientes fiéis',
@@ -240,6 +234,11 @@ const pt = {
     totalIncome: 'Receita total', totalPurchases: 'Total compras', colPhone: 'Telefone',
     colEmail: 'Email', currentStock: 'Stock atual', minStock: 'Stock mínimo', missing: 'Em falta',
     consultCritical: 'Consultar stock crítico', fillDates: 'Preencha as datas',
+    cardClientHistory: 'Histórico do cliente', selectClientPlaceholder: 'Selecionar cliente...',
+    clientSince: 'Cliente desde', sectionSales: 'Vendas', sectionCreditDebts: 'Dívidas de Crédito',
+    sectionInstallments: 'Prestações', emptySales: 'Nenhuma venda encontrada para este cliente',
+    emptyDebts: 'Sem dívidas de crédito', emptyInstallments: 'Sem prestações',
+    colType: 'Tipo', totalOwed: 'Total em dívida',
   },
   cashflow: {
     title: 'Fluxo de Caixa', subtitle: 'Controlo de entradas, saídas e saldo do caixa',

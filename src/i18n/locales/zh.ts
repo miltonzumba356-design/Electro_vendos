@@ -13,7 +13,7 @@ const zh = {
   },
   nav: {
     dashboard: '仪表板', products: '产品', clients: '客户', sales: '销售',
-    invoices: '发票', deliveryNotes: '送货单', suppliers: '供应商', stock: '库存', users: '用户',
+    invoices: '发票', suppliers: '供应商', stock: '库存', users: '用户',
     cashFlow: '现金流', reports: '报告', logout: '退出登录',
   },
   login: {
@@ -172,18 +172,12 @@ const zh = {
     },
   },
   deliveryNotes: {
-    title: '送货单', subtitle: '根据已有的销售或发票生成的运输单据',
-    sourceSale: '销售', sourceInvoice: '发票',
-    selectSale: '选择销售...', selectInvoice: '选择发票...',
-    emptySource: '未找到', itemsTitle: '待运输产品',
-    colDate: '日期', colProduct: '产品', colDescription: '描述', colQuantity: '数量',
+    buttonLabel: '送货单', dialogTitle: '送货单',
+    colProduct: '产品', colDescription: '描述', colQuantity: '数量',
     fieldDriver: '司机', driverPlaceholder: '例如: 王先生',
     fieldPlate: '车牌号', platePlaceholder: '例如: LD-12-34-AB',
     fieldNotes: '备注', notesPlaceholder: '有关运输的其他说明',
     preview: '预览', printOrDownload: '打印/下载',
-    toasts: {
-      loadError: '加载销售/发票数据时出错', selectSource: '请选择销售或发票',
-    },
   },
   suppliers: {
     title: '供应商', subtitle: '供应商、赊购和欠款',
@@ -216,7 +210,7 @@ const zh = {
   },
   reports: {
     title: '报告', subtitle: '业务分析与统计',
-    tabPeriod: '按期间', tabByClient: '按客户',
+    tabPeriod: '按期间', tabByClient: '按客户', tabClientHistory: '客户历史',
     tabLoyal: '忠实客户', tabInactive: '不活跃', tabBestSelling: '畅销产品',
     tabCritical: '危急库存', cardPeriod: '按期间销售',
     cardByClient: '按客户销售', cardLoyal: '忠实客户',
@@ -233,6 +227,11 @@ const zh = {
     totalIncome: '总收入', totalPurchases: '购买总量', colPhone: '电话',
     colEmail: '电子邮件', currentStock: '当前库存', minStock: '最低库存', missing: '缺货',
     consultCritical: '查询危急库存', fillDates: '请填写日期',
+    cardClientHistory: '客户历史', selectClientPlaceholder: '选择客户...',
+    clientSince: '客户自', sectionSales: '销售', sectionCreditDebts: '赊销欠款',
+    sectionInstallments: '分期付款', emptySales: '未找到该客户的销售记录',
+    emptyDebts: '没有赊销欠款', emptyInstallments: '没有分期付款',
+    colType: '类型', totalOwed: '欠款总额',
   },
   cashflow: {
     title: '现金流', subtitle: '收入、支出和现金余额管理',

@@ -40,10 +40,12 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X } from 'lucide-react'
+import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp } from '@/lib/recibo'
+import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
+import type { NotaEntregaOrigem } from '@/app/components/NotaEntregaDialog'
 import PrestacoesPage from '@/app/pages/PrestacoesPage'
 
 function formatKz(value: number) {
@@ -70,6 +72,7 @@ function VendasTab({ t }: { t: TFunction }) {
   const [novaVendaOpen, setNovaVendaOpen] = useState(false)
   const [detalhesVenda, setDetalhesVenda] = useState<VendaResponse | null>(null)
   const [vendaConcluida, setVendaConcluida] = useState<{ venda: VendaResponse; telefone: string | null } | null>(null)
+  const [notaEntregaOrigem, setNotaEntregaOrigem] = useState<NotaEntregaOrigem | null>(null)
 
   const [clienteMode, setClienteMode] = useState<'existente' | 'novo' | 'nenhum'>('nenhum')
   const [clienteId, setClienteId] = useState('')
@@ -566,18 +569,36 @@ function VendasTab({ t }: { t: TFunction }) {
             <div className="flex items-center justify-between pr-6">
               <DialogTitle>{t('sales.detailsTitle')}</DialogTitle>
               {detalhesVenda && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 shrink-0"
-                  onClick={() => imprimirVenda(
-                    detalhesVenda,
-                    clientes.find((c) => c.id === detalhesVenda.cliente_id)?.nif
-                  )}
-                >
-                  <Printer className="size-4" />
-                  {t('sales.printReceipt')}
-                </Button>
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setNotaEntregaOrigem({
+                      tipo: 'venda',
+                      ref: detalhesVenda.id.slice(0, 8).toUpperCase(),
+                      clienteNome: detalhesVenda.cliente_nome,
+                      clienteNif: clientes.find((c) => c.id === detalhesVenda.cliente_id)?.nif ?? null,
+                      data: detalhesVenda.criado_em,
+                      itens: detalhesVenda.itens.map((i) => ({ produto_nome: i.produto_nome, quantidade: i.quantidade })),
+                    })}
+                  >
+                    <FileSignature className="size-4" />
+                    {t('deliveryNotes.buttonLabel')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => imprimirVenda(
+                      detalhesVenda,
+                      clientes.find((c) => c.id === detalhesVenda.cliente_id)?.nif
+                    )}
+                  >
+                    <Printer className="size-4" />
+                    {t('sales.printReceipt')}
+                  </Button>
+                </div>
               )}
             </div>
           </DialogHeader>
@@ -644,6 +665,8 @@ function VendasTab({ t }: { t: TFunction }) {
           )}
         </DialogContent>
       </Dialog>
+
+      <NotaEntregaDialog origem={notaEntregaOrigem} onClose={() => setNotaEntregaOrigem(null)} t={t} />
     </div>
   )
 }

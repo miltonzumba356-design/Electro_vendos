@@ -35,6 +35,8 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
+import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
+import type { NotaEntregaOrigem } from '@/app/components/NotaEntregaDialog'
 import {
   Plus,
   Eye,
@@ -42,6 +44,7 @@ import {
   Trash2,
   RefreshCw,
   FileText,
+  FileSignature,
   TrendingUp,
   Users,
   DollarSign,
@@ -66,10 +69,11 @@ function statusBadge(cancelada_em: string | null) {
 
 /* ── Detalhe de fatura ──────────────────────────────────────── */
 function FaturaDetalheDialog({
-  fatura, onCancelar, onClose, t,
+  fatura, onCancelar, onNotaEntrega, onClose, t,
 }: {
   fatura: FaturaResponse | null
   onCancelar: (id: string) => void
+  onNotaEntrega: (fatura: FaturaResponse) => void
   onClose: () => void
   t: TFunction
 }) {
@@ -78,7 +82,13 @@ function FaturaDetalheDialog({
     <Dialog open={!!fatura} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t('invoices.detailTitle')} #{fatura.numero}</DialogTitle>
+          <div className="flex items-center justify-between pr-6">
+            <DialogTitle>{t('invoices.detailTitle')} #{fatura.numero}</DialogTitle>
+            <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => onNotaEntrega(fatura)}>
+              <FileSignature className="size-4" />
+              {t('deliveryNotes.buttonLabel')}
+            </Button>
+          </div>
         </DialogHeader>
         <div className="space-y-4 pt-2">
           <div className="grid grid-cols-2 gap-3 text-sm">
@@ -366,6 +376,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
   const [novaOpen, setNovaOpen] = useState(false)
   const [detalheFatura, setDetalheFatura] = useState<FaturaResponse | null>(null)
   const [loadingDetalhe, setLoadingDetalhe] = useState(false)
+  const [notaEntregaOrigem, setNotaEntregaOrigem] = useState<NotaEntregaOrigem | null>(null)
 
   const [filtroCliente, setFiltroCliente] = useState('')
   const [dataInicio, setDataInicio] = useState('')
@@ -534,9 +545,19 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
       <FaturaDetalheDialog
         fatura={detalheFatura}
         onCancelar={handleCancelar}
+        onNotaEntrega={(f) => setNotaEntregaOrigem({
+          tipo: 'fatura',
+          ref: f.numero,
+          clienteNome: f.cliente_nome,
+          clienteNif: f.cliente_nif,
+          data: f.emitida_em,
+          itens: f.itens.map((i) => ({ produto_nome: i.produto_nome, quantidade: i.quantidade })),
+        })}
         onClose={() => setDetalheFatura(null)}
         t={t}
       />
+
+      <NotaEntregaDialog origem={notaEntregaOrigem} onClose={() => setNotaEntregaOrigem(null)} t={t} />
     </div>
   )
 }

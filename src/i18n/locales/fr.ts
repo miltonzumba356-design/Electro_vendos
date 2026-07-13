@@ -13,7 +13,7 @@ const fr = {
   },
   nav: {
     dashboard: 'Tableau de bord', products: 'Produits', clients: 'Clients', sales: 'Ventes',
-    invoices: 'Factures', deliveryNotes: 'Bons de Livraison', suppliers: 'Fournisseurs', stock: 'Stock', users: 'Utilisateurs',
+    invoices: 'Factures', suppliers: 'Fournisseurs', stock: 'Stock', users: 'Utilisateurs',
     cashFlow: 'Flux de Trésorerie', reports: 'Rapports', logout: 'Se déconnecter',
   },
   login: {
@@ -181,18 +181,12 @@ const fr = {
     },
   },
   deliveryNotes: {
-    title: 'Bons de Livraison', subtitle: 'Document de transport généré à partir d\'une vente ou facture',
-    sourceSale: 'Vente', sourceInvoice: 'Facture',
-    selectSale: 'Sélectionner une vente...', selectInvoice: 'Sélectionner une facture...',
-    emptySource: 'Aucun résultat', itemsTitle: 'Produits à transporter',
-    colDate: 'Date', colProduct: 'Produit', colDescription: 'Description', colQuantity: 'Quantité',
+    buttonLabel: 'Bon de Livraison', dialogTitle: 'Bon de Livraison',
+    colProduct: 'Produit', colDescription: 'Description', colQuantity: 'Quantité',
     fieldDriver: 'Chauffeur', driverPlaceholder: 'Ex: Jean Dupont',
     fieldPlate: 'Immatriculation du véhicule', platePlaceholder: 'Ex: LD-12-34-AB',
     fieldNotes: 'Observations', notesPlaceholder: 'Notes supplémentaires sur le transport',
     preview: 'Aperçu', printOrDownload: 'Imprimer / Télécharger',
-    toasts: {
-      loadError: 'Erreur de chargement des données de la vente/facture', selectSource: 'Sélectionnez une vente ou une facture',
-    },
   },
   suppliers: {
     title: 'Fournisseurs', subtitle: 'Fournisseurs, achats à crédit et dettes',
@@ -225,7 +219,7 @@ const fr = {
   },
   reports: {
     title: 'Rapports', subtitle: "Analyses et statistiques de l'entreprise",
-    tabPeriod: 'Par période', tabByClient: 'Par client',
+    tabPeriod: 'Par période', tabByClient: 'Par client', tabClientHistory: 'Historique du Client',
     tabLoyal: 'Clients fidèles', tabInactive: 'Inactifs', tabBestSelling: 'Meilleures ventes',
     tabCritical: 'Stock critique', cardPeriod: 'Ventes par période',
     cardByClient: 'Ventes par client', cardLoyal: 'Clients fidèles',
@@ -242,6 +236,11 @@ const fr = {
     totalIncome: 'Revenu total', totalPurchases: 'Total achats', colPhone: 'Téléphone',
     colEmail: 'Email', currentStock: 'Stock actuel', minStock: 'Stock min.', missing: 'Manquant',
     consultCritical: 'Consulter le stock critique', fillDates: 'Remplissez les dates',
+    cardClientHistory: 'Historique du client', selectClientPlaceholder: 'Sélectionner un client...',
+    clientSince: 'Client depuis', sectionSales: 'Ventes', sectionCreditDebts: 'Dettes à Crédit',
+    sectionInstallments: 'Échéances', emptySales: 'Aucune vente trouvée pour ce client',
+    emptyDebts: 'Aucune dette à crédit', emptyInstallments: 'Aucune échéance',
+    colType: 'Type', totalOwed: 'Total dû',
   },
   cashflow: {
     title: 'Flux de Trésorerie', subtitle: "Contrôle des entrées, sorties et solde de caisse",

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { relatoriosService } from '@/services/relatorios'
+import { clientesService } from '@/services/clientes'
+import { vendasService } from '@/services/vendas'
 import type {
   RelatorioVendasPeriodo,
   RelatorioClienteFiel,
@@ -9,6 +11,9 @@ import type {
   RelatorioProdutoVendido,
   RelatorioVendaCliente,
   ProdutoStockBaixo,
+  ClienteResponse,
+  VendaResponse,
+  ExtratoCliente,
 } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -16,6 +21,9 @@ import { Label } from '@/app/components/ui/label'
 import { Badge } from '@/app/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
+import { Combobox } from '@/app/components/ui/combobox'
+import { TablePagination } from '@/app/components/ui/table-pagination'
+import { usePagination } from '@/lib/usePagination'
 import {
   Table,
   TableBody,
@@ -378,6 +386,205 @@ function VendasPorCliente({ t }: { t: TFunction }) {
   )
 }
 
+/* ── Histórico do cliente ───────────────────────────────────── */
+function HistoricoClienteTab({ t }: { t: TFunction }) {
+  const [clientes, setClientes] = useState<ClienteResponse[]>([])
+  const [vendas, setVendas] = useState<VendaResponse[]>([])
+  const [clienteId, setClienteId] = useState('')
+  const [extrato, setExtrato] = useState<ExtratoCliente | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    Promise.all([
+      clientesService.listar().catch(() => []),
+      vendasService.listar().catch(() => []),
+    ]).then(([c, v]) => { setClientes(c); setVendas(v) })
+  }, [])
+
+  const clienteSelecionado = clientes.find((c) => c.id === clienteId) ?? null
+  const vendasCliente = vendas
+    .filter((v) => v.cliente_id === clienteId)
+    .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(vendasCliente)
+
+  async function handleSelecionar(id: string) {
+    setClienteId(id)
+    resetPage()
+    if (!id) { setExtrato(null); return }
+    setLoading(true)
+    try {
+      const res = await relatoriosService.extratoCliente(id)
+      setExtrato(res)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('common.loadError'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const clienteOptions = clientes.map((c) => ({ value: c.id, label: c.nome }))
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2 max-w-lg">
+        <Label>{t('common.client')}</Label>
+        <Combobox
+          options={clienteOptions}
+          value={clienteId}
+          onValueChange={handleSelecionar}
+          placeholder={t('reports.selectClientPlaceholder')}
+          searchPlaceholder={t('common.search')}
+          emptyText={t('clients.empty')}
+        />
+      </div>
+
+      {loading && <Skeleton className="h-32 w-full" />}
+
+      {clienteSelecionado && !loading && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard label={t('common.phone')} value={clienteSelecionado.telefone ?? '—'} />
+            <StatCard label={t('common.email')} value={clienteSelecionado.email ?? '—'} />
+            <StatCard label={t('clients.fieldNif')} value={clienteSelecionado.nif ?? '—'} />
+            <StatCard label={t('reports.clientSince')} value={format(new Date(clienteSelecionado.criado_em), 'dd/MM/yyyy')} />
+          </div>
+          {clienteSelecionado.endereco && (
+            <p className="text-sm text-muted-foreground">{t('common.address')}: {clienteSelecionado.endereco}</p>
+          )}
+
+          {extrato && extrato.total_devido > 0 && (
+            <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3">
+              <p className="text-xs text-muted-foreground mb-1">{t('reports.totalOwed')}</p>
+              <p className="font-semibold text-destructive">{formatKz(extrato.total_devido)}</p>
+            </div>
+          )}
+
+          <div>
+            <h4 className="text-sm font-semibold mb-2 text-muted-foreground">{t('reports.sectionSales')}</h4>
+            {vendasCliente.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('reports.emptySales')}</p>
+            ) : (
+              <>
+                <div className="rounded-md border bg-card overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t('common.date')}</TableHead>
+                        <TableHead className="text-right">{t('sales.colItems')}</TableHead>
+                        <TableHead className="text-right">{t('common.total')}</TableHead>
+                        <TableHead>{t('reports.colType')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {pageItems.map((v) => (
+                        <TableRow key={v.id}>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {format(new Date(v.criado_em), 'dd/MM/yyyy')}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Badge variant="secondary">{v.itens.length}</Badge>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">{formatKz(v.total_final)}</TableCell>
+                          <TableCell>
+                            {v.credito ? (
+                              <Badge variant={v.credito_pago ? 'default' : 'destructive'}>
+                                {v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">{t('sales.cash')}</span>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <TablePagination page={page} totalPages={totalPages} onPageChange={setPage} />
+              </>
+            )}
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold mb-2 text-muted-foreground">{t('reports.sectionCreditDebts')}</h4>
+            {!extrato || extrato.dividas.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('reports.emptyDebts')}</p>
+            ) : (
+              <div className="rounded-md border bg-card overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('reports.colProduct')}</TableHead>
+                      <TableHead>{t('common.date')}</TableHead>
+                      <TableHead className="text-right">{t('common.total')}</TableHead>
+                      <TableHead className="text-right">{t('common.paid')}</TableHead>
+                      <TableHead className="text-right">{t('common.balance')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {extrato.dividas.map((d) => (
+                      <TableRow key={d.divida_id}>
+                        <TableCell className="font-medium">{d.produto_nome ?? '—'}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {format(new Date(d.data_compra), 'dd/MM/yyyy')}
+                        </TableCell>
+                        <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
+                        <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
+                        <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
+                        <TableCell>
+                          <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h4 className="text-sm font-semibold mb-2 text-muted-foreground">{t('reports.sectionInstallments')}</h4>
+            {!extrato || extrato.prestacoes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{t('reports.emptyInstallments')}</p>
+            ) : (
+              <div className="rounded-md border bg-card overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('reports.colProduct')}</TableHead>
+                      <TableHead>{t('common.date')}</TableHead>
+                      <TableHead className="text-right">{t('common.total')}</TableHead>
+                      <TableHead className="text-right">{t('common.paid')}</TableHead>
+                      <TableHead className="text-right">{t('common.balance')}</TableHead>
+                      <TableHead>{t('common.status')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {extrato.prestacoes.map((p) => (
+                      <TableRow key={p.prestacao_id}>
+                        <TableCell className="font-medium">{p.produto_nome ?? '—'}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {format(new Date(p.data_compra), 'dd/MM/yyyy')}
+                        </TableCell>
+                        <TableCell className="text-right">{formatKz(p.valor_total)}</TableCell>
+                        <TableCell className="text-right text-green-600">{formatKz(p.valor_pago)}</TableCell>
+                        <TableCell className="text-right font-medium text-destructive">{formatKz(p.saldo)}</TableCell>
+                        <TableCell>
+                          <Badge variant={p.situacao === 'PAGO' ? 'default' : 'secondary'}>{p.situacao}</Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Stock crítico ──────────────────────────────────────────── */
 function StockCritico({ t }: { t: TFunction }) {
   const [result, setResult] = useState<ProdutoStockBaixo[]>([])
@@ -447,6 +654,7 @@ export default function RelatoriosPage() {
         <TabsList className="flex-wrap h-auto gap-1">
           <TabsTrigger value="vendas-periodo">{t('reports.tabPeriod')}</TabsTrigger>
           <TabsTrigger value="vendas-por-cliente">{t('reports.tabByClient')}</TabsTrigger>
+          <TabsTrigger value="historico-cliente">{t('reports.tabClientHistory')}</TabsTrigger>
           <TabsTrigger value="clientes-fieis">{t('reports.tabLoyal')}</TabsTrigger>
           <TabsTrigger value="clientes-inativos">{t('reports.tabInactive')}</TabsTrigger>
           <TabsTrigger value="mais-vendidos">{t('reports.tabBestSelling')}</TabsTrigger>
@@ -461,6 +669,10 @@ export default function RelatoriosPage() {
           <TabsContent value="vendas-por-cliente">
             <Card><CardHeader><CardTitle className="text-base">{t('reports.cardByClient')}</CardTitle></CardHeader>
               <CardContent><VendasPorCliente t={t} /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="historico-cliente">
+            <Card><CardHeader><CardTitle className="text-base">{t('reports.cardClientHistory')}</CardTitle></CardHeader>
+              <CardContent><HistoricoClienteTab t={t} /></CardContent></Card>
           </TabsContent>
           <TabsContent value="clientes-fieis">
             <Card><CardHeader><CardTitle className="text-base">{t('reports.cardLoyal')}</CardTitle></CardHeader>

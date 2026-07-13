@@ -13,7 +13,7 @@ const en = {
   },
   nav: {
     dashboard: 'Dashboard', products: 'Products', clients: 'Clients', sales: 'Sales',
-    invoices: 'Invoices', deliveryNotes: 'Delivery Notes', suppliers: 'Suppliers', stock: 'Stock', users: 'Users',
+    invoices: 'Invoices', suppliers: 'Suppliers', stock: 'Stock', users: 'Users',
     cashFlow: 'Cash Flow', reports: 'Reports', logout: 'Sign out',
   },
   login: {
@@ -176,18 +176,12 @@ const en = {
     },
   },
   deliveryNotes: {
-    title: 'Delivery Notes', subtitle: 'Transport document generated from a sale or invoice',
-    sourceSale: 'Sale', sourceInvoice: 'Invoice',
-    selectSale: 'Select sale...', selectInvoice: 'Select invoice...',
-    emptySource: 'Nothing found', itemsTitle: 'Products to transport',
-    colDate: 'Date', colProduct: 'Product', colDescription: 'Description', colQuantity: 'Quantity',
+    buttonLabel: 'Delivery Note', dialogTitle: 'Delivery Note',
+    colProduct: 'Product', colDescription: 'Description', colQuantity: 'Quantity',
     fieldDriver: 'Driver', driverPlaceholder: 'E.g: John Smith',
     fieldPlate: 'Vehicle plate', platePlaceholder: 'E.g: LD-12-34-AB',
     fieldNotes: 'Notes', notesPlaceholder: 'Additional notes about the transport',
     preview: 'Preview', printOrDownload: 'Print / Download',
-    toasts: {
-      loadError: 'Error loading sale/invoice data', selectSource: 'Select a sale or invoice',
-    },
   },
   suppliers: {
     title: 'Suppliers', subtitle: 'Suppliers, credit purchases and debts',
@@ -220,7 +214,7 @@ const en = {
   },
   reports: {
     title: 'Reports', subtitle: 'Business analysis and statistics',
-    tabPeriod: 'By Period', tabByClient: 'By Client',
+    tabPeriod: 'By Period', tabByClient: 'By Client', tabClientHistory: 'Client History',
     tabLoyal: 'Loyal Clients', tabInactive: 'Inactive', tabBestSelling: 'Best Selling',
     tabCritical: 'Critical Stock', cardPeriod: 'Sales by period',
     cardByClient: 'Sales by client', cardLoyal: 'Loyal clients',
@@ -237,6 +231,11 @@ const en = {
     totalIncome: 'Total income', totalPurchases: 'Total purchases', colPhone: 'Phone',
     colEmail: 'Email', currentStock: 'Current stock', minStock: 'Min stock', missing: 'Missing',
     consultCritical: 'Consult critical stock', fillDates: 'Fill in the dates',
+    cardClientHistory: 'Client history', selectClientPlaceholder: 'Select client...',
+    clientSince: 'Client since', sectionSales: 'Sales', sectionCreditDebts: 'Credit Debts',
+    sectionInstallments: 'Installments', emptySales: 'No sales found for this client',
+    emptyDebts: 'No credit debts', emptyInstallments: 'No installments',
+    colType: 'Type', totalOwed: 'Total owed',
   },
   cashflow: {
     title: 'Cash Flow', subtitle: 'Control of income, expenses and cash balance',
