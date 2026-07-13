@@ -25,6 +25,7 @@ import {
   Globe,
   FileText,
   Truck,
+  FileSignature,
 } from 'lucide-react'
 import vendosLogo from '@/assets/vendos-logo.png'
 import { cn } from '@/app/components/ui/utils'
@@ -38,6 +39,7 @@ const navDefs = [
   { to: '/clientes',     key: 'clients',      icon: Users,           gestorOnly: false },
   { to: '/vendas',       key: 'sales',        icon: ShoppingCart,    gestorOnly: false },
   { to: '/faturas',      key: 'invoices',     icon: FileText,        gestorOnly: false },
+  { to: '/notas-entrega', key: 'deliveryNotes', icon: FileSignature, gestorOnly: false },
   { to: '/fornecedores', key: 'suppliers',    icon: Truck,           gestorOnly: false },
   { to: '/stock',        key: 'stock',        icon: Warehouse,       gestorOnly: true  },
   { to: '/utilizadores', key: 'users',        icon: UsersRound,      gestorOnly: true  },

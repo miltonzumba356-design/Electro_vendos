@@ -13,7 +13,7 @@ const zh = {
   },
   nav: {
     dashboard: '仪表板', products: '产品', clients: '客户', sales: '销售',
-    invoices: '发票', suppliers: '供应商', stock: '库存', users: '用户',
+    invoices: '发票', deliveryNotes: '送货单', suppliers: '供应商', stock: '库存', users: '用户',
     cashFlow: '现金流', reports: '报告', logout: '退出登录',
   },
   login: {
@@ -169,6 +169,20 @@ const zh = {
       created: '发票开具成功', createError: '开具发票时出错',
       cancelled: '发票作废成功', cancelError: '作废发票时出错',
       selectClient: '请选择客户', invalidItems: '请正确填写所有项目',
+    },
+  },
+  deliveryNotes: {
+    title: '送货单', subtitle: '根据已有的销售或发票生成的运输单据',
+    sourceSale: '销售', sourceInvoice: '发票',
+    selectSale: '选择销售...', selectInvoice: '选择发票...',
+    emptySource: '未找到', itemsTitle: '待运输产品',
+    colDate: '日期', colProduct: '产品', colDescription: '描述', colQuantity: '数量',
+    fieldDriver: '司机', driverPlaceholder: '例如: 王先生',
+    fieldPlate: '车牌号', platePlaceholder: '例如: LD-12-34-AB',
+    fieldNotes: '备注', notesPlaceholder: '有关运输的其他说明',
+    preview: '预览', printOrDownload: '打印/下载',
+    toasts: {
+      loadError: '加载销售/发票数据时出错', selectSource: '请选择销售或发票',
     },
   },
   suppliers: {

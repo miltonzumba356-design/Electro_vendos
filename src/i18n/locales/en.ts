@@ -13,7 +13,7 @@ const en = {
   },
   nav: {
     dashboard: 'Dashboard', products: 'Products', clients: 'Clients', sales: 'Sales',
-    invoices: 'Invoices', suppliers: 'Suppliers', stock: 'Stock', users: 'Users',
+    invoices: 'Invoices', deliveryNotes: 'Delivery Notes', suppliers: 'Suppliers', stock: 'Stock', users: 'Users',
     cashFlow: 'Cash Flow', reports: 'Reports', logout: 'Sign out',
   },
   login: {
@@ -173,6 +173,20 @@ const en = {
       created: 'Invoice issued successfully', createError: 'Error issuing invoice',
       cancelled: 'Invoice cancelled successfully', cancelError: 'Error cancelling invoice',
       selectClient: 'Select a client', invalidItems: 'Fill in all items correctly',
+    },
+  },
+  deliveryNotes: {
+    title: 'Delivery Notes', subtitle: 'Transport document generated from a sale or invoice',
+    sourceSale: 'Sale', sourceInvoice: 'Invoice',
+    selectSale: 'Select sale...', selectInvoice: 'Select invoice...',
+    emptySource: 'Nothing found', itemsTitle: 'Products to transport',
+    colDate: 'Date', colProduct: 'Product', colDescription: 'Description', colQuantity: 'Quantity',
+    fieldDriver: 'Driver', driverPlaceholder: 'E.g: John Smith',
+    fieldPlate: 'Vehicle plate', platePlaceholder: 'E.g: LD-12-34-AB',
+    fieldNotes: 'Notes', notesPlaceholder: 'Additional notes about the transport',
+    preview: 'Preview', printOrDownload: 'Print / Download',
+    toasts: {
+      loadError: 'Error loading sale/invoice data', selectSource: 'Select a sale or invoice',
     },
   },
   suppliers: {

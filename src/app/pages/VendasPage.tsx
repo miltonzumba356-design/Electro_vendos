@@ -522,7 +522,10 @@ function VendasTab({ t }: { t: TFunction }) {
                 <Button
                   variant="outline"
                   className="justify-start gap-2"
-                  onClick={() => visualizarVenda(vendaConcluida.venda)}
+                  onClick={() => visualizarVenda(
+                    vendaConcluida.venda,
+                    clientes.find((c) => c.id === vendaConcluida.venda.cliente_id)?.nif
+                  )}
                 >
                   <Eye className="size-4" />
                   {t('sales.preview')}
@@ -530,7 +533,10 @@ function VendasTab({ t }: { t: TFunction }) {
                 <Button
                   variant="outline"
                   className="justify-start gap-2"
-                  onClick={() => imprimirVenda(vendaConcluida.venda)}
+                  onClick={() => imprimirVenda(
+                    vendaConcluida.venda,
+                    clientes.find((c) => c.id === vendaConcluida.venda.cliente_id)?.nif
+                  )}
                 >
                   <Printer className="size-4" />
                   {t('sales.printReceipt')}
@@ -560,7 +566,15 @@ function VendasTab({ t }: { t: TFunction }) {
             <div className="flex items-center justify-between pr-6">
               <DialogTitle>{t('sales.detailsTitle')}</DialogTitle>
               {detalhesVenda && (
-                <Button variant="outline" size="sm" className="gap-2 shrink-0" onClick={() => imprimirVenda(detalhesVenda)}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 shrink-0"
+                  onClick={() => imprimirVenda(
+                    detalhesVenda,
+                    clientes.find((c) => c.id === detalhesVenda.cliente_id)?.nif
+                  )}
+                >
                   <Printer className="size-4" />
                   {t('sales.printReceipt')}
                 </Button>

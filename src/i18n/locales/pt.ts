@@ -13,7 +13,7 @@ const pt = {
   },
   nav: {
     dashboard: 'Dashboard', products: 'Produtos', clients: 'Clientes', sales: 'Vendas',
-    invoices: 'Faturas', suppliers: 'Fornecedores', stock: 'Stock', users: 'Utilizadores',
+    invoices: 'Faturas', deliveryNotes: 'Notas de Entrega', suppliers: 'Fornecedores', stock: 'Stock', users: 'Utilizadores',
     cashFlow: 'Fluxo de Caixa', reports: 'Relatórios', logout: 'Terminar sessão',
   },
   login: {
@@ -176,6 +176,20 @@ const pt = {
       created: 'Fatura emitida com sucesso', createError: 'Erro ao emitir fatura',
       cancelled: 'Fatura cancelada com sucesso', cancelError: 'Erro ao cancelar fatura',
       selectClient: 'Selecione um cliente', invalidItems: 'Preencha todos os itens correctamente',
+    },
+  },
+  deliveryNotes: {
+    title: 'Notas de Entrega', subtitle: 'Documento de transporte gerado a partir de uma venda ou fatura',
+    sourceSale: 'Venda', sourceInvoice: 'Fatura',
+    selectSale: 'Selecionar venda...', selectInvoice: 'Selecionar fatura...',
+    emptySource: 'Nada encontrado', itemsTitle: 'Produtos a transportar',
+    colDate: 'Data', colProduct: 'Produto', colDescription: 'Descrição', colQuantity: 'Quantidade',
+    fieldDriver: 'Motorista/Camionista', driverPlaceholder: 'Ex: João Manuel',
+    fieldPlate: 'Matrícula do veículo', platePlaceholder: 'Ex: LD-12-34-AB',
+    fieldNotes: 'Observações', notesPlaceholder: 'Notas adicionais sobre o transporte',
+    preview: 'Pré-visualizar', printOrDownload: 'Imprimir / Baixar',
+    toasts: {
+      loadError: 'Erro ao carregar dados da venda/fatura', selectSource: 'Selecione uma venda ou fatura',
     },
   },
   suppliers: {

@@ -13,7 +13,7 @@ const ar = {
   },
   nav: {
     dashboard: 'لوحة التحكم', products: 'المنتجات', clients: 'العملاء', sales: 'المبيعات',
-    invoices: 'الفواتير', suppliers: 'الموردون', stock: 'المخزون', users: 'المستخدمون',
+    invoices: 'الفواتير', deliveryNotes: 'إشعارات التسليم', suppliers: 'الموردون', stock: 'المخزون', users: 'المستخدمون',
     cashFlow: 'التدفق النقدي', reports: 'التقارير', logout: 'تسجيل الخروج',
   },
   login: {
@@ -170,6 +170,20 @@ const ar = {
       created: 'تم إصدار الفاتورة بنجاح', createError: 'خطأ في إصدار الفاتورة',
       cancelled: 'تم إلغاء الفاتورة بنجاح', cancelError: 'خطأ في إلغاء الفاتورة',
       selectClient: 'اختر عميلًا', invalidItems: 'يرجى ملء جميع العناصر بشكل صحيح',
+    },
+  },
+  deliveryNotes: {
+    title: 'إشعارات التسليم', subtitle: 'مستند نقل يتم إنشاؤه من عملية بيع أو فاتورة موجودة',
+    sourceSale: 'عملية بيع', sourceInvoice: 'فاتورة',
+    selectSale: 'اختر عملية بيع...', selectInvoice: 'اختر فاتورة...',
+    emptySource: 'لم يتم العثور على شيء', itemsTitle: 'المنتجات المراد نقلها',
+    colDate: 'التاريخ', colProduct: 'المنتج', colDescription: 'الوصف', colQuantity: 'الكمية',
+    fieldDriver: 'السائق', driverPlaceholder: 'مثال: أحمد محمد',
+    fieldPlate: 'رقم لوحة المركبة', platePlaceholder: 'مثال: LD-12-34-AB',
+    fieldNotes: 'ملاحظات', notesPlaceholder: 'ملاحظات إضافية حول النقل',
+    preview: 'معاينة', printOrDownload: 'طباعة / تنزيل',
+    toasts: {
+      loadError: 'خطأ في تحميل بيانات البيع/الفاتورة', selectSource: 'اختر عملية بيع أو فاتورة',
     },
   },
   suppliers: {

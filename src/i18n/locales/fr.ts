@@ -13,7 +13,7 @@ const fr = {
   },
   nav: {
     dashboard: 'Tableau de bord', products: 'Produits', clients: 'Clients', sales: 'Ventes',
-    invoices: 'Factures', suppliers: 'Fournisseurs', stock: 'Stock', users: 'Utilisateurs',
+    invoices: 'Factures', deliveryNotes: 'Bons de Livraison', suppliers: 'Fournisseurs', stock: 'Stock', users: 'Utilisateurs',
     cashFlow: 'Flux de Trésorerie', reports: 'Rapports', logout: 'Se déconnecter',
   },
   login: {
@@ -178,6 +178,20 @@ const fr = {
       created: 'Facture émise avec succès', createError: "Erreur lors de l'émission de la facture",
       cancelled: 'Facture annulée avec succès', cancelError: "Erreur lors de l'annulation",
       selectClient: 'Sélectionnez un client', invalidItems: 'Remplissez correctement tous les articles',
+    },
+  },
+  deliveryNotes: {
+    title: 'Bons de Livraison', subtitle: 'Document de transport généré à partir d\'une vente ou facture',
+    sourceSale: 'Vente', sourceInvoice: 'Facture',
+    selectSale: 'Sélectionner une vente...', selectInvoice: 'Sélectionner une facture...',
+    emptySource: 'Aucun résultat', itemsTitle: 'Produits à transporter',
+    colDate: 'Date', colProduct: 'Produit', colDescription: 'Description', colQuantity: 'Quantité',
+    fieldDriver: 'Chauffeur', driverPlaceholder: 'Ex: Jean Dupont',
+    fieldPlate: 'Immatriculation du véhicule', platePlaceholder: 'Ex: LD-12-34-AB',
+    fieldNotes: 'Observations', notesPlaceholder: 'Notes supplémentaires sur le transport',
+    preview: 'Aperçu', printOrDownload: 'Imprimer / Télécharger',
+    toasts: {
+      loadError: 'Erreur de chargement des données de la vente/facture', selectSource: 'Sélectionnez une vente ou une facture',
     },
   },
   suppliers: {
