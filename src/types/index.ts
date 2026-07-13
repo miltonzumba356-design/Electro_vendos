@@ -254,6 +254,54 @@ export interface TotalDividasResponse {
   total_devido: number
 }
 
+// ── Fornecedores ────────────────────────────────────────────────
+export interface FornecedorCreate {
+  nome: string
+  telefone?: string | null
+  nif?: string | null
+  endereco?: string | null
+}
+
+export interface FornecedorResponse {
+  id: string
+  nome: string
+  telefone: string | null
+  nif: string | null
+  endereco: string | null
+  criado_em: string
+}
+
+export interface CompraFornecedorCreate {
+  produto_id: string
+  quantidade: number
+  preco_unitario: number
+}
+
+export interface DividaFornecedorResponse {
+  id: string
+  fornecedor_id: string
+  fornecedor_nome: string | null
+  produto_id: string | null
+  produto_nome: string | null
+  quantidade: number | null
+  valor_total: number
+  valor_pago: number
+  saldo: number
+  status: string
+  criado_em: string
+  pago_em: string | null
+}
+
+export interface PagarDividaFornecedorRequest {
+  divida_id: string
+  valor: number
+}
+
+export interface TotalDividasFornecedorResponse {
+  quantidade_dividas: number
+  total_devido: number
+}
+
 // ── Relatórios ──────────────────────────────────────────────────
 export interface RelatorioVendasPeriodo {
   data_inicio: string

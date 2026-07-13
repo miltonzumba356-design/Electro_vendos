@@ -1072,6 +1072,58 @@
         }
       }
     },
+    "/relatorios/clientes/{cliente_id}/extrato": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Extrato de dívidas e compras a crédito do cliente",
+        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve.",
+        "operationId": "extrato_cliente_relatorios_clientes__cliente_id__extrato_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cliente_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cliente Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtratoCliente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/relatorios/produtos/mais-vendidos": {
       "get": {
         "tags": [
@@ -1475,6 +1527,457 @@
           },
           "404": {
             "description": "Dívida não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores": {
+      "post": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Registar fornecedor (Gestor)",
+        "operationId": "criar_fornecedor_fornecedores_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FornecedorCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FornecedorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Listar fornecedores",
+        "operationId": "listar_fornecedores_fornecedores_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FornecedorResponse"
+                  },
+                  "title": "Response Listar Fornecedores Fornecedores Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/dividas/total": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Total em dívida a fornecedores",
+        "operationId": "total_dividas_fornecedores_dividas_total_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotalDividasFornecedorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/fornecedores/dividas": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Listar dívidas a fornecedores",
+        "operationId": "listar_dividas_fornecedores_dividas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fornecedor Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(DIVIDA|PAGA)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DividaFornecedorResponse"
+                  },
+                  "title": "Response Listar Dividas Fornecedores Dividas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/dividas/{divida_id}": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Buscar dívida a fornecedor por ID",
+        "operationId": "buscar_divida_fornecedores_dividas__divida_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "divida_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Divida Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaFornecedorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dívida não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/dividas/pagar": {
+      "post": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Pagar dívida a fornecedor (Gestor)",
+        "description": "Regista um pagamento à dívida do fornecedor (divida_id vai no corpo do pedido). Aceita pagamento parcial ou total. Não gera nenhum lançamento no fluxo de caixa.",
+        "operationId": "pagar_divida_fornecedores_dividas_pagar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagarDividaFornecedorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Pagamento registado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaFornecedorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dívida já está paga ou valor excede saldo"
+          },
+          "404": {
+            "description": "Dívida não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/fornecedores/{fornecedor_id}": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Buscar fornecedor por ID",
+        "operationId": "buscar_fornecedor_fornecedores__fornecedor_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fornecedor Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FornecedorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/{fornecedor_id}/compras": {
+      "post": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Registar compra a crédito ao fornecedor (Gestor)",
+        "description": "Regista a compra de um produto a um fornecedor a crédito: aumenta o stock do produto imediatamente e cria a dívida ao fornecedor. Não mexe no fluxo de caixa — nem agora nem quando a dívida for paga.",
+        "operationId": "criar_compra_fornecedores__fornecedor_id__compras_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fornecedor Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompraFornecedorCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaFornecedorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor ou produto não encontrado"
           },
           "422": {
             "description": "Validation Error",
@@ -2993,6 +3496,36 @@
         "type": "object",
         "title": "ClienteUpdate"
       },
+      "CompraFornecedorCreate": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "description": "Produto comprado"
+          },
+          "quantidade": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Quantidade",
+            "examples": [50]
+          },
+          "preco_unitario": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Preco Unitario",
+            "description": "Preço de custo unitário (Kz)",
+            "examples": [1000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "quantidade",
+          "preco_unitario"
+        ],
+        "title": "CompraFornecedorCreate"
+      },
       "DividaCheckResponse": {
         "properties": {
           "tem_divida": {
@@ -3029,6 +3562,160 @@
           "tem_divida"
         ],
         "title": "DividaCheckResponse"
+      },
+      "DividaExtratoItem": {
+        "properties": {
+          "divida_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Divida Id"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "data_compra": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Compra"
+          },
+          "valor_total": {
+            "type": "number",
+            "title": "Valor Total"
+          },
+          "valor_pago": {
+            "type": "number",
+            "title": "Valor Pago"
+          },
+          "saldo": {
+            "type": "number",
+            "title": "Saldo"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "divida_id",
+          "data_compra",
+          "valor_total",
+          "valor_pago",
+          "saldo",
+          "status"
+        ],
+        "title": "DividaExtratoItem"
+      },
+      "DividaFornecedorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "fornecedor_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Fornecedor Id"
+          },
+          "fornecedor_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fornecedor Nome"
+          },
+          "produto_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "quantidade": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantidade"
+          },
+          "valor_total": {
+            "type": "number",
+            "title": "Valor Total"
+          },
+          "valor_pago": {
+            "type": "number",
+            "title": "Valor Pago"
+          },
+          "saldo": {
+            "type": "number",
+            "title": "Saldo",
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "pago_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pago Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "fornecedor_id",
+          "valor_total",
+          "valor_pago",
+          "status",
+          "criado_em"
+        ],
+        "title": "DividaFornecedorResponse"
       },
       "DividaResponse": {
         "properties": {
@@ -3121,6 +3808,95 @@
           "criado_em"
         ],
         "title": "DividaResponse"
+      },
+      "ExtratoCliente": {
+        "properties": {
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id"
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido"
+          },
+          "dividas": {
+            "items": {
+              "$ref": "#/components/schemas/DividaExtratoItem"
+            },
+            "type": "array",
+            "title": "Dividas"
+          },
+          "prestacoes": {
+            "items": {
+              "$ref": "#/components/schemas/PrestacaoExtratoItem"
+            },
+            "type": "array",
+            "title": "Prestacoes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_id",
+          "cliente_nome",
+          "total_devido"
+        ],
+        "title": "ExtratoCliente",
+        "example": {
+          "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+          "cliente_nome": "Carlos Filipe",
+          "dividas": [
+            {
+              "data_compra": "2026-07-01T10:00:00Z",
+              "divida_id": "c2f0129e-5bcf-4aa5-9ff5-a067067c9139",
+              "produto_nome": "Arroz 5kg",
+              "saldo": 15000,
+              "status": "DIVIDA",
+              "valor_pago": 10000,
+              "valor_total": 25000
+            }
+          ],
+          "nif": "123456789",
+          "prestacoes": [
+            {
+              "data_compra": "2026-06-01T00:00:00Z",
+              "prestacao_id": "0a5ef24e-7c3d-4a9c-bd73-0ba322add65e",
+              "produto_nome": "Fogão 4 bocas",
+              "saldo": 60000,
+              "situacao": "PARCIAL",
+              "valor_pago": 30000,
+              "valor_total": 90000
+            }
+          ],
+          "telefone": "923456789",
+          "total_devido": 75000
+        }
       },
       "FaturaCreate": {
         "properties": {
@@ -3397,6 +4173,120 @@
           "total_itens"
         ],
         "title": "FaturaResumida"
+      },
+      "FornecedorCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Nome",
+            "examples": [
+              "Distribuidora Central"
+            ]
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone",
+            "examples": [
+              "923456789"
+            ]
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "FornecedorCreate"
+      },
+      "FornecedorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "criado_em"
+        ],
+        "title": "FornecedorResponse"
       },
       "HTTPValidationError": {
         "properties": {
@@ -3958,6 +4848,28 @@
         ],
         "title": "PagamentoResponse"
       },
+      "PagarDividaFornecedorRequest": {
+        "properties": {
+          "divida_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Divida Id",
+            "description": "ID da dívida a pagar"
+          },
+          "valor": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Valor",
+            "description": "Valor a pagar ao fornecedor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "divida_id",
+          "valor"
+        ],
+        "title": "PagarDividaFornecedorRequest"
+      },
       "PagarDividaRequest": {
         "properties": {
           "valor": {
@@ -4126,6 +5038,57 @@
           "taxa_multa": 5,
           "valor_total": 150000
         }
+      },
+      "PrestacaoExtratoItem": {
+        "properties": {
+          "prestacao_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Prestacao Id"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "data_compra": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Compra"
+          },
+          "valor_total": {
+            "type": "number",
+            "title": "Valor Total"
+          },
+          "valor_pago": {
+            "type": "number",
+            "title": "Valor Pago"
+          },
+          "saldo": {
+            "type": "number",
+            "title": "Saldo"
+          },
+          "situacao": {
+            "type": "string",
+            "title": "Situacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prestacao_id",
+          "data_compra",
+          "valor_total",
+          "valor_pago",
+          "saldo",
+          "situacao"
+        ],
+        "title": "PrestacaoExtratoItem"
       },
       "PrestacaoResponse": {
         "properties": {
@@ -5195,6 +6158,24 @@
           "faturas"
         ],
         "title": "TopCliente"
+      },
+      "TotalDividasFornecedorResponse": {
+        "properties": {
+          "quantidade_dividas": {
+            "type": "integer",
+            "title": "Quantidade Dividas"
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade_dividas",
+          "total_devido"
+        ],
+        "title": "TotalDividasFornecedorResponse"
       },
       "TotalDividasResponse": {
         "properties": {

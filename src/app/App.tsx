@@ -13,6 +13,7 @@ import UtilizadoresPage from '@/app/pages/UtilizadoresPage'
 import RelatoriosPage from '@/app/pages/RelatoriosPage'
 import FluxoCaixaPage from '@/app/pages/FluxoCaixaPage'
 import FaturasPage from '@/app/pages/FaturasPage'
+import FornecedoresPage from '@/app/pages/FornecedoresPage'
 
 function ProtectedRoute({ children, gestorOnly = false }: {
   children: React.ReactNode
@@ -82,6 +83,10 @@ function AppRoutes() {
       <Route
         path="/faturas"
         element={<ProtectedRoute><FaturasPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/fornecedores"
+        element={<ProtectedRoute><FornecedoresPage /></ProtectedRoute>}
       />
       <Route
         path="/relatorios"
