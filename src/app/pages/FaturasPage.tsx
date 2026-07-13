@@ -97,10 +97,6 @@ function FaturaDetalheDialog({
               <p className="font-medium">{fatura.cliente_nome}</p>
             </div>
             <div>
-              <p className="text-muted-foreground">NIF</p>
-              <p>{fatura.cliente_nif || '—'}</p>
-            </div>
-            <div>
               <p className="text-muted-foreground">{t('invoices.colDate')}</p>
               <p>{format(new Date(fatura.emitida_em), 'dd/MM/yyyy HH:mm')}</p>
             </div>
@@ -549,7 +545,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
           tipo: 'fatura',
           ref: f.numero,
           clienteNome: f.cliente_nome,
-          clienteNif: f.cliente_nif,
+          clienteNif: null,
           data: f.emitida_em,
           itens: f.itens.map((i) => ({ produto_nome: i.produto_nome, quantidade: i.quantidade })),
         })}
