@@ -329,19 +329,19 @@ export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string |
   window.open(url, '_blank')
 }
 
-// Constrói o link wa.me com o extrato de transações de um fornecedor (compras
-// a crédito registadas). Sem número de telefone do fornecedor, o WhatsApp
-// mostra o seletor de contactos do utilizador.
-export function partilharExtratoFornecedorWhatsapp(
-  fornecedor: { nome: string; telefone?: string | null },
+// Monta o texto do extrato de um fornecedor (compras a crédito registadas)
+// para acompanhar a partilha via WhatsApp — usado junto com o PDF anexado
+// (ver partilharArquivoOuTexto em lib/share.ts).
+export function montarMensagemExtratoFornecedor(
+  fornecedor: { nome: string },
   dividas: DividaFornecedorResponse[],
   totais: { gasto: number; pago: number; devido: number }
-) {
+): string {
   const linhas = dividas.map((d) => {
     const moeda = d.moeda ?? 'AOA'
     return `• ${d.produto_nome ?? 'Compra'}${d.quantidade ? ` x${d.quantidade}` : ''} — ${fmtKz(d.valor_total)} ${moeda} (${d.status})`
   })
-  const mensagem = [
+  return [
     `*ELECTRO VENDOS* — Extrato de Fornecedor`,
     `Fornecedor: ${fornecedor.nome}`,
     '',
@@ -351,10 +351,6 @@ export function partilharExtratoFornecedorWhatsapp(
     `Total pago: ${fmtKz(totais.pago)}`,
     `Total em dívida: ${fmtKz(totais.devido)}`,
   ].join('\n')
-
-  const numero = fornecedor.telefone ? fornecedor.telefone.replace(/[^0-9]/g, '') : ''
-  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`
-  window.open(url, '_blank')
 }
 
 function gerarEntradaStockHtml(m: MovimentoResponse, comBotaoImprimir: boolean): string {

@@ -214,6 +214,7 @@ const en = {
       purchaseRegistered: 'Purchase registered successfully', purchaseError: 'Error registering purchase',
       invalidValue: 'Enter a valid value',
       paymentRegistered: 'Payment registered successfully', paymentError: 'Error registering payment',
+      pdfDownloadedAttachManually: 'PDF downloaded — attach it manually in the WhatsApp chat',
     },
   },
   reports: {

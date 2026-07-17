@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { useAuth } from '@/contexts/AuthContext'
@@ -40,20 +41,10 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { exportTablePdf, type PdfColumn } from '@/lib/pdf'
-import { partilharExtratoFornecedorWhatsapp } from '@/lib/recibo'
-import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown, MessageCircle } from 'lucide-react'
+import { exportTablePdf } from '@/lib/pdf'
+import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-
-function MiniStat({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
-  return (
-    <div className="bg-muted/30 rounded-md p-3">
-      <p className="text-xs text-muted-foreground mb-1">{label}</p>
-      <p className={`font-semibold text-sm ${danger ? 'text-destructive' : ''}`}>{value}</p>
-    </div>
-  )
-}
 
 function formatKz(v: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -389,146 +380,6 @@ function PagarDividaFornecedorDialog({
               </Button>
             </div>
           </form>
-        )}
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-/* ── Extrato do fornecedor (transações, gasto, dívida, partilhar/PDF) ── */
-function FornecedorExtratoDialog({
-  fornecedor, onClose, t,
-}: {
-  fornecedor: FornecedorResponse | null
-  onClose: () => void
-  t: TFunction
-}) {
-  const [dividas, setDividas] = useState<DividaFornecedorResponse[]>([])
-  const [loading, setLoading] = useState(false)
-
-  useEffect(() => {
-    if (!fornecedor) { setDividas([]); return }
-    setLoading(true)
-    fornecedoresService.dividas.listar({ fornecedor_id: fornecedor.id })
-      .then(setDividas)
-      .catch(() => toast.error(t('common.loadError')))
-      .finally(() => setLoading(false))
-  }, [fornecedor])
-
-  const totalGasto = dividas.reduce((s, d) => s + d.valor_total, 0)
-  const totalPago = dividas.reduce((s, d) => s + d.valor_pago, 0)
-  const totalDevido = dividas.reduce((s, d) => s + d.saldo, 0)
-
-  const columns: PdfColumn[] = [
-    { header: t('suppliers.colProduct'), key: 'produto' },
-    { header: t('suppliers.colQuantity'), key: 'quantidade', align: 'right' },
-    { header: t('common.total'), key: 'total', align: 'right' },
-    { header: t('common.paid'), key: 'pago', align: 'right' },
-    { header: t('common.balance'), key: 'saldo', align: 'right' },
-    { header: t('suppliers.fieldCurrency'), key: 'moeda' },
-    { header: t('common.status'), key: 'status' },
-    { header: t('suppliers.colDate'), key: 'data' },
-  ]
-
-  function buildRows() {
-    return dividas.map((d) => ({
-      produto: d.produto_nome ?? '—', quantidade: d.quantidade ?? '—', total: formatMoeda(d.valor_total, d.moeda ?? 'AOA'),
-      pago: formatMoeda(d.valor_pago, d.moeda ?? 'AOA'), saldo: formatMoeda(d.saldo, d.moeda ?? 'AOA'),
-      moeda: d.moeda ?? 'AOA', status: d.status,
-      data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
-    }))
-  }
-
-  return (
-    <Dialog open={!!fornecedor} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{fornecedor?.nome}</DialogTitle>
-        </DialogHeader>
-        {fornecedor && (
-          <div className="space-y-4 pt-2">
-            {fornecedor.telefone && (
-              <p className="text-sm text-muted-foreground">{t('common.phone')}: {fornecedor.telefone}</p>
-            )}
-
-            {loading ? <Skeleton className="h-32 w-full" /> : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <MiniStat label={t('suppliers.totalSpent')} value={formatKz(totalGasto)} />
-                  <MiniStat label={t('common.paid')} value={formatKz(totalPago)} />
-                  <MiniStat label={t('suppliers.totalOwed')} value={formatKz(totalDevido)} danger={totalDevido > 0} />
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant="outline"
-                    className="gap-2"
-                    disabled={dividas.length === 0}
-                    onClick={() => exportTablePdf({
-                      title: t('suppliers.extratoTitle'),
-                      subtitle: fornecedor.nome,
-                      columns,
-                      rows: buildRows(),
-                      filename: `fornecedor-${fornecedor.nome}`,
-                    })}
-                  >
-                    <FileDown className="size-4" />
-                    {t('common.downloadPdf')}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-                    disabled={dividas.length === 0}
-                    onClick={() => partilharExtratoFornecedorWhatsapp(
-                      fornecedor, dividas, { gasto: totalGasto, pago: totalPago, devido: totalDevido }
-                    )}
-                  >
-                    <MessageCircle className="size-4" />
-                    {t('sales.shareWhatsapp')}
-                  </Button>
-                </div>
-
-                {dividas.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">{t('suppliers.debtEmpty')}</p>
-                ) : (
-                  <div className="rounded-md border overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>{t('suppliers.colProduct')}</TableHead>
-                          <TableHead className="text-right">{t('suppliers.colQuantity')}</TableHead>
-                          <TableHead className="text-right">{t('common.total')}</TableHead>
-                          <TableHead className="text-right">{t('common.paid')}</TableHead>
-                          <TableHead className="text-right">{t('common.balance')}</TableHead>
-                          <TableHead>{t('suppliers.fieldCurrency')}</TableHead>
-                          <TableHead>{t('common.status')}</TableHead>
-                          <TableHead>{t('suppliers.colDate')}</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {dividas.map((d) => (
-                          <TableRow key={d.id}>
-                            <TableCell className="font-medium">{d.produto_nome ?? '—'}</TableCell>
-                            <TableCell className="text-right">{d.quantidade ?? '—'}</TableCell>
-                            <TableCell className="text-right">{formatMoeda(d.valor_total, d.moeda ?? 'AOA')}</TableCell>
-                            <TableCell className="text-right text-green-600">{formatMoeda(d.valor_pago, d.moeda ?? 'AOA')}</TableCell>
-                            <TableCell className="text-right font-medium text-destructive">{formatMoeda(d.saldo, d.moeda ?? 'AOA')}</TableCell>
-                            <TableCell><Badge variant="outline">{d.moeda ?? 'AOA'}</Badge></TableCell>
-                            <TableCell>
-                              <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground text-sm">
-                              {format(new Date(d.criado_em), 'dd/MM/yyyy')}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
         )}
       </DialogContent>
     </Dialog>
@@ -918,10 +769,10 @@ function DividasFornecedorTab({
 export default function FornecedoresPage() {
   const { t } = useTranslation()
   const { isGestor } = useAuth()
+  const navigate = useNavigate()
   const [fornecedores, setFornecedores] = useState<FornecedorResponse[]>([])
   const [produtos, setProdutos] = useState<ProdutoResponse[]>([])
   const [loading, setLoading] = useState(true)
-  const [extratoFornecedor, setExtratoFornecedor] = useState<FornecedorResponse | null>(null)
 
   async function load() {
     setLoading(true)
@@ -959,7 +810,7 @@ export default function FornecedoresPage() {
               isGestor={isGestor}
               onCreated={(f) => setFornecedores((prev) => [f, ...prev])}
               onCompraSuccess={load}
-              onSelecionar={setExtratoFornecedor}
+              onSelecionar={(f) => navigate(`/fornecedores/${f.id}`)}
               t={t}
             />
           </TabsContent>
@@ -968,18 +819,12 @@ export default function FornecedoresPage() {
               fornecedores={fornecedores}
               produtos={produtos}
               isGestor={isGestor}
-              onSelecionar={setExtratoFornecedor}
+              onSelecionar={(f) => navigate(`/fornecedores/${f.id}`)}
               t={t}
             />
           </TabsContent>
         </div>
       </Tabs>
-
-      <FornecedorExtratoDialog
-        fornecedor={extratoFornecedor}
-        onClose={() => setExtratoFornecedor(null)}
-        t={t}
-      />
     </div>
   )
 }

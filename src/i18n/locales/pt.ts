@@ -217,6 +217,7 @@ const pt = {
       purchaseRegistered: 'Compra registada com sucesso', purchaseError: 'Erro ao registar compra',
       invalidValue: 'Introduza um valor válido',
       paymentRegistered: 'Pagamento registado com sucesso', paymentError: 'Erro ao registar pagamento',
+      pdfDownloadedAttachManually: 'PDF descarregado — anexa-o manualmente na conversa do WhatsApp',
     },
   },
   reports: {

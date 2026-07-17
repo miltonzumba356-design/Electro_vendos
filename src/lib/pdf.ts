@@ -39,9 +39,7 @@ function drawHeader(doc: jsPDF, title: string, subtitle?: string) {
   doc.setTextColor('#111111')
 }
 
-// Exporta uma tabela de dados (relatórios, listas) para PDF, com cabeçalho
-// de marca e paginação automática do jspdf-autotable.
-export function exportTablePdf({ title, subtitle, columns, rows, filename, totalsRow }: ExportTablePdfOptions) {
+function buildTableDoc({ title, subtitle, columns, rows, totalsRow }: Omit<ExportTablePdfOptions, 'filename'>): jsPDF {
   const landscape = columns.length > 5
   const doc = new jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'mm', format: 'a4' })
 
@@ -61,7 +59,20 @@ export function exportTablePdf({ title, subtitle, columns, rows, filename, total
     margin: { top: 28, left: 12, right: 12 },
   })
 
+  return doc
+}
+
+// Exporta uma tabela de dados (relatórios, listas) para PDF, com cabeçalho
+// de marca e paginação automática do jspdf-autotable.
+export function exportTablePdf({ filename, ...opts }: ExportTablePdfOptions) {
+  const doc = buildTableDoc(opts)
   doc.save(filename.endsWith('.pdf') ? filename : `${filename}.pdf`)
+}
+
+// Igual a exportTablePdf, mas devolve o PDF como Blob em vez de o descarregar
+// — usado para partilhar o ficheiro (ex.: Web Share API para o WhatsApp).
+export function getTablePdfBlob(opts: Omit<ExportTablePdfOptions, 'filename'>): Blob {
+  return buildTableDoc(opts).output('blob')
 }
 
 // Converte um documento HTML já renderizado (ex.: o popup de recibo/nota) em
