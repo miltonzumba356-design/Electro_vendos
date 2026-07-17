@@ -896,6 +896,18 @@ function LucroPorProduto({ t }: { t: TFunction }) {
 }
 
 /* ── Metas de receita e lucro ───────────────────────────────── */
+// O backend não tem parâmetro "periodo" — só data_inicio/data_fim. O
+// seletor de mês (YYYY-MM) é convertido aqui para o intervalo do mês inteiro.
+function periodoParaDatas(periodo: string): { data_inicio?: string; data_fim?: string } {
+  if (!periodo) return {}
+  const [anoStr, mesStr] = periodo.split('-')
+  const ano = Number(anoStr)
+  const mes = Number(mesStr)
+  const inicio = new Date(Date.UTC(ano, mes - 1, 1, 0, 0, 0))
+  const fim = new Date(Date.UTC(ano, mes, 0, 23, 59, 59))
+  return { data_inicio: inicio.toISOString(), data_fim: fim.toISOString() }
+}
+
 function MetasProgresso({ t }: { t: TFunction }) {
   const [result, setResult] = useState<RelatorioMetasProgresso | null>(null)
   const [loading, setLoading] = useState(false)
@@ -907,8 +919,10 @@ function MetasProgresso({ t }: { t: TFunction }) {
     e?.preventDefault()
     setLoading(true)
     try {
+      const { data_inicio, data_fim } = periodoParaDatas(periodo)
       const res = await relatoriosService.metasProgresso({
-        periodo: periodo || undefined,
+        data_inicio,
+        data_fim,
         nome: nome || undefined,
         limite: limite ? Number(limite) : undefined,
       })

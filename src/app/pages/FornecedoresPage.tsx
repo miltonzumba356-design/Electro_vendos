@@ -40,16 +40,36 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { exportTablePdf } from '@/lib/pdf'
-import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown } from 'lucide-react'
+import { exportTablePdf, type PdfColumn } from '@/lib/pdf'
+import { partilharExtratoFornecedorWhatsapp } from '@/lib/recibo'
+import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown, MessageCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+
+function MiniStat({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
+  return (
+    <div className="bg-muted/30 rounded-md p-3">
+      <p className="text-xs text-muted-foreground mb-1">{label}</p>
+      <p className={`font-semibold text-sm ${danger ? 'text-destructive' : ''}`}>{value}</p>
+    </div>
+  )
+}
 
 function formatKz(v: number) {
   return new Intl.NumberFormat('pt-AO', {
     style: 'currency',
     currency: 'AOA',
     maximumFractionDigits: 0,
+  }).format(v)
+}
+
+// Formata respeitando a moeda escolhida — o Kz (AOA) não usa casas decimais
+// (valores muito grandes), USD/EUR usam as 2 casas habituais.
+function formatMoeda(v: number, moeda: Moeda | string = 'AOA') {
+  return new Intl.NumberFormat('pt-AO', {
+    style: 'currency',
+    currency: moeda,
+    maximumFractionDigits: moeda === 'AOA' ? 0 : 2,
   }).format(v)
 }
 
@@ -272,7 +292,7 @@ function NovaCompraDialog({
           <Separator />
           <div className="flex justify-between font-bold text-base">
             <span>{t('common.total')}</span>
-            <span>{formatKz(total)}</span>
+            <span>{formatMoeda(total, moeda)}</span>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
@@ -336,7 +356,7 @@ function PagarDividaFornecedorDialog({
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <p className="text-sm text-muted-foreground">
               {divida.fornecedor_nome ?? '—'} · {t('common.balance')}{' '}
-              <span className="font-semibold text-foreground">{formatKz(divida.saldo)}</span>
+              <span className="font-semibold text-foreground">{formatMoeda(divida.saldo, divida.moeda ?? 'AOA')}</span>
             </p>
             <div className="space-y-2">
               <Label htmlFor="valor-divida-forn">{t('suppliers.fieldValue')} *</Label>
@@ -375,9 +395,149 @@ function PagarDividaFornecedorDialog({
   )
 }
 
+/* ── Extrato do fornecedor (transações, gasto, dívida, partilhar/PDF) ── */
+function FornecedorExtratoDialog({
+  fornecedor, onClose, t,
+}: {
+  fornecedor: FornecedorResponse | null
+  onClose: () => void
+  t: TFunction
+}) {
+  const [dividas, setDividas] = useState<DividaFornecedorResponse[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!fornecedor) { setDividas([]); return }
+    setLoading(true)
+    fornecedoresService.dividas.listar({ fornecedor_id: fornecedor.id })
+      .then(setDividas)
+      .catch(() => toast.error(t('common.loadError')))
+      .finally(() => setLoading(false))
+  }, [fornecedor])
+
+  const totalGasto = dividas.reduce((s, d) => s + d.valor_total, 0)
+  const totalPago = dividas.reduce((s, d) => s + d.valor_pago, 0)
+  const totalDevido = dividas.reduce((s, d) => s + d.saldo, 0)
+
+  const columns: PdfColumn[] = [
+    { header: t('suppliers.colProduct'), key: 'produto' },
+    { header: t('suppliers.colQuantity'), key: 'quantidade', align: 'right' },
+    { header: t('common.total'), key: 'total', align: 'right' },
+    { header: t('common.paid'), key: 'pago', align: 'right' },
+    { header: t('common.balance'), key: 'saldo', align: 'right' },
+    { header: t('suppliers.fieldCurrency'), key: 'moeda' },
+    { header: t('common.status'), key: 'status' },
+    { header: t('suppliers.colDate'), key: 'data' },
+  ]
+
+  function buildRows() {
+    return dividas.map((d) => ({
+      produto: d.produto_nome ?? '—', quantidade: d.quantidade ?? '—', total: formatMoeda(d.valor_total, d.moeda ?? 'AOA'),
+      pago: formatMoeda(d.valor_pago, d.moeda ?? 'AOA'), saldo: formatMoeda(d.saldo, d.moeda ?? 'AOA'),
+      moeda: d.moeda ?? 'AOA', status: d.status,
+      data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
+    }))
+  }
+
+  return (
+    <Dialog open={!!fornecedor} onOpenChange={onClose}>
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{fornecedor?.nome}</DialogTitle>
+        </DialogHeader>
+        {fornecedor && (
+          <div className="space-y-4 pt-2">
+            {fornecedor.telefone && (
+              <p className="text-sm text-muted-foreground">{t('common.phone')}: {fornecedor.telefone}</p>
+            )}
+
+            {loading ? <Skeleton className="h-32 w-full" /> : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <MiniStat label={t('suppliers.totalSpent')} value={formatKz(totalGasto)} />
+                  <MiniStat label={t('common.paid')} value={formatKz(totalPago)} />
+                  <MiniStat label={t('suppliers.totalOwed')} value={formatKz(totalDevido)} danger={totalDevido > 0} />
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    className="gap-2"
+                    disabled={dividas.length === 0}
+                    onClick={() => exportTablePdf({
+                      title: t('suppliers.extratoTitle'),
+                      subtitle: fornecedor.nome,
+                      columns,
+                      rows: buildRows(),
+                      filename: `fornecedor-${fornecedor.nome}`,
+                    })}
+                  >
+                    <FileDown className="size-4" />
+                    {t('common.downloadPdf')}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                    disabled={dividas.length === 0}
+                    onClick={() => partilharExtratoFornecedorWhatsapp(
+                      fornecedor, dividas, { gasto: totalGasto, pago: totalPago, devido: totalDevido }
+                    )}
+                  >
+                    <MessageCircle className="size-4" />
+                    {t('sales.shareWhatsapp')}
+                  </Button>
+                </div>
+
+                {dividas.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-8">{t('suppliers.debtEmpty')}</p>
+                ) : (
+                  <div className="rounded-md border overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>{t('suppliers.colProduct')}</TableHead>
+                          <TableHead className="text-right">{t('suppliers.colQuantity')}</TableHead>
+                          <TableHead className="text-right">{t('common.total')}</TableHead>
+                          <TableHead className="text-right">{t('common.paid')}</TableHead>
+                          <TableHead className="text-right">{t('common.balance')}</TableHead>
+                          <TableHead>{t('suppliers.fieldCurrency')}</TableHead>
+                          <TableHead>{t('common.status')}</TableHead>
+                          <TableHead>{t('suppliers.colDate')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {dividas.map((d) => (
+                          <TableRow key={d.id}>
+                            <TableCell className="font-medium">{d.produto_nome ?? '—'}</TableCell>
+                            <TableCell className="text-right">{d.quantidade ?? '—'}</TableCell>
+                            <TableCell className="text-right">{formatMoeda(d.valor_total, d.moeda ?? 'AOA')}</TableCell>
+                            <TableCell className="text-right text-green-600">{formatMoeda(d.valor_pago, d.moeda ?? 'AOA')}</TableCell>
+                            <TableCell className="text-right font-medium text-destructive">{formatMoeda(d.saldo, d.moeda ?? 'AOA')}</TableCell>
+                            <TableCell><Badge variant="outline">{d.moeda ?? 'AOA'}</Badge></TableCell>
+                            <TableCell>
+                              <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {format(new Date(d.criado_em), 'dd/MM/yyyy')}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 /* ── Tab: Fornecedores ────────────────────────────────────────── */
 function FornecedoresTab({
-  fornecedores, produtos, loading, isGestor, onCreated, onCompraSuccess, t,
+  fornecedores, produtos, loading, isGestor, onCreated, onCompraSuccess, onSelecionar, t,
 }: {
   fornecedores: FornecedorResponse[]
   produtos: ProdutoResponse[]
@@ -385,6 +545,7 @@ function FornecedoresTab({
   isGestor: boolean
   onCreated: (f: FornecedorResponse) => void
   onCompraSuccess: () => void
+  onSelecionar: (f: FornecedorResponse) => void
   t: TFunction
 }) {
   const [search, setSearch] = useState('')
@@ -470,7 +631,7 @@ function FornecedoresTab({
               </TableRow>
             ) : (
               pageItems.map((f) => (
-                <TableRow key={f.id}>
+                <TableRow key={f.id} className="cursor-pointer hover:bg-muted/40" onClick={() => onSelecionar(f)}>
                   <TableCell className="font-medium">{f.nome}</TableCell>
                   <TableCell>{f.telefone ?? '—'}</TableCell>
                   <TableCell>{f.nif ?? '—'}</TableCell>
@@ -480,7 +641,12 @@ function FornecedoresTab({
                   </TableCell>
                   {isGestor && (
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="icon" onClick={() => setCompraFornecedorId(f.id)} title={t('suppliers.newPurchase')}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => { e.stopPropagation(); setCompraFornecedorId(f.id) }}
+                        title={t('suppliers.newPurchase')}
+                      >
                         <ShoppingCart className="size-4" />
                       </Button>
                     </TableCell>
@@ -517,11 +683,12 @@ function FornecedoresTab({
 
 /* ── Tab: Dívidas a fornecedores ─────────────────────────────── */
 function DividasFornecedorTab({
-  fornecedores, produtos, isGestor, t,
+  fornecedores, produtos, isGestor, onSelecionar, t,
 }: {
   fornecedores: FornecedorResponse[]
   produtos: ProdutoResponse[]
   isGestor: boolean
+  onSelecionar: (f: FornecedorResponse) => void
   t: TFunction
 }) {
   const [dividas, setDividas] = useState<DividaFornecedorResponse[]>([])
@@ -632,8 +799,9 @@ function DividasFornecedorTab({
             ],
             rows: dividas.map((d) => ({
               fornecedor: d.fornecedor_nome ?? '—', produto: d.produto_nome ?? '—',
-              quantidade: d.quantidade ?? '—', total: formatKz(d.valor_total), pago: formatKz(d.valor_pago),
-              saldo: formatKz(d.saldo), moeda: d.moeda ?? 'AOA', status: d.status,
+              quantidade: d.quantidade ?? '—', total: formatMoeda(d.valor_total, d.moeda ?? 'AOA'),
+              pago: formatMoeda(d.valor_pago, d.moeda ?? 'AOA'), saldo: formatMoeda(d.saldo, d.moeda ?? 'AOA'),
+              moeda: d.moeda ?? 'AOA', status: d.status,
               data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
             })),
             filename: 'dividas-fornecedores',
@@ -683,12 +851,23 @@ function DividasFornecedorTab({
             ) : (
               pageItems.map((d) => (
                 <TableRow key={d.id}>
-                  <TableCell className="font-medium">{d.fornecedor_nome ?? '—'}</TableCell>
+                  <TableCell className="font-medium">
+                    <button
+                      type="button"
+                      className="hover:underline text-left"
+                      onClick={() => {
+                        const f = fornecedores.find((fo) => fo.id === d.fornecedor_id)
+                        if (f) onSelecionar(f)
+                      }}
+                    >
+                      {d.fornecedor_nome ?? '—'}
+                    </button>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
                   <TableCell className="text-right">{d.quantidade ?? '—'}</TableCell>
-                  <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
-                  <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
-                  <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
+                  <TableCell className="text-right">{formatMoeda(d.valor_total, d.moeda ?? 'AOA')}</TableCell>
+                  <TableCell className="text-right text-green-600">{formatMoeda(d.valor_pago, d.moeda ?? 'AOA')}</TableCell>
+                  <TableCell className="text-right font-medium text-destructive">{formatMoeda(d.saldo, d.moeda ?? 'AOA')}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{d.moeda ?? 'AOA'}</Badge>
                   </TableCell>
@@ -742,6 +921,7 @@ export default function FornecedoresPage() {
   const [fornecedores, setFornecedores] = useState<FornecedorResponse[]>([])
   const [produtos, setProdutos] = useState<ProdutoResponse[]>([])
   const [loading, setLoading] = useState(true)
+  const [extratoFornecedor, setExtratoFornecedor] = useState<FornecedorResponse | null>(null)
 
   async function load() {
     setLoading(true)
@@ -779,6 +959,7 @@ export default function FornecedoresPage() {
               isGestor={isGestor}
               onCreated={(f) => setFornecedores((prev) => [f, ...prev])}
               onCompraSuccess={load}
+              onSelecionar={setExtratoFornecedor}
               t={t}
             />
           </TabsContent>
@@ -787,11 +968,18 @@ export default function FornecedoresPage() {
               fornecedores={fornecedores}
               produtos={produtos}
               isGestor={isGestor}
+              onSelecionar={setExtratoFornecedor}
               t={t}
             />
           </TabsContent>
         </div>
       </Tabs>
+
+      <FornecedorExtratoDialog
+        fornecedor={extratoFornecedor}
+        onClose={() => setExtratoFornecedor(null)}
+        t={t}
+      />
     </div>
   )
 }

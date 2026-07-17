@@ -38,7 +38,9 @@ export const relatoriosService = {
   lucroPorProduto: (params?: { data_inicio?: string; data_fim?: string; nome?: string; limite?: number }) =>
     api.get<RelatorioLucroProduto[]>('/relatorios/produtos/lucro', params),
 
-  // `periodo` no formato YYYY-MM. Sem periodo/nome, traz as metas activas hoje.
-  metasProgresso: (params?: { periodo?: string; nome?: string; limite?: number; incluir_totais?: boolean }) =>
+  // Sem data_inicio/data_fim, traz as metas activas hoje. O backend não tem
+  // parâmetro "periodo" — quem chama deve converter o período (ex.: mês) em
+  // data_inicio/data_fim antes de invocar este método.
+  metasProgresso: (params?: { data_inicio?: string; data_fim?: string; nome?: string; limite?: number; incluir_totais?: boolean }) =>
     api.get<RelatorioMetasProgresso>('/relatorios/metas/progresso', params),
 }
