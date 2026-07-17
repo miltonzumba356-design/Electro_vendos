@@ -510,9 +510,15 @@ FaturaCreate {
 ## 8. Configuração e Deployment
 
 ### 8.1 Variáveis de Ambiente
+O backend é um serviço remoto (ex.: Railway) — nunca corre em localhost neste
+projeto. `VITE_API_BASE_URL` é obrigatória e não tem valor por omissão; sem
+ela definida, `src/lib/api.ts` recusa fazer pedidos.
 ```env
-VITE_API_BASE_URL=http://localhost:8000
+VITE_API_BASE_URL=https://eletro-vendus-production.up.railway.app
 ```
+Em desenvolvimento, define-a no `.env` (não versionado). Em produção
+(Vercel ou outro), configura-a nas variáveis de ambiente do deploy e
+reconstrói a aplicação — o valor é gravado no bundle em tempo de build.
 
 ### 8.2 Desenvolvimento Local
 ```bash

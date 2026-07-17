@@ -1,20 +1,28 @@
 import { authStorage } from '@/lib/authStorage'
 
-const BASE_URL = (import.meta.env.VITE_API_BASE_URL as string) ?? 'http://localhost:8000'
+// Não há valor por omissão de propósito: o backend nunca corre em localhost
+// neste projeto (é um serviço remoto, ex.: Railway). Sem VITE_API_BASE_URL
+// configurada — no .env em desenvolvimento, ou nas variáveis de ambiente do
+// deploy em produção — nenhum pedido deve ser feito, para não mascarar o
+// problema com um fallback silencioso que nunca vai responder.
+const BASE_URL = import.meta.env.VITE_API_BASE_URL as string | undefined
 
-if (import.meta.env.PROD && !import.meta.env.VITE_API_BASE_URL) {
-  // Vite grava VITE_API_BASE_URL no bundle em tempo de build. Se faltar no
-  // ambiente de build (ex.: variável não configurada no Vercel), a app cai
-  // silenciosamente para localhost:8000 e nenhum pedido chega ao backend real.
+if (!BASE_URL) {
   console.error(
-    '[api] VITE_API_BASE_URL não definida no build de produção — a app está a tentar falar com ' +
-    BASE_URL + '. Configure VITE_API_BASE_URL nas variáveis de ambiente do deploy e faça rebuild.'
+    '[api] VITE_API_BASE_URL não está definida. Configure-a no .env (desenvolvimento) ou nas ' +
+    'variáveis de ambiente do deploy (produção) e reinicie/reconstrua a aplicação.'
   )
 }
 
 type Params = Record<string, string | number | boolean | undefined | null>
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  if (!BASE_URL) {
+    throw new Error(
+      'VITE_API_BASE_URL não está configurada. Defina esta variável de ambiente antes de usar a aplicação.'
+    )
+  }
+
   const token = authStorage.getToken()
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

@@ -3996,6 +3996,18 @@
             "type": "string",
             "title": "Status"
           },
+          "moeda_pagamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moeda Pagamento",
+            "description": "Moeda do último pagamento (KZ/USD/EUR)"
+          },
           "criado_em": {
             "type": "string",
             "format": "date-time",
@@ -5050,6 +5062,16 @@
         ],
         "title": "MetaResponse"
       },
+      "MoedaPagamento": {
+        "type": "string",
+        "enum": [
+          "KZ",
+          "AOA",
+          "USD",
+          "EUR"
+        ],
+        "title": "MoedaPagamento"
+      },
       "MovimentoCreate": {
         "properties": {
           "produto_id": {
@@ -5284,7 +5306,12 @@
             "type": "number",
             "exclusiveMinimum": 0,
             "title": "Valor",
-            "description": "Valor a pagar ao fornecedor"
+            "description": "Valor a pagar ao fornecedor (já em Kz)"
+          },
+          "moeda": {
+            "$ref": "#/components/schemas/MoedaPagamento",
+            "description": "Moeda em que o pagamento foi feito (apenas registo, sem conversão)",
+            "default": "KZ"
           }
         },
         "type": "object",

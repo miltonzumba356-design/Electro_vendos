@@ -271,14 +271,16 @@ export interface FornecedorResponse {
   criado_em: string
 }
 
-export type Moeda = 'AOA' | 'USD' | 'EUR'
-export const MOEDAS: Moeda[] = ['AOA', 'USD', 'EUR']
+// Moeda em que um pagamento a fornecedor foi feito — apenas um registo
+// informativo. O valor da dívida e do pagamento fica sempre em Kz, sem
+// conversão; não existe moeda na criação da compra, só no pagamento.
+export type MoedaPagamento = 'KZ' | 'AOA' | 'USD' | 'EUR'
+export const MOEDAS_PAGAMENTO: MoedaPagamento[] = ['KZ', 'AOA', 'USD', 'EUR']
 
 export interface CompraFornecedorCreate {
   produto_id: string
   quantidade: number
   preco_unitario: number
-  moeda?: Moeda
 }
 
 export interface DividaFornecedorResponse {
@@ -294,13 +296,13 @@ export interface DividaFornecedorResponse {
   status: string
   criado_em: string
   pago_em: string | null
-  moeda?: Moeda | null
+  moeda_pagamento?: string | null
 }
 
 export interface PagarDividaFornecedorRequest {
   divida_id: string
   valor: number
-  moeda?: Moeda
+  moeda?: MoedaPagamento
 }
 
 export interface TotalDividasFornecedorResponse {
@@ -383,6 +385,26 @@ export interface RelatorioMetaProduto {
   preco_custo_unitario: number
   lucro_medio_por_unidade: number
   custo_total: number
+}
+
+export interface MetaCreate {
+  produto_id: string
+  data_inicio: string
+  data_fim: string
+  meta_receita: number
+  meta_lucro: number
+}
+
+export interface MetaResponse {
+  id: string
+  produto_id: string
+  produto_nome: string | null
+  data_inicio: string
+  data_fim: string
+  meta_receita: number
+  meta_lucro: number
+  criado_em: string
+  atualizado_em: string
 }
 
 export interface TotaisMetas {

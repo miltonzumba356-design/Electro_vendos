@@ -12,9 +12,9 @@ import type {
   TotalDividasFornecedorResponse,
   ProdutoResponse,
   CompraFornecedorCreate,
-  Moeda,
+  MoedaPagamento,
 } from '@/types'
-import { MOEDAS } from '@/types'
+import { MOEDAS_PAGAMENTO } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -46,21 +46,14 @@ import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown } fro
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
+// Os valores de compras/dívidas a fornecedores ficam sempre em Kz — a API
+// não converte moeda, só regista em que moeda o pagamento foi feito
+// (ver moeda_pagamento em DividaFornecedorResponse).
 function formatKz(v: number) {
   return new Intl.NumberFormat('pt-AO', {
     style: 'currency',
     currency: 'AOA',
     maximumFractionDigits: 0,
-  }).format(v)
-}
-
-// Formata respeitando a moeda escolhida — o Kz (AOA) não usa casas decimais
-// (valores muito grandes), USD/EUR usam as 2 casas habituais.
-function formatMoeda(v: number, moeda: Moeda | string = 'AOA') {
-  return new Intl.NumberFormat('pt-AO', {
-    style: 'currency',
-    currency: moeda,
-    maximumFractionDigits: moeda === 'AOA' ? 0 : 2,
   }).format(v)
 }
 
@@ -187,7 +180,6 @@ function NovaCompraDialog({
   const [produtoId, setProdutoId] = useState('')
   const [quantidade, setQuantidade] = useState('1')
   const [precoUnitario, setPrecoUnitario] = useState('')
-  const [moeda, setMoeda] = useState<Moeda>('AOA')
   const [saving, setSaving] = useState(false)
 
   const total = (Number(quantidade) || 0) * (Number(precoUnitario) || 0)
@@ -204,7 +196,7 @@ function NovaCompraDialog({
     }
     setSaving(true)
     try {
-      const data: CompraFornecedorCreate = { produto_id: produtoId, quantidade: qtd, preco_unitario: preco, moeda }
+      const data: CompraFornecedorCreate = { produto_id: produtoId, quantidade: qtd, preco_unitario: preco }
       await fornecedoresService.comprar(fornecedorId, data)
       toast.success(t('suppliers.toasts.purchaseRegistered'))
       onSuccess()
@@ -271,19 +263,10 @@ function NovaCompraDialog({
               />
             </div>
           </div>
-          <div className="space-y-2">
-            <Label>{t('suppliers.fieldCurrency')}</Label>
-            <Select value={moeda} onValueChange={(v) => setMoeda(v as Moeda)}>
-              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {MOEDAS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
           <Separator />
           <div className="flex justify-between font-bold text-base">
             <span>{t('common.total')}</span>
-            <span>{formatMoeda(total, moeda)}</span>
+            <span>{formatKz(total)}</span>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
@@ -309,13 +292,13 @@ function PagarDividaFornecedorDialog({
   t: TFunction
 }) {
   const [valor, setValor] = useState('')
-  const [moeda, setMoeda] = useState<Moeda>('AOA')
+  const [moeda, setMoeda] = useState<MoedaPagamento>('KZ')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (divida) {
       setValor(String(divida.saldo))
-      setMoeda(divida.moeda ?? 'AOA')
+      setMoeda((divida.moeda_pagamento as MoedaPagamento) ?? 'KZ')
     }
   }, [divida])
 
@@ -347,7 +330,7 @@ function PagarDividaFornecedorDialog({
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <p className="text-sm text-muted-foreground">
               {divida.fornecedor_nome ?? '—'} · {t('common.balance')}{' '}
-              <span className="font-semibold text-foreground">{formatMoeda(divida.saldo, divida.moeda ?? 'AOA')}</span>
+              <span className="font-semibold text-foreground">{formatKz(divida.saldo)}</span>
             </p>
             <div className="space-y-2">
               <Label htmlFor="valor-divida-forn">{t('suppliers.fieldValue')} *</Label>
@@ -363,11 +346,11 @@ function PagarDividaFornecedorDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('suppliers.fieldCurrency')}</Label>
-              <Select value={moeda} onValueChange={(v) => setMoeda(v as Moeda)}>
+              <Label>{t('suppliers.paymentCurrency')}</Label>
+              <Select value={moeda} onValueChange={(v) => setMoeda(v as MoedaPagamento)}>
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {MOEDAS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                  {MOEDAS_PAGAMENTO.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -644,15 +627,15 @@ function DividasFornecedorTab({
               { header: t('common.total'), key: 'total', align: 'right' },
               { header: t('common.paid'), key: 'pago', align: 'right' },
               { header: t('common.balance'), key: 'saldo', align: 'right' },
-              { header: t('suppliers.fieldCurrency'), key: 'moeda' },
+              { header: t('suppliers.paymentCurrency'), key: 'moeda' },
               { header: t('common.status'), key: 'status' },
               { header: t('suppliers.colDate'), key: 'data' },
             ],
             rows: dividas.map((d) => ({
               fornecedor: d.fornecedor_nome ?? '—', produto: d.produto_nome ?? '—',
-              quantidade: d.quantidade ?? '—', total: formatMoeda(d.valor_total, d.moeda ?? 'AOA'),
-              pago: formatMoeda(d.valor_pago, d.moeda ?? 'AOA'), saldo: formatMoeda(d.saldo, d.moeda ?? 'AOA'),
-              moeda: d.moeda ?? 'AOA', status: d.status,
+              quantidade: d.quantidade ?? '—', total: formatKz(d.valor_total),
+              pago: formatKz(d.valor_pago), saldo: formatKz(d.saldo),
+              moeda: d.moeda_pagamento ?? '—', status: d.status,
               data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
             })),
             filename: 'dividas-fornecedores',
@@ -678,7 +661,7 @@ function DividasFornecedorTab({
               <TableHead className="text-right">{t('common.total')}</TableHead>
               <TableHead className="text-right">{t('common.paid')}</TableHead>
               <TableHead className="text-right">{t('common.balance')}</TableHead>
-              <TableHead>{t('suppliers.fieldCurrency')}</TableHead>
+              <TableHead>{t('suppliers.paymentCurrency')}</TableHead>
               <TableHead>{t('common.status')}</TableHead>
               <TableHead>{t('suppliers.colDate')}</TableHead>
               {isGestor && <TableHead className="text-right">{t('suppliers.colActions')}</TableHead>}
@@ -716,11 +699,11 @@ function DividasFornecedorTab({
                   </TableCell>
                   <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
                   <TableCell className="text-right">{d.quantidade ?? '—'}</TableCell>
-                  <TableCell className="text-right">{formatMoeda(d.valor_total, d.moeda ?? 'AOA')}</TableCell>
-                  <TableCell className="text-right text-green-600">{formatMoeda(d.valor_pago, d.moeda ?? 'AOA')}</TableCell>
-                  <TableCell className="text-right font-medium text-destructive">{formatMoeda(d.saldo, d.moeda ?? 'AOA')}</TableCell>
+                  <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
+                  <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
+                  <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{d.moeda ?? 'AOA'}</Badge>
+                    {d.moeda_pagamento ? <Badge variant="outline">{d.moeda_pagamento}</Badge> : <span className="text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell>
                     <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>

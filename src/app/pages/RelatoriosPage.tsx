@@ -4,6 +4,8 @@ import type { TFunction } from 'i18next'
 import { relatoriosService } from '@/services/relatorios'
 import { clientesService } from '@/services/clientes'
 import { vendasService } from '@/services/vendas'
+import { produtosService } from '@/services/produtos'
+import { metasService } from '@/services/metas'
 import type {
   RelatorioVendasPeriodo,
   RelatorioClienteFiel,
@@ -16,6 +18,7 @@ import type {
   ExtratoCliente,
   RelatorioLucroProduto,
   RelatorioMetasProgresso,
+  ProdutoResponse,
 } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -24,6 +27,12 @@ import { Badge } from '@/app/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/tabs'
 import { Combobox } from '@/app/components/ui/combobox'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/app/components/ui/dialog'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
 import { exportTablePdf, type PdfColumn } from '@/lib/pdf'
@@ -36,7 +45,7 @@ import {
   TableRow,
 } from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { AlertTriangle, FileDown } from 'lucide-react'
+import { AlertTriangle, FileDown, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -908,12 +917,117 @@ function periodoParaDatas(periodo: string): { data_inicio?: string; data_fim?: s
   return { data_inicio: inicio.toISOString(), data_fim: fim.toISOString() }
 }
 
+/* ── Nova meta dialog ───────────────────────────────────────── */
+function NovaMetaDialog({
+  onSuccess, onClose, t,
+}: {
+  onSuccess: () => void
+  onClose: () => void
+  t: TFunction
+}) {
+  const [produtos, setProdutos] = useState<ProdutoResponse[]>([])
+  const [produtoId, setProdutoId] = useState('')
+  const [periodo, setPeriodo] = useState(() => new Date().toISOString().slice(0, 7))
+  const [metaReceita, setMetaReceita] = useState('')
+  const [metaLucro, setMetaLucro] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    produtosService.listar().then(setProdutos).catch(() => {})
+  }, [])
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!produtoId) { toast.error(t('reports.toasts.selectProduct')); return }
+    const receita = Number(metaReceita)
+    const lucro = Number(metaLucro)
+    if (!receita || receita <= 0 || !lucro || lucro <= 0) {
+      toast.error(t('reports.toasts.invalidGoal'))
+      return
+    }
+    const { data_inicio, data_fim } = periodoParaDatas(periodo)
+    if (!data_inicio || !data_fim) return
+    setSaving(true)
+    try {
+      await metasService.criar({ produto_id: produtoId, data_inicio, data_fim, meta_receita: receita, meta_lucro: lucro })
+      toast.success(t('reports.toasts.goalSaved'))
+      onSuccess()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('reports.toasts.goalSaveError'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="max-w-[95vw] sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{t('reports.newGoalTitle')}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label>{t('reports.colProduct')} *</Label>
+            <Combobox
+              options={produtos.map((p) => ({ value: p.id, label: p.nome }))}
+              value={produtoId}
+              onValueChange={setProdutoId}
+              placeholder={t('installments.selectProduct')}
+              searchPlaceholder={t('common.search')}
+              emptyText={t('products.empty')}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>{t('reports.period')} *</Label>
+            <Input type="month" value={periodo} onChange={(e) => setPeriodo(e.target.value)} required />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-2">
+              <Label htmlFor="meta-receita">{t('reports.goalRevenue')} *</Label>
+              <Input
+                id="meta-receita"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={metaReceita}
+                onChange={(e) => setMetaReceita(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="meta-lucro">{t('reports.goalProfit')} *</Label>
+              <Input
+                id="meta-lucro"
+                type="number"
+                min="0.01"
+                step="0.01"
+                value={metaLucro}
+                onChange={(e) => setMetaLucro(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
+              {t('common.cancel')}
+            </Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? t('common.saving') : t('common.save')}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function MetasProgresso({ t }: { t: TFunction }) {
   const [result, setResult] = useState<RelatorioMetasProgresso | null>(null)
   const [loading, setLoading] = useState(false)
   const [periodo, setPeriodo] = useState(() => new Date().toISOString().slice(0, 7))
   const [nome, setNome] = useState('')
   const [limite, setLimite] = useState('')
+  const [novaMetaOpen, setNovaMetaOpen] = useState(false)
 
   async function carregar(e?: React.FormEvent) {
     e?.preventDefault()
@@ -952,6 +1066,10 @@ function MetasProgresso({ t }: { t: TFunction }) {
         <Button type="submit" disabled={loading}>
           {loading ? t('reports.loading') : t('reports.consult')}
         </Button>
+        <Button type="button" variant="outline" className="gap-2" onClick={() => setNovaMetaOpen(true)}>
+          <Plus className="size-4" />
+          {t('reports.newGoal')}
+        </Button>
         {result && result.produtos.length > 0 && (
           <DownloadPdfButton
             t={t}
@@ -977,6 +1095,14 @@ function MetasProgresso({ t }: { t: TFunction }) {
           />
         )}
       </form>
+
+      {novaMetaOpen && (
+        <NovaMetaDialog
+          onSuccess={() => { setNovaMetaOpen(false); carregar() }}
+          onClose={() => setNovaMetaOpen(false)}
+          t={t}
+        />
+      )}
 
       {loading && <Skeleton className="h-32 w-full" />}
 

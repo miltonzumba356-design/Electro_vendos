@@ -198,7 +198,7 @@ const en = {
     newPurchase: 'New purchase', newPurchaseTitle: 'New credit purchase',
     selectSupplier: 'Select supplier...', selectProduct: 'Select product...',
     fieldProduct: 'Product', fieldQuantity: 'Quantity', fieldUnitPrice: 'Unit Price (Kz)',
-    fieldCurrency: 'Currency',
+    paymentCurrency: 'Payment currency',
     allSuppliers: 'All suppliers',
     totalDebts: 'Total debts', totalOwed: 'Total owed', totalSpent: 'Total spent',
     extratoTitle: 'Supplier Statement',
@@ -250,6 +250,11 @@ const en = {
     pctRevenue: '% Revenue goal', pctProfit: '% Profit goal',
     quantityProducts: 'Products with goal', unitsSold: 'Units sold',
     emptyGoals: 'No active goal found for the given period',
+    newGoal: 'New goal', newGoalTitle: 'New revenue and profit goal',
+    toasts: {
+      selectProduct: 'Select a product', invalidGoal: 'Enter valid goal values',
+      goalSaved: 'Goal saved successfully', goalSaveError: 'Error saving goal',
+    },
   },
   cashflow: {
     title: 'Cash Flow', subtitle: 'Control of income, expenses and cash balance',

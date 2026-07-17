@@ -22,19 +22,14 @@ import { ArrowLeft, FileDown, MessageCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
+// Os valores de compras/dívidas a fornecedores ficam sempre em Kz — a API
+// não converte moeda, só regista em que moeda o pagamento foi feito
+// (ver moeda_pagamento em DividaFornecedorResponse).
 function formatKz(v: number) {
   return new Intl.NumberFormat('pt-AO', {
     style: 'currency',
     currency: 'AOA',
     maximumFractionDigits: 0,
-  }).format(v)
-}
-
-function formatMoeda(v: number, moeda: string = 'AOA') {
-  return new Intl.NumberFormat('pt-AO', {
-    style: 'currency',
-    currency: moeda,
-    maximumFractionDigits: moeda === 'AOA' ? 0 : 2,
   }).format(v)
 }
 
@@ -79,16 +74,16 @@ export default function FornecedorExtratoPage() {
     { header: t('common.total'), key: 'total', align: 'right' },
     { header: t('common.paid'), key: 'pago', align: 'right' },
     { header: t('common.balance'), key: 'saldo', align: 'right' },
-    { header: t('suppliers.fieldCurrency'), key: 'moeda' },
+    { header: t('suppliers.paymentCurrency'), key: 'moeda' },
     { header: t('common.status'), key: 'status' },
     { header: t('suppliers.colDate'), key: 'data' },
   ]
 
   function buildRows() {
     return dividas.map((d) => ({
-      produto: d.produto_nome ?? '—', quantidade: d.quantidade ?? '—', total: formatMoeda(d.valor_total, d.moeda ?? 'AOA'),
-      pago: formatMoeda(d.valor_pago, d.moeda ?? 'AOA'), saldo: formatMoeda(d.saldo, d.moeda ?? 'AOA'),
-      moeda: d.moeda ?? 'AOA', status: d.status,
+      produto: d.produto_nome ?? '—', quantidade: d.quantidade ?? '—', total: formatKz(d.valor_total),
+      pago: formatKz(d.valor_pago), saldo: formatKz(d.saldo),
+      moeda: d.moeda_pagamento ?? '—', status: d.status,
       data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
     }))
   }
@@ -186,7 +181,7 @@ export default function FornecedorExtratoPage() {
                     <TableHead className="text-right">{t('common.total')}</TableHead>
                     <TableHead className="text-right">{t('common.paid')}</TableHead>
                     <TableHead className="text-right">{t('common.balance')}</TableHead>
-                    <TableHead>{t('suppliers.fieldCurrency')}</TableHead>
+                    <TableHead>{t('suppliers.paymentCurrency')}</TableHead>
                     <TableHead>{t('common.status')}</TableHead>
                     <TableHead>{t('suppliers.colDate')}</TableHead>
                   </TableRow>
@@ -196,10 +191,12 @@ export default function FornecedorExtratoPage() {
                     <TableRow key={d.id}>
                       <TableCell className="font-medium">{d.produto_nome ?? '—'}</TableCell>
                       <TableCell className="text-right">{d.quantidade ?? '—'}</TableCell>
-                      <TableCell className="text-right">{formatMoeda(d.valor_total, d.moeda ?? 'AOA')}</TableCell>
-                      <TableCell className="text-right text-green-600">{formatMoeda(d.valor_pago, d.moeda ?? 'AOA')}</TableCell>
-                      <TableCell className="text-right font-medium text-destructive">{formatMoeda(d.saldo, d.moeda ?? 'AOA')}</TableCell>
-                      <TableCell><Badge variant="outline">{d.moeda ?? 'AOA'}</Badge></TableCell>
+                      <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
+                      <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
+                      <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
+                      <TableCell>
+                        {d.moeda_pagamento ? <Badge variant="outline">{d.moeda_pagamento}</Badge> : <span className="text-muted-foreground">—</span>}
+                      </TableCell>
                       <TableCell>
                         <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
                       </TableCell>

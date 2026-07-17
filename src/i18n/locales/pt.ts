@@ -201,7 +201,7 @@ const pt = {
     newPurchase: 'Nova compra', newPurchaseTitle: 'Nova compra a crédito',
     selectSupplier: 'Selecionar fornecedor...', selectProduct: 'Selecionar produto...',
     fieldProduct: 'Produto', fieldQuantity: 'Quantidade', fieldUnitPrice: 'Preço Unitário (Kz)',
-    fieldCurrency: 'Moeda',
+    paymentCurrency: 'Moeda do pagamento',
     allSuppliers: 'Todos os fornecedores',
     totalDebts: 'Total de dívidas', totalOwed: 'Total devido', totalSpent: 'Total gasto',
     extratoTitle: 'Extrato de Fornecedor',
@@ -253,6 +253,11 @@ const pt = {
     pctRevenue: '% Meta receita', pctProfit: '% Meta lucro',
     quantityProducts: 'Produtos com meta', unitsSold: 'Unidades vendidas',
     emptyGoals: 'Nenhuma meta activa encontrada para o período indicado',
+    newGoal: 'Nova meta', newGoalTitle: 'Nova meta de receita e lucro',
+    toasts: {
+      selectProduct: 'Selecione um produto', invalidGoal: 'Introduza valores válidos para a meta',
+      goalSaved: 'Meta guardada com sucesso', goalSaveError: 'Erro ao guardar meta',
+    },
   },
   cashflow: {
     title: 'Fluxo de Caixa', subtitle: 'Controlo de entradas, saídas e saldo do caixa',

@@ -1,7 +1,8 @@
 import { vi } from 'vitest'
 
-// Usa a mesma BASE_URL que o api.ts lê em runtime
-export const BASE = (import.meta.env.VITE_API_BASE_URL as string) ?? 'http://localhost:8000'
+// Usa a mesma BASE_URL que o api.ts lê em runtime — sem fallback, tal como
+// em produção: os testes correm com VITE_API_BASE_URL definida via .env.
+export const BASE = import.meta.env.VITE_API_BASE_URL as string
 
 export function mockFetch(body: unknown, status = 200) {
   return vi.spyOn(globalThis, 'fetch').mockResolvedValue(
