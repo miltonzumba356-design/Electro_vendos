@@ -15,6 +15,8 @@ import FluxoCaixaPage from '@/app/pages/FluxoCaixaPage'
 import FaturasPage from '@/app/pages/FaturasPage'
 import FornecedoresPage from '@/app/pages/FornecedoresPage'
 import FornecedorExtratoPage from '@/app/pages/FornecedorExtratoPage'
+import DividaClienteDetalhePage from '@/app/pages/DividaClienteDetalhePage'
+import DividaFornecedorDetalhePage from '@/app/pages/DividaFornecedorDetalhePage'
 
 function ProtectedRoute({ children, gestorOnly = false }: {
   children: React.ReactNode
@@ -90,8 +92,16 @@ function AppRoutes() {
         element={<ProtectedRoute><FornecedoresPage /></ProtectedRoute>}
       />
       <Route
+        path="/fornecedores/dividas/:id"
+        element={<ProtectedRoute><DividaFornecedorDetalhePage /></ProtectedRoute>}
+      />
+      <Route
         path="/fornecedores/:id"
         element={<ProtectedRoute><FornecedorExtratoPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/dividas/:id"
+        element={<ProtectedRoute><DividaClienteDetalhePage /></ProtectedRoute>}
       />
       <Route
         path="/relatorios"

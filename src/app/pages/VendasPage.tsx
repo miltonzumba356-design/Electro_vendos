@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { vendasService } from '@/services/vendas'
@@ -50,7 +51,6 @@ import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp } from '@/lib/re
 import { exportTablePdf } from '@/lib/pdf'
 import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
 import type { NotaEntregaOrigem } from '@/app/components/NotaEntregaDialog'
-import { PagamentosHistoricoDialog } from '@/app/components/PagamentosHistoricoDialog'
 import PrestacoesPage from '@/app/pages/PrestacoesPage'
 
 function formatKz(value: number) {
@@ -794,12 +794,12 @@ function PagarDividaDialog({
 
 /* ── Tab: Dívidas (vendas a crédito) ─────────────────────────────── */
 function DividasCreditoTab({ t }: { t: TFunction }) {
+  const navigate = useNavigate()
   const [dividas, setDividas] = useState<DividaResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFiltro, setStatusFiltro] = useState<'DIVIDA' | 'PAGA' | 'TODAS'>('DIVIDA')
   const [pagarDivida, setPagarDivida] = useState<DividaResponse | null>(null)
-  const [historicoDivida, setHistoricoDivida] = useState<DividaResponse | null>(null)
 
   const filtered = dividas.filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
   const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
@@ -930,39 +930,50 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
                 </TableCell>
               </TableRow>
             ) : (
-              pageItems.map((d) => (
-                <TableRow key={d.id}>
-                  <TableCell className="font-medium">{d.cliente_nome ?? '—'}</TableCell>
-                  <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
-                  <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
-                  <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
-                  <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
-                  <TableCell>
-                    <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground text-sm">
-                    {format(new Date(d.criado_em), 'dd/MM/yyyy')}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        title={t('installments.paymentHistoryTitle')}
-                        onClick={() => setHistoricoDivida(d)}
-                        disabled={d.pagamentos.length === 0}
-                      >
-                        <History className="size-4 text-muted-foreground" />
-                      </Button>
-                      {d.status !== 'PAGA' && (
-                        <Button variant="ghost" size="icon" onClick={() => setPagarDivida(d)}>
-                          <Wallet className="size-4 text-primary" />
+              pageItems.map((d) => {
+                const somenteHistorico = d.status === 'PAGA'
+                return (
+                  <TableRow
+                    key={d.id}
+                    className={somenteHistorico ? 'cursor-pointer hover:bg-muted/40' : undefined}
+                    onClick={somenteHistorico ? () => navigate(`/dividas/${d.id}`) : undefined}
+                  >
+                    <TableCell className="font-medium">{d.cliente_nome ?? '—'}</TableCell>
+                    <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
+                    <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
+                    <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
+                    <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
+                    <TableCell>
+                      <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">
+                      {format(new Date(d.criado_em), 'dd/MM/yyyy')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {somenteHistorico ? (
+                        <Button variant="ghost" size="icon" title={t('installments.paymentHistoryTitle')} onClick={() => navigate(`/dividas/${d.id}`)}>
+                          <History className="size-4 text-muted-foreground" />
                         </Button>
+                      ) : (
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={t('installments.paymentHistoryTitle')}
+                            onClick={() => navigate(`/dividas/${d.id}`)}
+                            disabled={d.pagamentos.length === 0}
+                          >
+                            <History className="size-4 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => setPagarDivida(d)}>
+                            <Wallet className="size-4 text-primary" />
+                          </Button>
+                        </div>
                       )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
+                    </TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>
@@ -973,13 +984,6 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
         divida={pagarDivida}
         onSuccess={handlePago}
         onClose={() => setPagarDivida(null)}
-        t={t}
-      />
-
-      <PagamentosHistoricoDialog
-        titulo={historicoDivida ? `${historicoDivida.cliente_nome ?? '—'} · ${historicoDivida.produto_nome ?? '—'}` : null}
-        pagamentos={historicoDivida?.pagamentos ?? []}
-        onClose={() => setHistoricoDivida(null)}
         t={t}
       />
     </div>

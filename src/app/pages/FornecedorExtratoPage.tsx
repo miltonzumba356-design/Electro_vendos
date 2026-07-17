@@ -18,7 +18,6 @@ import { Separator } from '@/app/components/ui/separator'
 import { exportTablePdf, getTablePdfBlob, type PdfColumn } from '@/lib/pdf'
 import { montarMensagemExtratoFornecedor } from '@/lib/recibo'
 import { partilharArquivoOuTexto } from '@/lib/share'
-import { PagamentosHistoricoDialog } from '@/app/components/PagamentosHistoricoDialog'
 import { ArrowLeft, FileDown, MessageCircle, Printer, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -52,7 +51,6 @@ export default function FornecedorExtratoPage() {
   const [dividas, setDividas] = useState<DividaFornecedorResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [sharing, setSharing] = useState(false)
-  const [historicoDivida, setHistoricoDivida] = useState<DividaFornecedorResponse | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -129,7 +127,7 @@ export default function FornecedorExtratoPage() {
     if (!fornecedor) return
     setSharing(true)
     try {
-      const blob = getTablePdfBlob({ title: t('suppliers.extratoTitle'), subtitle: fornecedor.nome, columns, rows: buildRows() })
+      const blob = await getTablePdfBlob({ title: t('suppliers.extratoTitle'), subtitle: fornecedor.nome, columns, rows: buildRows() })
       const file = new File([blob], `extrato-${fornecedor.nome}.pdf`, { type: 'application/pdf' })
       const mensagem = montarMensagemExtratoFornecedor(
         fornecedor, dividas, { gasto: totalGasto, pago: totalPago, devido: totalDevido }
@@ -228,7 +226,11 @@ export default function FornecedorExtratoPage() {
                 </TableHeader>
                 <TableBody>
                   {dividas.map((d) => (
-                    <TableRow key={d.id}>
+                    <TableRow
+                      key={d.id}
+                      className="cursor-pointer hover:bg-muted/40"
+                      onClick={() => navigate(`/fornecedores/dividas/${d.id}`)}
+                    >
                       <TableCell className="font-medium">{d.produto_nome ?? '—'}</TableCell>
                       <TableCell className="text-right">{d.quantidade ?? '—'}</TableCell>
                       <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
@@ -250,7 +252,7 @@ export default function FornecedorExtratoPage() {
                           variant="ghost"
                           size="icon"
                           title={t('installments.paymentHistoryTitle')}
-                          onClick={() => setHistoricoDivida(d)}
+                          onClick={(e) => { e.stopPropagation(); navigate(`/fornecedores/dividas/${d.id}`) }}
                           disabled={d.pagamentos.length === 0}
                         >
                           <History className="size-4 text-muted-foreground" />
@@ -264,13 +266,6 @@ export default function FornecedorExtratoPage() {
           )}
         </div>
       ) : null}
-
-      <PagamentosHistoricoDialog
-        titulo={historicoDivida ? `${fornecedor?.nome ?? '—'} · ${historicoDivida.produto_nome ?? '—'}` : null}
-        pagamentos={historicoDivida?.pagamentos ?? []}
-        onClose={() => setHistoricoDivida(null)}
-        t={t}
-      />
     </div>
   )
 }

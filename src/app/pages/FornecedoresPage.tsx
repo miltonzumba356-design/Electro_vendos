@@ -42,7 +42,6 @@ import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
 import { exportTablePdf } from '@/lib/pdf'
-import { PagamentosHistoricoDialog } from '@/app/components/PagamentosHistoricoDialog'
 import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -527,6 +526,7 @@ function DividasFornecedorTab({
   onSelecionar: (f: FornecedorResponse) => void
   t: TFunction
 }) {
+  const navigate = useNavigate()
   const [dividas, setDividas] = useState<DividaFornecedorResponse[]>([])
   const [total, setTotal] = useState<TotalDividasFornecedorResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -534,7 +534,6 @@ function DividasFornecedorTab({
   const [fornecedorFiltro, setFornecedorFiltro] = useState('')
   const [pagarDivida, setPagarDivida] = useState<DividaFornecedorResponse | null>(null)
   const [novaCompraOpen, setNovaCompraOpen] = useState(false)
-  const [historicoDivida, setHistoricoDivida] = useState<DividaFornecedorResponse | null>(null)
 
   const { page, pageItems, totalPages, setPage, resetPage } = usePagination(dividas)
 
@@ -747,7 +746,7 @@ function DividasFornecedorTab({
                           variant="ghost"
                           size="icon"
                           title={t('installments.paymentHistoryTitle')}
-                          onClick={() => setHistoricoDivida(d)}
+                          onClick={() => navigate(`/fornecedores/dividas/${d.id}`)}
                           disabled={d.pagamentos.length === 0}
                         >
                           <History className="size-4 text-muted-foreground" />
@@ -784,13 +783,6 @@ function DividasFornecedorTab({
           t={t}
         />
       )}
-
-      <PagamentosHistoricoDialog
-        titulo={historicoDivida ? `${historicoDivida.fornecedor_nome ?? '—'} · ${historicoDivida.produto_nome ?? '—'}` : null}
-        pagamentos={historicoDivida?.pagamentos ?? []}
-        onClose={() => setHistoricoDivida(null)}
-        t={t}
-      />
     </div>
   )
 }

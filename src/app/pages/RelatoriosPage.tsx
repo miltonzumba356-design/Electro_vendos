@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { relatoriosService } from '@/services/relatorios'
@@ -46,7 +47,6 @@ import {
   TableRow,
 } from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { PagamentosHistoricoDialog } from '@/app/components/PagamentosHistoricoDialog'
 import { AlertTriangle, FileDown, Plus, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -506,12 +506,12 @@ function VendasPorCliente({ t }: { t: TFunction }) {
 
 /* ── Histórico do cliente ───────────────────────────────────── */
 function HistoricoClienteTab({ t }: { t: TFunction }) {
+  const navigate = useNavigate()
   const [clientes, setClientes] = useState<ClienteResponse[]>([])
   const [vendas, setVendas] = useState<VendaResponse[]>([])
   const [clienteId, setClienteId] = useState('')
   const [extrato, setExtrato] = useState<ExtratoCliente | null>(null)
   const [loading, setLoading] = useState(false)
-  const [historicoDivida, setHistoricoDivida] = useState<DividaExtratoItem | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -688,7 +688,11 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
                   </TableHeader>
                   <TableBody>
                     {extrato.dividas.map((d) => (
-                      <TableRow key={d.divida_id}>
+                      <TableRow
+                        key={d.divida_id}
+                        className="cursor-pointer hover:bg-muted/40"
+                        onClick={() => navigate(`/dividas/${d.divida_id}`)}
+                      >
                         <TableCell className="font-medium">{d.produto_nome ?? '—'}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {format(new Date(d.data_compra), 'dd/MM/yyyy')}
@@ -704,7 +708,7 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
                             variant="ghost"
                             size="icon"
                             title={t('installments.paymentHistoryTitle')}
-                            onClick={() => setHistoricoDivida(d)}
+                            onClick={(e) => { e.stopPropagation(); navigate(`/dividas/${d.divida_id}`) }}
                             disabled={d.pagamentos.length === 0}
                           >
                             <History className="size-4 text-muted-foreground" />
@@ -757,13 +761,6 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
           </div>
         </div>
       )}
-
-      <PagamentosHistoricoDialog
-        titulo={historicoDivida ? `${clienteSelecionado?.nome ?? '—'} · ${historicoDivida.produto_nome ?? '—'}` : null}
-        pagamentos={historicoDivida?.pagamentos ?? []}
-        onClose={() => setHistoricoDivida(null)}
-        t={t}
-      />
     </div>
   )
 }
