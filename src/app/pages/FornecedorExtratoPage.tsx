@@ -18,13 +18,14 @@ import { Separator } from '@/app/components/ui/separator'
 import { exportTablePdf, getTablePdfBlob, type PdfColumn } from '@/lib/pdf'
 import { montarMensagemExtratoFornecedor } from '@/lib/recibo'
 import { partilharArquivoOuTexto } from '@/lib/share'
-import { ArrowLeft, FileDown, MessageCircle } from 'lucide-react'
+import { PagamentosHistoricoDialog } from '@/app/components/PagamentosHistoricoDialog'
+import { ArrowLeft, FileDown, MessageCircle, Printer, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
 // Os valores de compras/dívidas a fornecedores ficam sempre em Kz — a API
-// não converte moeda, só regista em que moeda o pagamento foi feito
-// (ver moeda_pagamento em DividaFornecedorResponse).
+// não converte moeda, só regista em que moeda cada pagamento foi feito
+// (ver pagamentos em DividaFornecedorResponse).
 function formatKz(v: number) {
   return new Intl.NumberFormat('pt-AO', {
     style: 'currency',
@@ -51,6 +52,7 @@ export default function FornecedorExtratoPage() {
   const [dividas, setDividas] = useState<DividaFornecedorResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [sharing, setSharing] = useState(false)
+  const [historicoDivida, setHistoricoDivida] = useState<DividaFornecedorResponse | null>(null)
 
   useEffect(() => {
     if (!id) return
@@ -83,7 +85,7 @@ export default function FornecedorExtratoPage() {
     return dividas.map((d) => ({
       produto: d.produto_nome ?? '—', quantidade: d.quantidade ?? '—', total: formatKz(d.valor_total),
       pago: formatKz(d.valor_pago), saldo: formatKz(d.saldo),
-      moeda: d.moeda_pagamento ?? '—', status: d.status,
+      moeda: d.pagamentos.at(-1)?.moeda ?? '—', status: d.status,
       data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
     }))
   }
@@ -97,6 +99,30 @@ export default function FornecedorExtratoPage() {
       rows: buildRows(),
       filename: `fornecedor-${fornecedor.nome}`,
     })
+  }
+
+  function handleBaixarHistoricoPagamentos() {
+    if (!fornecedor) return
+    exportTablePdf({
+      title: t('installments.paymentHistoryTitle'),
+      subtitle: fornecedor.nome,
+      columns: [
+        { header: t('suppliers.colProduct'), key: 'produto' },
+        { header: t('common.date'), key: 'data' },
+        { header: t('common.total'), key: 'valor', align: 'right' },
+        { header: t('suppliers.paymentCurrency'), key: 'moeda' },
+      ],
+      rows: dividas.flatMap((d) => d.pagamentos.map((p) => ({
+        produto: d.produto_nome ?? '—',
+        data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
+        valor: formatKz(p.valor), moeda: p.moeda,
+      }))),
+      filename: `historico-pagamentos-${fornecedor.nome}`,
+    })
+  }
+
+  function handleImprimir() {
+    window.print()
   }
 
   async function handlePartilhar() {
@@ -158,6 +184,19 @@ export default function FornecedorExtratoPage() {
             </Button>
             <Button
               variant="outline"
+              className="gap-2"
+              disabled={dividas.every((d) => d.pagamentos.length === 0)}
+              onClick={handleBaixarHistoricoPagamentos}
+            >
+              <FileDown className="size-4" />
+              {t('installments.downloadPaymentHistory')}
+            </Button>
+            <Button variant="outline" className="gap-2" disabled={dividas.length === 0} onClick={handleImprimir}>
+              <Printer className="size-4" />
+              {t('deliveryNotes.printOrDownload')}
+            </Button>
+            <Button
+              variant="outline"
               className="gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
               disabled={dividas.length === 0 || sharing}
               onClick={handlePartilhar}
@@ -184,6 +223,7 @@ export default function FornecedorExtratoPage() {
                     <TableHead>{t('suppliers.paymentCurrency')}</TableHead>
                     <TableHead>{t('common.status')}</TableHead>
                     <TableHead>{t('suppliers.colDate')}</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -195,13 +235,26 @@ export default function FornecedorExtratoPage() {
                       <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
                       <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
                       <TableCell>
-                        {d.moeda_pagamento ? <Badge variant="outline">{d.moeda_pagamento}</Badge> : <span className="text-muted-foreground">—</span>}
+                        {d.pagamentos.length > 0
+                          ? <Badge variant="outline">{d.pagamentos.at(-1)!.moeda}</Badge>
+                          : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                       <TableCell>
                         <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {format(new Date(d.criado_em), 'dd/MM/yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={t('installments.paymentHistoryTitle')}
+                          onClick={() => setHistoricoDivida(d)}
+                          disabled={d.pagamentos.length === 0}
+                        >
+                          <History className="size-4 text-muted-foreground" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -211,6 +264,13 @@ export default function FornecedorExtratoPage() {
           )}
         </div>
       ) : null}
+
+      <PagamentosHistoricoDialog
+        titulo={historicoDivida ? `${fornecedor?.nome ?? '—'} · ${historicoDivida.produto_nome ?? '—'}` : null}
+        pagamentos={historicoDivida?.pagamentos ?? []}
+        onClose={() => setHistoricoDivida(null)}
+        t={t}
+      />
     </div>
   )
 }

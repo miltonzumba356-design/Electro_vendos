@@ -1078,7 +1078,7 @@
           "Relatórios"
         ],
         "summary": "Extrato de dívidas e compras a crédito do cliente",
-        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve.",
+        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve. Cada dívida traz também `pagamentos`: a lista de cada valor pago até zerar, com a moeda usada em cada um.",
         "operationId": "extrato_cliente_relatorios_clientes__cliente_id__extrato_get",
         "security": [
           {
@@ -1740,7 +1740,7 @@
           "Dívidas"
         ],
         "summary": "Pagar dívida",
-        "description": "Regista um pagamento para a dívida. Aceita pagamento parcial ou total. Se o valor total for atingido, a dívida é marcada como PAGA e a venda associada (se existir) tem `credito_pago=true`.",
+        "description": "Regista um pagamento para a dívida, com a moeda usada (KZ/AOA/USD/EUR — apenas registo, sem conversão de câmbio). Aceita pagamento parcial ou total; cada pagamento fica guardado no histórico (`pagamentos`) da dívida. Se o valor total for atingido, a dívida é marcada como PAGA e a venda associada (se existir) tem `credito_pago=true`.",
         "operationId": "pagar_divida_dividas__divida_id__pagar_post",
         "security": [
           {
@@ -2090,7 +2090,7 @@
           "Fornecedores"
         ],
         "summary": "Pagar dívida a fornecedor (Gestor)",
-        "description": "Regista um pagamento à dívida do fornecedor (divida_id vai no corpo do pedido). Aceita pagamento parcial ou total. Não gera nenhum lançamento no fluxo de caixa.",
+        "description": "Regista um pagamento à dívida do fornecedor (divida_id vai no corpo do pedido), com a moeda usada (KZ/AOA/USD/EUR — apenas registo, sem conversão de câmbio). Aceita pagamento parcial ou total; cada pagamento fica guardado no histórico (`pagamentos`) da dívida. Não gera nenhum lançamento no fluxo de caixa.",
         "operationId": "pagar_divida_fornecedores_dividas_pagar_post",
         "requestBody": {
           "content": {
@@ -3909,6 +3909,14 @@
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "pagamentos": {
+            "items": {
+              "$ref": "#/components/schemas/PagamentoDividaExtratoItem"
+            },
+            "type": "array",
+            "title": "Pagamentos",
+            "description": "Histórico de pagamentos feitos até zerar a dívida, cada um com sua moeda"
           }
         },
         "type": "object",
@@ -3996,17 +4004,13 @@
             "type": "string",
             "title": "Status"
           },
-          "moeda_pagamento": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Moeda Pagamento",
-            "description": "Moeda do último pagamento (KZ/USD/EUR)"
+          "pagamentos": {
+            "items": {
+              "$ref": "#/components/schemas/PagamentoDividaFornecedorResponse"
+            },
+            "type": "array",
+            "title": "Pagamentos",
+            "description": "Histórico de pagamentos, cada um com sua moeda"
           },
           "criado_em": {
             "type": "string",
@@ -4099,6 +4103,14 @@
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "pagamentos": {
+            "items": {
+              "$ref": "#/components/schemas/PagamentoDividaResponse"
+            },
+            "type": "array",
+            "title": "Pagamentos",
+            "description": "Histórico de pagamentos, cada um com sua moeda"
           },
           "criado_em": {
             "type": "string",
@@ -4195,6 +4207,18 @@
             {
               "data_compra": "2026-07-01T10:00:00Z",
               "divida_id": "c2f0129e-5bcf-4aa5-9ff5-a067067c9139",
+              "pagamentos": [
+                {
+                  "data_pagamento": "2026-07-05T09:00:00Z",
+                  "moeda": "KZ",
+                  "valor": 5000
+                },
+                {
+                  "data_pagamento": "2026-07-10T14:00:00Z",
+                  "moeda": "USD",
+                  "valor": 5000
+                }
+              ],
               "produto_nome": "Arroz 5kg",
               "saldo": 15000,
               "status": "DIVIDA",
@@ -5233,6 +5257,102 @@
           "valor": 25000
         }
       },
+      "PagamentoDividaExtratoItem": {
+        "properties": {
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "examples": [5000]
+          },
+          "moeda": {
+            "type": "string",
+            "title": "Moeda",
+            "examples": [
+              "KZ"
+            ]
+          },
+          "data_pagamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Pagamento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valor",
+          "moeda",
+          "data_pagamento"
+        ],
+        "title": "PagamentoDividaExtratoItem"
+      },
+      "PagamentoDividaFornecedorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "examples": [40]
+          },
+          "moeda": {
+            "type": "string",
+            "title": "Moeda",
+            "examples": [
+              "USD"
+            ]
+          },
+          "data_pagamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Pagamento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "valor",
+          "moeda",
+          "data_pagamento"
+        ],
+        "title": "PagamentoDividaFornecedorResponse"
+      },
+      "PagamentoDividaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "examples": [5000]
+          },
+          "moeda": {
+            "type": "string",
+            "title": "Moeda",
+            "examples": [
+              "KZ"
+            ]
+          },
+          "data_pagamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Pagamento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "valor",
+          "moeda",
+          "data_pagamento"
+        ],
+        "title": "PagamentoDividaResponse"
+      },
       "PagamentoResponse": {
         "properties": {
           "id": {
@@ -5328,6 +5448,11 @@
             "exclusiveMinimum": 0,
             "title": "Valor",
             "description": "Valor a pagar"
+          },
+          "moeda": {
+            "$ref": "#/components/schemas/MoedaPagamento",
+            "description": "Moeda em que o pagamento foi feito (apenas registo, sem conversão)",
+            "default": "KZ"
           }
         },
         "type": "object",

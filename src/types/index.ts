@@ -220,7 +220,21 @@ export interface ClienteDividaResponse {
   prestacoes: PrestacaoResponse[]
 }
 
+// Moeda em que um pagamento (de cliente ou fornecedor) foi feito — apenas um
+// registo informativo. O valor da dívida e do pagamento fica sempre em Kz,
+// sem conversão; não existe moeda na criação da compra/venda, só no
+// pagamento da dívida.
+export type MoedaPagamento = 'KZ' | 'AOA' | 'USD' | 'EUR'
+export const MOEDAS_PAGAMENTO: MoedaPagamento[] = ['KZ', 'AOA', 'USD', 'EUR']
+
 // ── Dívidas (vendas a crédito) ─────────────────────────────────
+export interface PagamentoDividaResponse {
+  id: string
+  valor: number
+  moeda: string
+  data_pagamento: string
+}
+
 export interface DividaResponse {
   id: string
   cliente_id: string
@@ -233,6 +247,7 @@ export interface DividaResponse {
   status: string
   criado_em: string
   pago_em: string | null
+  pagamentos: PagamentoDividaResponse[]
 }
 
 export interface DividaCheckResponse {
@@ -244,6 +259,7 @@ export interface DividaCheckResponse {
 
 export interface PagarDividaRequest {
   valor: number
+  moeda?: MoedaPagamento
 }
 
 export interface TotalDividasResponse {
@@ -271,16 +287,17 @@ export interface FornecedorResponse {
   criado_em: string
 }
 
-// Moeda em que um pagamento a fornecedor foi feito — apenas um registo
-// informativo. O valor da dívida e do pagamento fica sempre em Kz, sem
-// conversão; não existe moeda na criação da compra, só no pagamento.
-export type MoedaPagamento = 'KZ' | 'AOA' | 'USD' | 'EUR'
-export const MOEDAS_PAGAMENTO: MoedaPagamento[] = ['KZ', 'AOA', 'USD', 'EUR']
-
 export interface CompraFornecedorCreate {
   produto_id: string
   quantidade: number
   preco_unitario: number
+}
+
+export interface PagamentoDividaFornecedorResponse {
+  id: string
+  valor: number
+  moeda: string
+  data_pagamento: string
 }
 
 export interface DividaFornecedorResponse {
@@ -296,7 +313,7 @@ export interface DividaFornecedorResponse {
   status: string
   criado_em: string
   pago_em: string | null
-  moeda_pagamento?: string | null
+  pagamentos: PagamentoDividaFornecedorResponse[]
 }
 
 export interface PagarDividaFornecedorRequest {
@@ -424,6 +441,12 @@ export interface RelatorioMetasProgresso {
   totais: TotaisMetas | null
 }
 
+export interface PagamentoDividaExtratoItem {
+  valor: number
+  moeda: string
+  data_pagamento: string
+}
+
 export interface DividaExtratoItem {
   divida_id: string
   produto_nome: string | null
@@ -432,6 +455,7 @@ export interface DividaExtratoItem {
   valor_pago: number
   saldo: number
   status: string
+  pagamentos: PagamentoDividaExtratoItem[]
 }
 
 export interface PrestacaoExtratoItem {

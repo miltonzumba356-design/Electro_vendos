@@ -42,13 +42,14 @@ import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
 import { exportTablePdf } from '@/lib/pdf'
-import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown } from 'lucide-react'
+import { PagamentosHistoricoDialog } from '@/app/components/PagamentosHistoricoDialog'
+import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
 // Os valores de compras/dívidas a fornecedores ficam sempre em Kz — a API
-// não converte moeda, só regista em que moeda o pagamento foi feito
-// (ver moeda_pagamento em DividaFornecedorResponse).
+// não converte moeda, só regista em que moeda cada pagamento foi feito
+// (ver pagamentos em DividaFornecedorResponse).
 function formatKz(v: number) {
   return new Intl.NumberFormat('pt-AO', {
     style: 'currency',
@@ -298,7 +299,8 @@ function PagarDividaFornecedorDialog({
   useEffect(() => {
     if (divida) {
       setValor(String(divida.saldo))
-      setMoeda((divida.moeda_pagamento as MoedaPagamento) ?? 'KZ')
+      const ultimoPagamento = divida.pagamentos.at(-1)
+      setMoeda((ultimoPagamento?.moeda as MoedaPagamento) ?? 'KZ')
     }
   }, [divida])
 
@@ -532,6 +534,7 @@ function DividasFornecedorTab({
   const [fornecedorFiltro, setFornecedorFiltro] = useState('')
   const [pagarDivida, setPagarDivida] = useState<DividaFornecedorResponse | null>(null)
   const [novaCompraOpen, setNovaCompraOpen] = useState(false)
+  const [historicoDivida, setHistoricoDivida] = useState<DividaFornecedorResponse | null>(null)
 
   const { page, pageItems, totalPages, setPage, resetPage } = usePagination(dividas)
 
@@ -635,7 +638,7 @@ function DividasFornecedorTab({
               fornecedor: d.fornecedor_nome ?? '—', produto: d.produto_nome ?? '—',
               quantidade: d.quantidade ?? '—', total: formatKz(d.valor_total),
               pago: formatKz(d.valor_pago), saldo: formatKz(d.saldo),
-              moeda: d.moeda_pagamento ?? '—', status: d.status,
+              moeda: d.pagamentos.at(-1)?.moeda ?? '—', status: d.status,
               data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
             })),
             filename: 'dividas-fornecedores',
@@ -643,6 +646,30 @@ function DividasFornecedorTab({
         >
           <FileDown className="size-4" />
           {t('common.downloadPdf')}
+        </Button>
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={dividas.every((d) => d.pagamentos.length === 0)}
+          onClick={() => exportTablePdf({
+            title: t('installments.paymentHistoryTitle'),
+            columns: [
+              { header: t('suppliers.colSupplier'), key: 'fornecedor' },
+              { header: t('suppliers.colProduct'), key: 'produto' },
+              { header: t('common.date'), key: 'data' },
+              { header: t('common.total'), key: 'valor', align: 'right' },
+              { header: t('suppliers.paymentCurrency'), key: 'moeda' },
+            ],
+            rows: dividas.flatMap((d) => d.pagamentos.map((p) => ({
+              fornecedor: d.fornecedor_nome ?? '—', produto: d.produto_nome ?? '—',
+              data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
+              valor: formatKz(p.valor), moeda: p.moeda,
+            }))),
+            filename: 'historico-pagamentos-fornecedores',
+          })}
+        >
+          <FileDown className="size-4" />
+          {t('installments.downloadPaymentHistory')}
         </Button>
         {isGestor && (
           <Button onClick={() => setNovaCompraOpen(true)} className="gap-2">
@@ -703,7 +730,9 @@ function DividasFornecedorTab({
                   <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
                   <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
                   <TableCell>
-                    {d.moeda_pagamento ? <Badge variant="outline">{d.moeda_pagamento}</Badge> : <span className="text-muted-foreground">—</span>}
+                    {d.pagamentos.length > 0
+                      ? <Badge variant="outline">{d.pagamentos.at(-1)!.moeda}</Badge>
+                      : <span className="text-muted-foreground">—</span>}
                   </TableCell>
                   <TableCell>
                     <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
@@ -713,11 +742,22 @@ function DividasFornecedorTab({
                   </TableCell>
                   {isGestor && (
                     <TableCell className="text-right">
-                      {d.status !== 'PAGA' && (
-                        <Button variant="ghost" size="icon" onClick={() => setPagarDivida(d)}>
-                          <Wallet className="size-4 text-primary" />
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title={t('installments.paymentHistoryTitle')}
+                          onClick={() => setHistoricoDivida(d)}
+                          disabled={d.pagamentos.length === 0}
+                        >
+                          <History className="size-4 text-muted-foreground" />
                         </Button>
-                      )}
+                        {d.status !== 'PAGA' && (
+                          <Button variant="ghost" size="icon" onClick={() => setPagarDivida(d)}>
+                            <Wallet className="size-4 text-primary" />
+                          </Button>
+                        )}
+                      </div>
                     </TableCell>
                   )}
                 </TableRow>
@@ -744,6 +784,13 @@ function DividasFornecedorTab({
           t={t}
         />
       )}
+
+      <PagamentosHistoricoDialog
+        titulo={historicoDivida ? `${historicoDivida.fornecedor_nome ?? '—'} · ${historicoDivida.produto_nome ?? '—'}` : null}
+        pagamentos={historicoDivida?.pagamentos ?? []}
+        onClose={() => setHistoricoDivida(null)}
+        t={t}
+      />
     </div>
   )
 }

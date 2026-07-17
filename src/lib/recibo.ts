@@ -338,7 +338,8 @@ export function montarMensagemExtratoFornecedor(
   totais: { gasto: number; pago: number; devido: number }
 ): string {
   const linhas = dividas.map((d) => {
-    const pagamento = d.moeda_pagamento ? ` [pago em ${d.moeda_pagamento}]` : ''
+    const ultimaMoeda = d.pagamentos.at(-1)?.moeda
+    const pagamento = ultimaMoeda ? ` [último pagamento em ${ultimaMoeda}]` : ''
     return `• ${d.produto_nome ?? 'Compra'}${d.quantidade ? ` x${d.quantidade}` : ''} — ${fmtKz(d.valor_total)} (${d.status})${pagamento}`
   })
   return [

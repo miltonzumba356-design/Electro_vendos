@@ -19,6 +19,7 @@ import type {
   RelatorioLucroProduto,
   RelatorioMetasProgresso,
   ProdutoResponse,
+  DividaExtratoItem,
 } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -45,17 +46,18 @@ import {
   TableRow,
 } from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { AlertTriangle, FileDown, Plus } from 'lucide-react'
+import { PagamentosHistoricoDialog } from '@/app/components/PagamentosHistoricoDialog'
+import { AlertTriangle, FileDown, Plus, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
 function DownloadPdfButton({
-  onClick, disabled, t,
-}: { onClick: () => void; disabled?: boolean; t: TFunction }) {
+  onClick, disabled, label, t,
+}: { onClick: () => void; disabled?: boolean; label?: string; t: TFunction }) {
   return (
     <Button variant="outline" size="sm" className="gap-2" disabled={disabled} onClick={onClick}>
       <FileDown className="size-4" />
-      {t('common.downloadPdf')}
+      {label ?? t('common.downloadPdf')}
     </Button>
   )
 }
@@ -509,6 +511,7 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
   const [clienteId, setClienteId] = useState('')
   const [extrato, setExtrato] = useState<ExtratoCliente | null>(null)
   const [loading, setLoading] = useState(false)
+  const [historicoDivida, setHistoricoDivida] = useState<DividaExtratoItem | null>(null)
 
   useEffect(() => {
     Promise.all([
@@ -572,6 +575,28 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
                 tipo: v.credito ? (v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')) : t('sales.cash'),
               })),
               filename: `historico-${clienteSelecionado.nome}`,
+            })}
+          />
+        )}
+        {clienteSelecionado && extrato && extrato.dividas.some((d) => d.pagamentos.length > 0) && (
+          <DownloadPdfButton
+            t={t}
+            label={t('installments.downloadPaymentHistory')}
+            onClick={() => exportTablePdf({
+              title: t('installments.paymentHistoryTitle'),
+              subtitle: clienteSelecionado.nome,
+              columns: [
+                { header: t('reports.colProduct'), key: 'produto' },
+                { header: t('common.date'), key: 'data' },
+                { header: t('common.total'), key: 'valor', align: 'right' },
+                { header: t('suppliers.paymentCurrency'), key: 'moeda' },
+              ],
+              rows: extrato.dividas.flatMap((d) => d.pagamentos.map((p) => ({
+                produto: d.produto_nome ?? '—',
+                data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
+                valor: formatKz(p.valor), moeda: p.moeda,
+              }))),
+              filename: `historico-pagamentos-${clienteSelecionado.nome}`,
             })}
           />
         )}
@@ -658,6 +683,7 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
                       <TableHead className="text-right">{t('common.paid')}</TableHead>
                       <TableHead className="text-right">{t('common.balance')}</TableHead>
                       <TableHead>{t('common.status')}</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -672,6 +698,17 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
                         <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
                         <TableCell>
                           <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={t('installments.paymentHistoryTitle')}
+                            onClick={() => setHistoricoDivida(d)}
+                            disabled={d.pagamentos.length === 0}
+                          >
+                            <History className="size-4 text-muted-foreground" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -720,6 +757,13 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
           </div>
         </div>
       )}
+
+      <PagamentosHistoricoDialog
+        titulo={historicoDivida ? `${clienteSelecionado?.nome ?? '—'} · ${historicoDivida.produto_nome ?? '—'}` : null}
+        pagamentos={historicoDivida?.pagamentos ?? []}
+        onClose={() => setHistoricoDivida(null)}
+        t={t}
+      />
     </div>
   )
 }

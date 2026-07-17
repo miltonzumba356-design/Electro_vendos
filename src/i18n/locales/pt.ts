@@ -149,6 +149,8 @@ const pt = {
     openBalance: 'Saldo em aberto',
     vencYear: 'Ano', vencMonth: 'Mês', consult: 'Consultar', overdue: 'vencimento(s) em atraso',
     vencEmpty: 'Sem vencimentos para este mês',
+    paymentHistoryTitle: 'Histórico de pagamentos', paymentHistoryEmpty: 'Nenhum pagamento registado',
+    downloadPaymentHistory: 'Histórico de pagamentos',
     toasts: {
       selectSale: 'Selecione uma venda', invalidInstallments: 'Número de prestações: 1 a 48',
       planCreated: 'Plano criado com sucesso', planCreateError: 'Erro ao criar plano',

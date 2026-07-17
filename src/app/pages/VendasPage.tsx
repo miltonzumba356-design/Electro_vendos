@@ -13,7 +13,9 @@ import type {
   VendaCreate,
   DividaCheckResponse,
   DividaResponse,
+  MoedaPagamento,
 } from '@/types'
+import { MOEDAS_PAGAMENTO } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -35,18 +37,20 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature, FileDown } from 'lucide-react'
+import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature, FileDown, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp } from '@/lib/recibo'
 import { exportTablePdf } from '@/lib/pdf'
 import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
 import type { NotaEntregaOrigem } from '@/app/components/NotaEntregaDialog'
+import { PagamentosHistoricoDialog } from '@/app/components/PagamentosHistoricoDialog'
 import PrestacoesPage from '@/app/pages/PrestacoesPage'
 
 function formatKz(value: number) {
@@ -711,10 +715,14 @@ function PagarDividaDialog({
   t: TFunction
 }) {
   const [valor, setValor] = useState('')
+  const [moeda, setMoeda] = useState<MoedaPagamento>('KZ')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (divida) setValor(String(divida.saldo))
+    if (divida) {
+      setValor(String(divida.saldo))
+      setMoeda('KZ')
+    }
   }, [divida])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -725,7 +733,7 @@ function PagarDividaDialog({
     }
     setSaving(true)
     try {
-      const updated = await dividasService.pagar(divida.id, { valor: Number(valor) })
+      const updated = await dividasService.pagar(divida.id, { valor: Number(valor), moeda })
       onSuccess(updated)
       toast.success(t('sales.toasts.debtPaymentRegistered'))
     } catch (err) {
@@ -760,6 +768,15 @@ function PagarDividaDialog({
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label>{t('suppliers.paymentCurrency')}</Label>
+              <Select value={moeda} onValueChange={(v) => setMoeda(v as MoedaPagamento)}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MOEDAS_PAGAMENTO.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
                 {t('common.cancel')}
@@ -782,6 +799,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   const [search, setSearch] = useState('')
   const [statusFiltro, setStatusFiltro] = useState<'DIVIDA' | 'PAGA' | 'TODAS'>('DIVIDA')
   const [pagarDivida, setPagarDivida] = useState<DividaResponse | null>(null)
+  const [historicoDivida, setHistoricoDivida] = useState<DividaResponse | null>(null)
 
   const filtered = dividas.filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
   const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
@@ -856,6 +874,30 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
           <FileDown className="size-4" />
           {t('common.downloadPdf')}
         </Button>
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={filtered.every((d) => d.pagamentos.length === 0)}
+          onClick={() => exportTablePdf({
+            title: t('installments.paymentHistoryTitle'),
+            columns: [
+              { header: t('sales.colClient'), key: 'cliente' },
+              { header: t('sales.debtProduct'), key: 'produto' },
+              { header: t('common.date'), key: 'data' },
+              { header: t('common.total'), key: 'valor', align: 'right' },
+              { header: t('suppliers.paymentCurrency'), key: 'moeda' },
+            ],
+            rows: filtered.flatMap((d) => d.pagamentos.map((p) => ({
+              cliente: d.cliente_nome ?? '—', produto: d.produto_nome ?? '—',
+              data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
+              valor: formatKz(p.valor), moeda: p.moeda,
+            }))),
+            filename: 'historico-pagamentos-clientes',
+          })}
+        >
+          <FileDown className="size-4" />
+          {t('installments.downloadPaymentHistory')}
+        </Button>
       </div>
 
       <div className="rounded-md border bg-card overflow-x-auto">
@@ -902,11 +944,22 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
                     {format(new Date(d.criado_em), 'dd/MM/yyyy')}
                   </TableCell>
                   <TableCell className="text-right">
-                    {d.status !== 'PAGA' && (
-                      <Button variant="ghost" size="icon" onClick={() => setPagarDivida(d)}>
-                        <Wallet className="size-4 text-primary" />
+                    <div className="flex justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        title={t('installments.paymentHistoryTitle')}
+                        onClick={() => setHistoricoDivida(d)}
+                        disabled={d.pagamentos.length === 0}
+                      >
+                        <History className="size-4 text-muted-foreground" />
                       </Button>
-                    )}
+                      {d.status !== 'PAGA' && (
+                        <Button variant="ghost" size="icon" onClick={() => setPagarDivida(d)}>
+                          <Wallet className="size-4 text-primary" />
+                        </Button>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -920,6 +973,13 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
         divida={pagarDivida}
         onSuccess={handlePago}
         onClose={() => setPagarDivida(null)}
+        t={t}
+      />
+
+      <PagamentosHistoricoDialog
+        titulo={historicoDivida ? `${historicoDivida.cliente_nome ?? '—'} · ${historicoDivida.produto_nome ?? '—'}` : null}
+        pagamentos={historicoDivida?.pagamentos ?? []}
+        onClose={() => setHistoricoDivida(null)}
         t={t}
       />
     </div>
