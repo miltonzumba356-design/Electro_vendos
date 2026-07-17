@@ -1236,6 +1236,264 @@
         }
       }
     },
+    "/relatorios/produtos/lucro": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Lucro por produto",
+        "description": "Sem data_inicio/data_fim, considera todas as vendas já registadas.",
+        "operationId": "lucro_por_produto_relatorios_produtos_lucro_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
+          },
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)",
+              "examples": [
+                "arroz"
+              ],
+              "title": "Nome"
+            },
+            "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)"
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Quantos produtos",
+              "examples": [10],
+              "default": 10,
+              "title": "Limite"
+            },
+            "description": "Quantos produtos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produtos ordenados por lucro (receita - custo), com margem percentual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RelatorioLucroProduto"
+                  },
+                  "title": "Response Lucro Por Produto Relatorios Produtos Lucro Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/metas/progresso": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Progresso das metas de receita e lucro por produto",
+        "description": "Cada meta tem seu próprio data_inicio/data_fim (definidos no POST /metas). Sem data_inicio/data_fim aqui, traz as metas activas hoje (hoje entre o início e o fim da meta). Se informar data_inicio/data_fim, traz as metas cujo período se sobrepõe à janela informada. O progresso de cada produto é sempre calculado usando o período da própria meta, não a janela de pesquisa.",
+        "operationId": "metas_progresso_relatorios_metas_progresso_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra metas activas a partir desta data. Omite para metas activas hoje",
+              "examples": [
+                "2026-07-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Filtra metas activas a partir desta data. Omite para metas activas hoje"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra metas activas até esta data. Omite para metas activas hoje",
+              "examples": [
+                "2026-07-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Filtra metas activas até esta data. Omite para metas activas hoje"
+          },
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)",
+              "examples": [
+                "arroz"
+              ],
+              "title": "Nome"
+            },
+            "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)"
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Quantos produtos trazer. Omite para trazer todos",
+              "examples": [10],
+              "title": "Limite"
+            },
+            "description": "Quantos produtos trazer. Omite para trazer todos"
+          },
+          {
+            "name": "incluir_totais",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Se false, não traz o resumo com os totais gerais",
+              "default": true,
+              "title": "Incluir Totais"
+            },
+            "description": "Se false, não traz o resumo com os totais gerais"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progresso por produto (receita/lucro arrecadado vs meta, quanto falta, unidades estimadas para bater a meta) e totais gerais",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelatorioMetasProgresso"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/relatorios/stock/baixo": {
       "get": {
         "tags": [
@@ -3108,6 +3366,56 @@
         }
       }
     },
+    "/metas": {
+      "post": {
+        "tags": [
+          "Metas"
+        ],
+        "summary": "Cadastrar/atualizar meta de receita e lucro do produto (Gestor)",
+        "description": "Define a meta de receita e lucro de um produto para um período (mês). Se já existir meta para o mesmo produto e período, actualiza os valores.",
+        "operationId": "criar_meta_metas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetaCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produto não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/health": {
       "get": {
         "summary": "Health",
@@ -4626,6 +4934,122 @@
           "sessao_id": "550e8400-e29b-41d4-a716-446655440000"
         }
       },
+      "MetaCreate": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "1edca05e-c4e7-490f-a90a-164a28ade8ad"
+            ]
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio",
+            "description": "Início do período da meta",
+            "examples": [
+              "2026-07-01T00:00:00Z"
+            ]
+          },
+          "data_fim": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Fim",
+            "description": "Fim do período da meta",
+            "examples": [
+              "2026-07-31T23:59:59Z"
+            ]
+          },
+          "meta_receita": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Meta Receita",
+            "examples": [500000]
+          },
+          "meta_lucro": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Meta Lucro",
+            "examples": [150000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "data_inicio",
+          "data_fim",
+          "meta_receita",
+          "meta_lucro"
+        ],
+        "title": "MetaCreate"
+      },
+      "MetaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio"
+          },
+          "data_fim": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Fim"
+          },
+          "meta_receita": {
+            "type": "number",
+            "title": "Meta Receita"
+          },
+          "meta_lucro": {
+            "type": "number",
+            "title": "Meta Lucro"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Atualizado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_id",
+          "data_inicio",
+          "data_fim",
+          "meta_receita",
+          "meta_lucro",
+          "criado_em",
+          "atualizado_em"
+        ],
+        "title": "MetaResponse"
+      },
       "MovimentoCreate": {
         "properties": {
           "produto_id": {
@@ -5782,6 +6206,251 @@
           "telefone": "999888777"
         }
       },
+      "RelatorioLucroProduto": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "1edca05e-c4e7-490f-a90a-164a28ade8ad"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "quantidade_vendida": {
+            "type": "integer",
+            "title": "Quantidade Vendida",
+            "examples": [120]
+          },
+          "total_receita": {
+            "type": "number",
+            "title": "Total Receita",
+            "examples": [384000]
+          },
+          "total_custo": {
+            "type": "number",
+            "title": "Total Custo",
+            "examples": [288000]
+          },
+          "lucro": {
+            "type": "number",
+            "title": "Lucro",
+            "examples": [96000]
+          },
+          "margem_percentual": {
+            "type": "number",
+            "title": "Margem Percentual",
+            "description": "Lucro sobre o custo, em %",
+            "examples": [33.33]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "produto_nome",
+          "quantidade_vendida",
+          "total_receita",
+          "total_custo",
+          "lucro",
+          "margem_percentual"
+        ],
+        "title": "RelatorioLucroProduto",
+        "example": {
+          "lucro": 96000,
+          "margem_percentual": 33.33,
+          "produto_id": "1edca05e-c4e7-490f-a90a-164a28ade8ad",
+          "produto_nome": "Arroz Agulha 5kg",
+          "quantidade_vendida": 120,
+          "total_custo": 288000,
+          "total_receita": 384000
+        }
+      },
+      "RelatorioMetaProduto": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "1edca05e-c4e7-490f-a90a-164a28ade8ad"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio",
+            "examples": [
+              "2026-07-01T00:00:00Z"
+            ]
+          },
+          "data_fim": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Fim",
+            "examples": [
+              "2026-07-31T23:59:59Z"
+            ]
+          },
+          "meta_receita": {
+            "type": "number",
+            "title": "Meta Receita",
+            "examples": [500000]
+          },
+          "meta_lucro": {
+            "type": "number",
+            "title": "Meta Lucro",
+            "examples": [150000]
+          },
+          "unidades_vendidas": {
+            "type": "integer",
+            "title": "Unidades Vendidas",
+            "examples": [65]
+          },
+          "preco_custo_unitario": {
+            "type": "number",
+            "title": "Preco Custo Unitario",
+            "description": "Custo de compra de uma unidade (mais recente)",
+            "examples": [2500]
+          },
+          "custo_total": {
+            "type": "number",
+            "title": "Custo Total",
+            "examples": [162500]
+          },
+          "receita_arrecadada": {
+            "type": "number",
+            "title": "Receita Arrecadada",
+            "examples": [325000]
+          },
+          "lucro_realizado": {
+            "type": "number",
+            "title": "Lucro Realizado",
+            "examples": [97500]
+          },
+          "receita_restante": {
+            "type": "number",
+            "title": "Receita Restante",
+            "examples": [175000]
+          },
+          "lucro_restante": {
+            "type": "number",
+            "title": "Lucro Restante",
+            "examples": [52500]
+          },
+          "percentual_meta_receita": {
+            "type": "number",
+            "title": "Percentual Meta Receita",
+            "examples": [65]
+          },
+          "percentual_meta_lucro": {
+            "type": "number",
+            "title": "Percentual Meta Lucro",
+            "examples": [65]
+          },
+          "lucro_medio_por_unidade": {
+            "type": "number",
+            "title": "Lucro Medio Por Unidade",
+            "examples": [1500]
+          },
+          "unidades_faltantes_estimadas": {
+            "type": "integer",
+            "title": "Unidades Faltantes Estimadas",
+            "description": "Estimativa de unidades a vender para bater a meta de lucro",
+            "examples": [35]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "produto_nome",
+          "data_inicio",
+          "data_fim",
+          "meta_receita",
+          "meta_lucro",
+          "unidades_vendidas",
+          "preco_custo_unitario",
+          "custo_total",
+          "receita_arrecadada",
+          "lucro_realizado",
+          "receita_restante",
+          "lucro_restante",
+          "percentual_meta_receita",
+          "percentual_meta_lucro",
+          "lucro_medio_por_unidade",
+          "unidades_faltantes_estimadas"
+        ],
+        "title": "RelatorioMetaProduto"
+      },
+      "RelatorioMetasProgresso": {
+        "properties": {
+          "produtos": {
+            "items": {
+              "$ref": "#/components/schemas/RelatorioMetaProduto"
+            },
+            "type": "array",
+            "title": "Produtos"
+          },
+          "totais": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TotaisMetas"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "RelatorioMetasProgresso",
+        "example": {
+          "produtos": [
+            {
+              "custo_total": 162500,
+              "data_fim": "2026-07-31T23:59:59Z",
+              "data_inicio": "2026-07-01T00:00:00Z",
+              "lucro_medio_por_unidade": 1500,
+              "lucro_realizado": 97500,
+              "lucro_restante": 52500,
+              "meta_lucro": 150000,
+              "meta_receita": 500000,
+              "percentual_meta_lucro": 65,
+              "percentual_meta_receita": 65,
+              "preco_custo_unitario": 2500,
+              "produto_id": "1edca05e-c4e7-490f-a90a-164a28ade8ad",
+              "produto_nome": "Arroz Agulha 5kg",
+              "receita_arrecadada": 325000,
+              "receita_restante": 175000,
+              "unidades_faltantes_estimadas": 35,
+              "unidades_vendidas": 65
+            }
+          ],
+          "totais": {
+            "custo_total": 2730000,
+            "lucro_realizado_total": 1170000,
+            "meta_lucro_total": 1800000,
+            "meta_receita_total": 6000000,
+            "percentual_meta_lucro": 65,
+            "percentual_meta_receita": 65,
+            "quantidade_produtos": 12,
+            "receita_arrecadada_total": 3900000,
+            "unidades_vendidas_total": 780
+          }
+        }
+      },
       "RelatorioProdutoVendido": {
         "properties": {
           "produto_id": {
@@ -6158,6 +6827,68 @@
           "faturas"
         ],
         "title": "TopCliente"
+      },
+      "TotaisMetas": {
+        "properties": {
+          "quantidade_produtos": {
+            "type": "integer",
+            "title": "Quantidade Produtos",
+            "examples": [12]
+          },
+          "meta_receita_total": {
+            "type": "number",
+            "title": "Meta Receita Total",
+            "examples": [6000000]
+          },
+          "meta_lucro_total": {
+            "type": "number",
+            "title": "Meta Lucro Total",
+            "examples": [1800000]
+          },
+          "custo_total": {
+            "type": "number",
+            "title": "Custo Total",
+            "examples": [2730000]
+          },
+          "receita_arrecadada_total": {
+            "type": "number",
+            "title": "Receita Arrecadada Total",
+            "examples": [3900000]
+          },
+          "lucro_realizado_total": {
+            "type": "number",
+            "title": "Lucro Realizado Total",
+            "examples": [1170000]
+          },
+          "unidades_vendidas_total": {
+            "type": "integer",
+            "title": "Unidades Vendidas Total",
+            "examples": [780]
+          },
+          "percentual_meta_receita": {
+            "type": "number",
+            "title": "Percentual Meta Receita",
+            "examples": [65]
+          },
+          "percentual_meta_lucro": {
+            "type": "number",
+            "title": "Percentual Meta Lucro",
+            "examples": [65]
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade_produtos",
+          "meta_receita_total",
+          "meta_lucro_total",
+          "custo_total",
+          "receita_arrecadada_total",
+          "lucro_realizado_total",
+          "unidades_vendidas_total",
+          "percentual_meta_receita",
+          "percentual_meta_lucro"
+        ],
+        "title": "TotaisMetas"
       },
       "TotalDividasFornecedorResponse": {
         "properties": {

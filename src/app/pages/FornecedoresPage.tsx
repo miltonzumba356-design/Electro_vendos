@@ -11,7 +11,9 @@ import type {
   TotalDividasFornecedorResponse,
   ProdutoResponse,
   CompraFornecedorCreate,
+  Moeda,
 } from '@/types'
+import { MOEDAS } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -32,12 +34,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/dialog'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { Separator } from '@/app/components/ui/separator'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt } from 'lucide-react'
+import { exportTablePdf } from '@/lib/pdf'
+import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -172,6 +176,7 @@ function NovaCompraDialog({
   const [produtoId, setProdutoId] = useState('')
   const [quantidade, setQuantidade] = useState('1')
   const [precoUnitario, setPrecoUnitario] = useState('')
+  const [moeda, setMoeda] = useState<Moeda>('AOA')
   const [saving, setSaving] = useState(false)
 
   const total = (Number(quantidade) || 0) * (Number(precoUnitario) || 0)
@@ -188,7 +193,7 @@ function NovaCompraDialog({
     }
     setSaving(true)
     try {
-      const data: CompraFornecedorCreate = { produto_id: produtoId, quantidade: qtd, preco_unitario: preco }
+      const data: CompraFornecedorCreate = { produto_id: produtoId, quantidade: qtd, preco_unitario: preco, moeda }
       await fornecedoresService.comprar(fornecedorId, data)
       toast.success(t('suppliers.toasts.purchaseRegistered'))
       onSuccess()
@@ -255,6 +260,15 @@ function NovaCompraDialog({
               />
             </div>
           </div>
+          <div className="space-y-2">
+            <Label>{t('suppliers.fieldCurrency')}</Label>
+            <Select value={moeda} onValueChange={(v) => setMoeda(v as Moeda)}>
+              <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MOEDAS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
           <Separator />
           <div className="flex justify-between font-bold text-base">
             <span>{t('common.total')}</span>
@@ -284,10 +298,14 @@ function PagarDividaFornecedorDialog({
   t: TFunction
 }) {
   const [valor, setValor] = useState('')
+  const [moeda, setMoeda] = useState<Moeda>('AOA')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    if (divida) setValor(String(divida.saldo))
+    if (divida) {
+      setValor(String(divida.saldo))
+      setMoeda(divida.moeda ?? 'AOA')
+    }
   }, [divida])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -298,7 +316,7 @@ function PagarDividaFornecedorDialog({
     }
     setSaving(true)
     try {
-      const updated = await fornecedoresService.dividas.pagar({ divida_id: divida.id, valor: Number(valor) })
+      const updated = await fornecedoresService.dividas.pagar({ divida_id: divida.id, valor: Number(valor), moeda })
       onSuccess(updated)
       toast.success(t('suppliers.toasts.paymentRegistered'))
     } catch (err) {
@@ -332,6 +350,15 @@ function PagarDividaFornecedorDialog({
                 onChange={(e) => setValor(e.target.value)}
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('suppliers.fieldCurrency')}</Label>
+              <Select value={moeda} onValueChange={(v) => setMoeda(v as Moeda)}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MOEDAS.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
@@ -383,6 +410,29 @@ function FornecedoresTab({
             className="pl-9"
           />
         </div>
+        <Button
+          variant="outline"
+          className="gap-2 shrink-0"
+          disabled={filtered.length === 0}
+          onClick={() => exportTablePdf({
+            title: t('suppliers.title'),
+            columns: [
+              { header: t('common.name'), key: 'nome' },
+              { header: t('suppliers.colPhone'), key: 'telefone' },
+              { header: t('suppliers.colNif'), key: 'nif' },
+              { header: t('suppliers.colAddress'), key: 'endereco' },
+              { header: t('suppliers.colRegistered'), key: 'criado_em' },
+            ],
+            rows: filtered.map((f) => ({
+              nome: f.nome, telefone: f.telefone ?? '—', nif: f.nif ?? '—',
+              endereco: f.endereco ?? '—', criado_em: format(new Date(f.criado_em), 'dd/MM/yyyy'),
+            })),
+            filename: 'fornecedores',
+          })}
+        >
+          <FileDown className="size-4" />
+          {t('common.downloadPdf')}
+        </Button>
         {isGestor && (
           <Button onClick={() => setNovoOpen(true)} className="gap-2 shrink-0">
             <Plus className="size-4" />
@@ -563,6 +613,35 @@ function DividasFornecedorTab({
           ))}
         </div>
         <div className="flex-1" />
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={dividas.length === 0}
+          onClick={() => exportTablePdf({
+            title: t('suppliers.tabDebts'),
+            columns: [
+              { header: t('suppliers.colSupplier'), key: 'fornecedor' },
+              { header: t('suppliers.colProduct'), key: 'produto' },
+              { header: t('suppliers.colQuantity'), key: 'quantidade', align: 'right' },
+              { header: t('common.total'), key: 'total', align: 'right' },
+              { header: t('common.paid'), key: 'pago', align: 'right' },
+              { header: t('common.balance'), key: 'saldo', align: 'right' },
+              { header: t('suppliers.fieldCurrency'), key: 'moeda' },
+              { header: t('common.status'), key: 'status' },
+              { header: t('suppliers.colDate'), key: 'data' },
+            ],
+            rows: dividas.map((d) => ({
+              fornecedor: d.fornecedor_nome ?? '—', produto: d.produto_nome ?? '—',
+              quantidade: d.quantidade ?? '—', total: formatKz(d.valor_total), pago: formatKz(d.valor_pago),
+              saldo: formatKz(d.saldo), moeda: d.moeda ?? 'AOA', status: d.status,
+              data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
+            })),
+            filename: 'dividas-fornecedores',
+          })}
+        >
+          <FileDown className="size-4" />
+          {t('common.downloadPdf')}
+        </Button>
         {isGestor && (
           <Button onClick={() => setNovaCompraOpen(true)} className="gap-2">
             <Plus className="size-4" /> {t('suppliers.newPurchase')}
@@ -580,6 +659,7 @@ function DividasFornecedorTab({
               <TableHead className="text-right">{t('common.total')}</TableHead>
               <TableHead className="text-right">{t('common.paid')}</TableHead>
               <TableHead className="text-right">{t('common.balance')}</TableHead>
+              <TableHead>{t('suppliers.fieldCurrency')}</TableHead>
               <TableHead>{t('common.status')}</TableHead>
               <TableHead>{t('suppliers.colDate')}</TableHead>
               {isGestor && <TableHead className="text-right">{t('suppliers.colActions')}</TableHead>}
@@ -589,14 +669,14 @@ function DividasFornecedorTab({
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: isGestor ? 9 : 8 }).map((_, j) => (
+                  {Array.from({ length: isGestor ? 10 : 9 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : dividas.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isGestor ? 9 : 8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={isGestor ? 10 : 9} className="text-center text-muted-foreground py-8">
                   {t('suppliers.debtEmpty')}
                 </TableCell>
               </TableRow>
@@ -609,6 +689,9 @@ function DividasFornecedorTab({
                   <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
                   <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
                   <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{d.moeda ?? 'AOA'}</Badge>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
                   </TableCell>

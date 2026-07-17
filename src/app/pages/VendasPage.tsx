@@ -40,10 +40,11 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature } from 'lucide-react'
+import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature, FileDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp } from '@/lib/recibo'
+import { exportTablePdf } from '@/lib/pdf'
 import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
 import type { NotaEntregaOrigem } from '@/app/components/NotaEntregaDialog'
 import PrestacoesPage from '@/app/pages/PrestacoesPage'
@@ -224,10 +225,39 @@ function VendasTab({ t }: { t: TFunction }) {
         <div>
           <p className="text-muted-foreground text-sm">{t('sales.count', { count: vendas.length })}</p>
         </div>
-        <Button onClick={openNovaVenda} className="gap-2 shrink-0">
-          <Plus className="size-4" />
-          {t('sales.new')}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            className="gap-2 shrink-0"
+            disabled={filtered.length === 0}
+            onClick={() => exportTablePdf({
+              title: t('sales.title'),
+              columns: [
+                { header: t('sales.colDate'), key: 'data' },
+                { header: t('sales.colClient'), key: 'cliente' },
+                { header: t('sales.colOperator'), key: 'operador' },
+                { header: t('sales.colItems'), key: 'itens', align: 'right' },
+                { header: t('sales.colNetTotal'), key: 'liquido', align: 'right' },
+                { header: t('sales.colFinalTotal'), key: 'total', align: 'right' },
+                { header: t('sales.colType'), key: 'tipo' },
+              ],
+              rows: filtered.map((v) => ({
+                data: format(new Date(v.criado_em), 'dd/MM/yyyy HH:mm'), cliente: v.cliente_nome,
+                operador: v.utilizador_nome, itens: v.itens.length, liquido: formatKz(v.total_sem_iva),
+                total: formatKz(v.total_final),
+                tipo: v.credito ? (v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')) : t('sales.cash'),
+              })),
+              filename: 'vendas',
+            })}
+          >
+            <FileDown className="size-4" />
+            {t('common.downloadPdf')}
+          </Button>
+          <Button onClick={openNovaVenda} className="gap-2 shrink-0">
+            <Plus className="size-4" />
+            {t('sales.new')}
+          </Button>
+        </div>
       </div>
 
       <div className="relative w-full max-w-sm">
@@ -800,6 +830,32 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
             </Button>
           ))}
         </div>
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={filtered.length === 0}
+          onClick={() => exportTablePdf({
+            title: t('sales.tabDebts'),
+            columns: [
+              { header: t('sales.colClient'), key: 'cliente' },
+              { header: t('sales.debtProduct'), key: 'produto' },
+              { header: t('installments.colTotal'), key: 'total', align: 'right' },
+              { header: t('installments.colPaid'), key: 'pago', align: 'right' },
+              { header: t('installments.colBalance'), key: 'saldo', align: 'right' },
+              { header: t('installments.colStatus'), key: 'status' },
+              { header: t('installments.colDate'), key: 'data' },
+            ],
+            rows: filtered.map((d) => ({
+              cliente: d.cliente_nome ?? '—', produto: d.produto_nome ?? '—',
+              total: formatKz(d.valor_total), pago: formatKz(d.valor_pago), saldo: formatKz(d.saldo),
+              status: d.status, data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
+            })),
+            filename: 'dividas-clientes',
+          })}
+        >
+          <FileDown className="size-4" />
+          {t('common.downloadPdf')}
+        </Button>
       </div>
 
       <div className="rounded-md border bg-card overflow-x-auto">

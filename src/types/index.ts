@@ -271,10 +271,14 @@ export interface FornecedorResponse {
   criado_em: string
 }
 
+export type Moeda = 'AOA' | 'USD' | 'EUR'
+export const MOEDAS: Moeda[] = ['AOA', 'USD', 'EUR']
+
 export interface CompraFornecedorCreate {
   produto_id: string
   quantidade: number
   preco_unitario: number
+  moeda?: Moeda
 }
 
 export interface DividaFornecedorResponse {
@@ -290,11 +294,13 @@ export interface DividaFornecedorResponse {
   status: string
   criado_em: string
   pago_em: string | null
+  moeda?: Moeda | null
 }
 
 export interface PagarDividaFornecedorRequest {
   divida_id: string
   valor: number
+  moeda?: Moeda
 }
 
 export interface TotalDividasFornecedorResponse {
@@ -347,6 +353,53 @@ export interface RelatorioVendaCliente {
   total_compras: number
   total_gasto: number
   media_por_venda: number
+}
+
+export interface RelatorioLucroProduto {
+  produto_id: string
+  produto_nome: string
+  quantidade_vendida: number
+  total_receita: number
+  total_custo: number
+  lucro: number
+  margem_percentual: number
+}
+
+export interface RelatorioMetaProduto {
+  produto_id: string
+  produto_nome: string
+  data_inicio: string
+  data_fim: string
+  meta_receita: number
+  meta_lucro: number
+  receita_arrecadada: number
+  receita_restante: number
+  lucro_realizado: number
+  lucro_restante: number
+  percentual_meta_receita: number
+  percentual_meta_lucro: number
+  unidades_vendidas: number
+  unidades_faltantes_estimadas: number
+  preco_custo_unitario: number
+  lucro_medio_por_unidade: number
+  custo_total: number
+}
+
+export interface TotaisMetas {
+  quantidade_produtos: number
+  receita_arrecadada_total: number
+  meta_receita_total: number
+  lucro_realizado_total: number
+  meta_lucro_total: number
+  custo_total: number
+  unidades_vendidas_total: number
+  percentual_meta_receita: number
+  percentual_meta_lucro: number
+}
+
+export interface RelatorioMetasProgresso {
+  produtos: RelatorioMetaProduto[]
+  totais: TotaisMetas | null
 }
 
 export interface DividaExtratoItem {

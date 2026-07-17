@@ -49,9 +49,11 @@ import {
   Users,
   DollarSign,
   Percent,
+  FileDown,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { exportTablePdf } from '@/lib/pdf'
 
 function formatKz(v: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -460,6 +462,29 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
           <RefreshCw className="size-4" /> {t('common.filter')}
         </Button>
         <div className="flex-1" />
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={faturas.length === 0}
+          onClick={() => exportTablePdf({
+            title: t('invoices.title'),
+            columns: [
+              { header: t('invoices.colNumber'), key: 'numero' },
+              { header: t('common.client'), key: 'cliente' },
+              { header: t('invoices.colItems'), key: 'itens', align: 'right' },
+              { header: t('invoices.totalFinal'), key: 'total', align: 'right' },
+              { header: t('invoices.colDate'), key: 'data' },
+              { header: t('invoices.colStatus'), key: 'status' },
+            ],
+            rows: faturas.map((f) => ({
+              numero: f.numero, cliente: f.cliente_nome, itens: f.total_itens, total: formatKz(f.total_final),
+              data: format(new Date(f.emitida_em), 'dd/MM/yyyy HH:mm'), status: f.cancelada_em ? 'Cancelada' : 'Activa',
+            })),
+            filename: 'faturas',
+          })}
+        >
+          <FileDown className="size-4" /> {t('common.downloadPdf')}
+        </Button>
         <Button onClick={() => setNovaOpen(true)} className="gap-2">
           <Plus className="size-4" /> {t('invoices.new')}
         </Button>

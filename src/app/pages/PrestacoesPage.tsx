@@ -37,9 +37,10 @@ import { Progress } from '@/app/components/ui/progress'
 import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { Plus, Eye, CreditCard, Search, Users, Calendar, AlertTriangle } from 'lucide-react'
+import { Plus, Eye, CreditCard, Search, Users, Calendar, AlertTriangle, FileDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { exportTablePdf } from '@/lib/pdf'
 
 function formatKz(value: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -362,6 +363,32 @@ function PlanosTab({ t }: { t: TFunction }) {
             className="pl-9"
           />
         </div>
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={filtered.length === 0}
+          onClick={() => exportTablePdf({
+            title: t('installments.tabPlans'),
+            columns: [
+              { header: t('installments.colClient'), key: 'cliente' },
+              { header: t('installments.colInstallments'), key: 'parcelas', align: 'right' },
+              { header: t('installments.colTotal'), key: 'total', align: 'right' },
+              { header: t('installments.colPaid'), key: 'pago', align: 'right' },
+              { header: t('installments.colBalance'), key: 'saldo', align: 'right' },
+              { header: t('installments.colStatus'), key: 'status' },
+              { header: t('installments.colDate'), key: 'data' },
+            ],
+            rows: filtered.map((p) => ({
+              cliente: p.cliente_nome, parcelas: `${p.numero_prestacoes}x`, total: formatKz(p.valor_total),
+              pago: formatKz(p.valor_pago), saldo: formatKz(p.saldo), status: p.situacao,
+              data: format(new Date(p.criado_em), 'dd/MM/yyyy'),
+            })),
+            filename: 'prestacoes',
+          })}
+        >
+          <FileDown className="size-4" />
+          {t('common.downloadPdf')}
+        </Button>
         <Button onClick={() => setNovoOpen(true)} className="gap-2">
           <Plus className="size-4" />
           {t('installments.newPlan')}
@@ -600,14 +627,39 @@ function DividasTab({ t }: { t: TFunction }) {
   return (
     <div className="space-y-4">
       {/* Barra de pesquisa */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <Input
-          placeholder={t('installments.searchPlaceholder')}
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); resetPage() }}
-          className="pl-9"
-        />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative max-w-sm flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder={t('installments.searchPlaceholder')}
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); resetPage() }}
+            className="pl-9"
+          />
+        </div>
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={filtrados.length === 0}
+          onClick={() => exportTablePdf({
+            title: t('installments.tabDebts'),
+            columns: [
+              { header: t('installments.colClient'), key: 'cliente' },
+              { header: t('installments.totalDebts'), key: 'qtd', align: 'right' },
+              { header: t('installments.totalOwed'), key: 'total', align: 'right' },
+              { header: t('installments.totalPaid'), key: 'pago', align: 'right' },
+              { header: t('installments.openBalance'), key: 'saldo', align: 'right' },
+            ],
+            rows: filtrados.map((c) => ({
+              cliente: c.nome, qtd: `${c.count}x`, total: formatKz(c.total),
+              pago: formatKz(c.pago), saldo: formatKz(c.saldo),
+            })),
+            filename: 'dividas-por-cliente',
+          })}
+        >
+          <FileDown className="size-4" />
+          {t('common.downloadPdf')}
+        </Button>
       </div>
 
       {/* Tabela de todos os clientes com dívidas */}
@@ -793,6 +845,31 @@ function VencimentosTab({ t }: { t: TFunction }) {
         <Button onClick={consultar} disabled={loading} className="gap-2">
           <Calendar className="size-4" />
           {t('installments.consult')}
+        </Button>
+        <Button
+          variant="outline"
+          className="gap-2"
+          disabled={data.length === 0}
+          onClick={() => exportTablePdf({
+            title: t('installments.tabVencimentos'),
+            subtitle: `${mes}/${ano}`,
+            columns: [
+              { header: t('common.client'), key: 'cliente' },
+              { header: t('installments.fieldProduct'), key: 'produto' },
+              { header: t('installments.fieldTotalValue'), key: 'valor', align: 'right' },
+              { header: t('installments.colDueDate'), key: 'vencimento' },
+              { header: t('installments.colDelay'), key: 'atraso' },
+            ],
+            rows: data.map((v) => ({
+              cliente: v.cliente_nome, produto: v.produto_nome, valor: formatKz(v.valor),
+              vencimento: format(new Date(v.data_vencimento), 'dd/MM/yyyy'),
+              atraso: v.dias_atraso > 0 ? `${v.dias_atraso}d` : 'OK',
+            })),
+            filename: `vencimentos-${ano}-${mes}`,
+          })}
+        >
+          <FileDown className="size-4" />
+          {t('common.downloadPdf')}
         </Button>
         {atrasados.length > 0 && (
           <div className="flex items-center gap-1.5 text-sm text-destructive">

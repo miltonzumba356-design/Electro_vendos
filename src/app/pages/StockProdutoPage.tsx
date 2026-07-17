@@ -19,10 +19,10 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { ArrowLeft, ArrowUpCircle, ArrowDownCircle, Printer } from 'lucide-react'
+import { ArrowLeft, ArrowUpCircle, ArrowDownCircle, Printer, Eye } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { imprimirEntradaStock } from '@/lib/recibo'
+import { imprimirEntradaStock, visualizarEntradaStock } from '@/lib/recibo'
 
 function formatKz(value: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -168,9 +168,14 @@ export default function StockProdutoPage() {
                     <TableCell className="text-muted-foreground">{m.utilizador_nome}</TableCell>
                     <TableCell>
                       {m.tipo === 'ENTRADA' && (
-                        <Button variant="ghost" size="icon" title="Imprimir nota de entrada" onClick={() => imprimirEntradaStock(m)}>
-                          <Printer className="size-4 text-muted-foreground" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button variant="ghost" size="icon" title={t('stock.previewEntry')} onClick={() => visualizarEntradaStock(m)}>
+                            <Eye className="size-4 text-muted-foreground" />
+                          </Button>
+                          <Button variant="ghost" size="icon" title={t('stock.printEntry')} onClick={() => imprimirEntradaStock(m)}>
+                            <Printer className="size-4 text-muted-foreground" />
+                          </Button>
+                        </div>
                       )}
                     </TableCell>
                   </TableRow>

@@ -14,6 +14,8 @@ import type {
   ClienteResponse,
   VendaResponse,
   ExtratoCliente,
+  RelatorioLucroProduto,
+  RelatorioMetasProgresso,
 } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -24,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/app/components/ui/ta
 import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
+import { exportTablePdf, type PdfColumn } from '@/lib/pdf'
 import {
   Table,
   TableBody,
@@ -33,9 +36,20 @@ import {
   TableRow,
 } from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, FileDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+
+function DownloadPdfButton({
+  onClick, disabled, t,
+}: { onClick: () => void; disabled?: boolean; t: TFunction }) {
+  return (
+    <Button variant="outline" size="sm" className="gap-2" disabled={disabled} onClick={onClick}>
+      <FileDown className="size-4" />
+      {t('common.downloadPdf')}
+    </Button>
+  )
+}
 
 function formatKz(value: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -133,6 +147,26 @@ function VendasPeriodo({ t }: { t: TFunction }) {
         <Button type="submit" disabled={loading}>
           {loading ? t('reports.loading') : t('reports.consult')}
         </Button>
+        {result && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardPeriod'),
+              columns: [
+                { header: t('reports.colProduct'), key: 'produto' },
+                { header: t('reports.soldQty'), key: 'qtd', align: 'right' },
+                { header: t('reports.totalIncome'), key: 'receita', align: 'right' },
+              ],
+              rows: result.produtos_mais_vendidos.map((p) => ({
+                produto: p.produto_nome, qtd: p.quantidade_vendida, receita: formatKz(p.total_receita),
+              })),
+              totalsRow: [
+                t('reports.totalSales'), String(result.total_vendas), formatKz(result.total_receita),
+              ],
+              filename: 'vendas-periodo',
+            })}
+          />
+        )}
       </form>
       {loading && <Skeleton className="h-32 w-full" />}
       {result && <PeriodoStats data={result} t={t} />}
@@ -173,6 +207,28 @@ function ClientesFieis({ t }: { t: TFunction }) {
         <Button type="submit" disabled={loading}>
           {loading ? t('reports.loading') : t('reports.consult')}
         </Button>
+        {result.length > 0 && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardLoyal'),
+              columns: [
+                { header: t('reports.colClient'), key: 'cliente' },
+                { header: t('reports.totalSales'), key: 'vendas', align: 'right' },
+                { header: t('reports.totalSpent'), key: 'gasto', align: 'right' },
+                { header: t('reports.avgPerSale'), key: 'media', align: 'right' },
+                { header: t('reports.level'), key: 'nivel' },
+                { header: t('reports.lastPurchase'), key: 'ultima' },
+              ],
+              rows: result.map((r) => ({
+                cliente: r.cliente_nome, vendas: r.total_vendas, gasto: formatKz(r.total_gasto),
+                media: formatKz(r.media_por_venda), nivel: r.nivel,
+                ultima: r.ultima_compra ? format(new Date(r.ultima_compra), 'dd/MM/yyyy') : '—',
+              })),
+              filename: 'clientes-fieis',
+            })}
+          />
+        )}
       </form>
       {loading && <Skeleton className="h-32 w-full" />}
       {result.length > 0 && (
@@ -242,6 +298,21 @@ function ClientesInativos({ t }: { t: TFunction }) {
         <Button type="submit" disabled={loading}>
           {loading ? t('reports.loading') : t('reports.consult')}
         </Button>
+        {result.length > 0 && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardInactive'),
+              columns: [
+                { header: t('common.name'), key: 'nome' },
+                { header: t('reports.colPhone'), key: 'telefone' },
+                { header: t('reports.colEmail'), key: 'email' },
+              ],
+              rows: result.map((r) => ({ nome: r.nome, telefone: r.telefone ?? '—', email: r.email ?? '—' })),
+              filename: 'clientes-inativos',
+            })}
+          />
+        )}
       </form>
       {loading && <Skeleton className="h-32 w-full" />}
       {result.length > 0 && (
@@ -297,6 +368,23 @@ function ProdutosMaisVendidos({ t }: { t: TFunction }) {
         <Button type="submit" disabled={loading}>
           {loading ? t('reports.loading') : t('reports.consult')}
         </Button>
+        {result.length > 0 && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardBestSelling'),
+              columns: [
+                { header: t('reports.colProduct'), key: 'produto' },
+                { header: t('reports.soldQty'), key: 'qtd', align: 'right' },
+                { header: t('reports.totalIncome'), key: 'receita', align: 'right' },
+              ],
+              rows: result.map((r) => ({
+                produto: r.produto_nome, qtd: r.quantidade_vendida, receita: formatKz(r.total_receita),
+              })),
+              filename: 'produtos-mais-vendidos',
+            })}
+          />
+        )}
       </form>
       {loading && <Skeleton className="h-32 w-full" />}
       {result.length > 0 && (
@@ -354,6 +442,25 @@ function VendasPorCliente({ t }: { t: TFunction }) {
         <Button type="submit" disabled={loading}>
           {loading ? t('reports.loading') : t('reports.consult')}
         </Button>
+        {result.length > 0 && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardByClient'),
+              columns: [
+                { header: t('reports.colClient'), key: 'cliente' },
+                { header: t('reports.totalPurchases'), key: 'compras', align: 'right' },
+                { header: t('reports.totalSpent'), key: 'gasto', align: 'right' },
+                { header: t('reports.avgPerSale'), key: 'media', align: 'right' },
+              ],
+              rows: result.map((r) => ({
+                cliente: r.cliente_nome, compras: r.total_compras, gasto: formatKz(r.total_gasto),
+                media: formatKz(r.media_por_venda),
+              })),
+              filename: 'vendas-por-cliente',
+            })}
+          />
+        )}
       </form>
       {loading && <Skeleton className="h-32 w-full" />}
       {result.length > 0 && (
@@ -426,16 +533,39 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
 
   return (
     <div className="space-y-4">
-      <div className="space-y-2 max-w-lg">
-        <Label>{t('common.client')}</Label>
-        <Combobox
-          options={clienteOptions}
-          value={clienteId}
-          onValueChange={handleSelecionar}
-          placeholder={t('reports.selectClientPlaceholder')}
-          searchPlaceholder={t('common.search')}
-          emptyText={t('clients.empty')}
-        />
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-2 max-w-lg flex-1 min-w-[220px]">
+          <Label>{t('common.client')}</Label>
+          <Combobox
+            options={clienteOptions}
+            value={clienteId}
+            onValueChange={handleSelecionar}
+            placeholder={t('reports.selectClientPlaceholder')}
+            searchPlaceholder={t('common.search')}
+            emptyText={t('clients.empty')}
+          />
+        </div>
+        {clienteSelecionado && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardClientHistory'),
+              subtitle: clienteSelecionado.nome,
+              columns: [
+                { header: t('common.date'), key: 'data' },
+                { header: t('sales.colItems'), key: 'itens', align: 'right' },
+                { header: t('common.total'), key: 'total', align: 'right' },
+                { header: t('reports.colType'), key: 'tipo' },
+              ],
+              rows: vendasCliente.map((v) => ({
+                data: format(new Date(v.criado_em), 'dd/MM/yyyy'), itens: v.itens.length,
+                total: formatKz(v.total_final),
+                tipo: v.credito ? (v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')) : t('sales.cash'),
+              })),
+              filename: `historico-${clienteSelecionado.nome}`,
+            })}
+          />
+        )}
       </div>
 
       {loading && <Skeleton className="h-32 w-full" />}
@@ -602,9 +732,29 @@ function StockCritico({ t }: { t: TFunction }) {
 
   return (
     <div className="space-y-4">
-      <Button onClick={handleConsultar} disabled={loading}>
-        {loading ? t('reports.loading') : t('reports.consultCritical')}
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={handleConsultar} disabled={loading}>
+          {loading ? t('reports.loading') : t('reports.consultCritical')}
+        </Button>
+        {result.length > 0 && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardCritical'),
+              columns: [
+                { header: t('reports.colProduct'), key: 'produto' },
+                { header: t('reports.currentStock'), key: 'atual', align: 'right' },
+                { header: t('reports.minStock'), key: 'minimo', align: 'right' },
+                { header: t('reports.missing'), key: 'falta', align: 'right' },
+              ],
+              rows: result.map((p) => ({
+                produto: p.nome, atual: p.stock_atual, minimo: p.stock_minimo, falta: p.diferenca,
+              })),
+              filename: 'stock-critico',
+            })}
+          />
+        )}
+      </div>
       {loading && <Skeleton className="h-32 w-full" />}
       {result.length > 0 && (
         <div className="rounded-md border bg-card overflow-x-auto">
@@ -639,6 +789,244 @@ function StockCritico({ t }: { t: TFunction }) {
   )
 }
 
+/* ── Lucro por produto ──────────────────────────────────────── */
+function LucroPorProduto({ t }: { t: TFunction }) {
+  const [result, setResult] = useState<RelatorioLucroProduto[]>([])
+  const [loading, setLoading] = useState(false)
+  const [inicio, setInicio] = useState('')
+  const [fim, setFim] = useState('')
+  const [nome, setNome] = useState('')
+  const [limite, setLimite] = useState('10')
+
+  async function carregar(e?: React.FormEvent) {
+    e?.preventDefault()
+    setLoading(true)
+    try {
+      const res = await relatoriosService.lucroPorProduto({
+        data_inicio: inicio ? new Date(inicio).toISOString() : undefined,
+        data_fim: fim ? new Date(fim + 'T23:59:59').toISOString() : undefined,
+        nome: nome || undefined,
+        limite: Number(limite),
+      })
+      setResult(res)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('common.loadError'))
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => { carregar() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const columns: PdfColumn[] = [
+    { header: t('reports.colProduct'), key: 'produto' },
+    { header: t('reports.soldQty'), key: 'qtd', align: 'right' },
+    { header: t('reports.totalIncome'), key: 'receita', align: 'right' },
+    { header: t('reports.totalCost'), key: 'custo', align: 'right' },
+    { header: t('reports.profit'), key: 'lucro', align: 'right' },
+    { header: t('reports.margin'), key: 'margem', align: 'right' },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={carregar} className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1">
+          <Label>{t('reports.startDate')} <span className="text-muted-foreground text-xs">({t('reports.emptyIsAllTime')})</span></Label>
+          <Input type="date" value={inicio} onChange={(e) => setInicio(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label>{t('reports.endDate')} <span className="text-muted-foreground text-xs">({t('reports.emptyIsAllTime')})</span></Label>
+          <Input type="date" value={fim} onChange={(e) => setFim(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label>{t('reports.searchProduct')}</Label>
+          <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder={t('reports.searchProductPlaceholder')} className="w-44" />
+        </div>
+        <div className="space-y-1">
+          <Label>{t('reports.limit')}</Label>
+          <Input type="number" value={limite} onChange={(e) => setLimite(e.target.value)} className="w-24" min="1" max="100" />
+        </div>
+        <Button type="submit" disabled={loading}>
+          {loading ? t('reports.loading') : t('reports.consult')}
+        </Button>
+        {result.length > 0 && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardProfit'),
+              columns,
+              rows: result.map((r) => ({
+                produto: r.produto_nome, qtd: r.quantidade_vendida, receita: formatKz(r.total_receita),
+                custo: formatKz(r.total_custo), lucro: formatKz(r.lucro), margem: `${r.margem_percentual.toFixed(1)}%`,
+              })),
+              filename: 'lucro-por-produto',
+            })}
+          />
+        )}
+      </form>
+      {loading && <Skeleton className="h-32 w-full" />}
+      {result.length > 0 && (
+        <div className="rounded-md border bg-card overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('reports.colProduct')}</TableHead>
+                <TableHead className="text-right">{t('reports.soldQty')}</TableHead>
+                <TableHead className="text-right">{t('reports.totalIncome')}</TableHead>
+                <TableHead className="text-right">{t('reports.totalCost')}</TableHead>
+                <TableHead className="text-right">{t('reports.profit')}</TableHead>
+                <TableHead className="text-right">{t('reports.margin')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {result.map((r) => (
+                <TableRow key={r.produto_id}>
+                  <TableCell className="font-medium">{r.produto_nome}</TableCell>
+                  <TableCell className="text-right">{r.quantidade_vendida}</TableCell>
+                  <TableCell className="text-right">{formatKz(r.total_receita)}</TableCell>
+                  <TableCell className="text-right text-muted-foreground">{formatKz(r.total_custo)}</TableCell>
+                  <TableCell className="text-right font-semibold text-green-600">{formatKz(r.lucro)}</TableCell>
+                  <TableCell className="text-right">{r.margem_percentual.toFixed(1)}%</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* ── Metas de receita e lucro ───────────────────────────────── */
+function MetasProgresso({ t }: { t: TFunction }) {
+  const [result, setResult] = useState<RelatorioMetasProgresso | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [periodo, setPeriodo] = useState(() => new Date().toISOString().slice(0, 7))
+  const [nome, setNome] = useState('')
+  const [limite, setLimite] = useState('')
+
+  async function carregar(e?: React.FormEvent) {
+    e?.preventDefault()
+    setLoading(true)
+    try {
+      const res = await relatoriosService.metasProgresso({
+        periodo: periodo || undefined,
+        nome: nome || undefined,
+        limite: limite ? Number(limite) : undefined,
+      })
+      setResult(res)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('common.loadError'))
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => { carregar() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  return (
+    <div className="space-y-4">
+      <form onSubmit={carregar} className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1">
+          <Label>{t('reports.period')}</Label>
+          <Input type="month" value={periodo} onChange={(e) => setPeriodo(e.target.value)} />
+        </div>
+        <div className="space-y-1">
+          <Label>{t('reports.searchProduct')}</Label>
+          <Input value={nome} onChange={(e) => setNome(e.target.value)} placeholder={t('reports.searchProductPlaceholder')} className="w-44" />
+        </div>
+        <div className="space-y-1">
+          <Label>{t('reports.limit')}</Label>
+          <Input type="number" value={limite} onChange={(e) => setLimite(e.target.value)} className="w-24" min="1" placeholder="—" />
+        </div>
+        <Button type="submit" disabled={loading}>
+          {loading ? t('reports.loading') : t('reports.consult')}
+        </Button>
+        {result && result.produtos.length > 0 && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardGoals'),
+              subtitle: periodo,
+              columns: [
+                { header: t('reports.colProduct'), key: 'produto' },
+                { header: t('reports.goalRevenue'), key: 'metaReceita', align: 'right' },
+                { header: t('reports.revenueRaised'), key: 'receita', align: 'right' },
+                { header: t('reports.goalProfit'), key: 'metaLucro', align: 'right' },
+                { header: t('reports.profitRealized'), key: 'lucro', align: 'right' },
+                { header: t('reports.pctRevenue'), key: 'pctReceita', align: 'right' },
+                { header: t('reports.pctProfit'), key: 'pctLucro', align: 'right' },
+              ],
+              rows: result.produtos.map((p) => ({
+                produto: p.produto_nome, metaReceita: formatKz(p.meta_receita), receita: formatKz(p.receita_arrecadada),
+                metaLucro: formatKz(p.meta_lucro), lucro: formatKz(p.lucro_realizado),
+                pctReceita: `${p.percentual_meta_receita.toFixed(0)}%`, pctLucro: `${p.percentual_meta_lucro.toFixed(0)}%`,
+              })),
+              filename: `metas-${periodo}`,
+            })}
+          />
+        )}
+      </form>
+
+      {loading && <Skeleton className="h-32 w-full" />}
+
+      {result && !loading && (
+        <div className="space-y-4">
+          {result.totais && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <StatCard label={t('reports.goalRevenue')} value={formatKz(result.totais.meta_receita_total)} />
+              <StatCard label={t('reports.revenueRaised')} value={formatKz(result.totais.receita_arrecadada_total)} />
+              <StatCard label={t('reports.goalProfit')} value={formatKz(result.totais.meta_lucro_total)} />
+              <StatCard label={t('reports.profitRealized')} value={formatKz(result.totais.lucro_realizado_total)} />
+              <StatCard label={t('reports.pctRevenue')} value={`${result.totais.percentual_meta_receita.toFixed(0)}%`} />
+              <StatCard label={t('reports.pctProfit')} value={`${result.totais.percentual_meta_lucro.toFixed(0)}%`} />
+              <StatCard label={t('reports.quantityProducts')} value={result.totais.quantidade_produtos} />
+              <StatCard label={t('reports.unitsSold')} value={result.totais.unidades_vendidas_total} />
+            </div>
+          )}
+
+          {result.produtos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('reports.emptyGoals')}</p>
+          ) : (
+            <div className="rounded-md border bg-card overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('reports.colProduct')}</TableHead>
+                    <TableHead className="text-right">{t('reports.goalRevenue')}</TableHead>
+                    <TableHead className="text-right">{t('reports.revenueRaised')}</TableHead>
+                    <TableHead className="text-right">{t('reports.pctRevenue')}</TableHead>
+                    <TableHead className="text-right">{t('reports.goalProfit')}</TableHead>
+                    <TableHead className="text-right">{t('reports.profitRealized')}</TableHead>
+                    <TableHead className="text-right">{t('reports.pctProfit')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {result.produtos.map((p) => (
+                    <TableRow key={p.produto_id}>
+                      <TableCell className="font-medium">{p.produto_nome}</TableCell>
+                      <TableCell className="text-right">{formatKz(p.meta_receita)}</TableCell>
+                      <TableCell className="text-right">{formatKz(p.receita_arrecadada)}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={p.percentual_meta_receita >= 100 ? 'default' : 'secondary'}>
+                          {p.percentual_meta_receita.toFixed(0)}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right">{formatKz(p.meta_lucro)}</TableCell>
+                      <TableCell className="text-right font-semibold text-green-600">{formatKz(p.lucro_realizado)}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={p.percentual_meta_lucro >= 100 ? 'default' : 'secondary'}>
+                          {p.percentual_meta_lucro.toFixed(0)}%
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Main Page ──────────────────────────────────────────────── */
 export default function RelatoriosPage() {
   const { t } = useTranslation()
@@ -658,6 +1046,8 @@ export default function RelatoriosPage() {
           <TabsTrigger value="clientes-fieis">{t('reports.tabLoyal')}</TabsTrigger>
           <TabsTrigger value="clientes-inativos">{t('reports.tabInactive')}</TabsTrigger>
           <TabsTrigger value="mais-vendidos">{t('reports.tabBestSelling')}</TabsTrigger>
+          <TabsTrigger value="lucro">{t('reports.tabProfit')}</TabsTrigger>
+          <TabsTrigger value="metas">{t('reports.tabGoals')}</TabsTrigger>
           <TabsTrigger value="stock-critico">{t('reports.tabCritical')}</TabsTrigger>
         </TabsList>
 
@@ -685,6 +1075,14 @@ export default function RelatoriosPage() {
           <TabsContent value="mais-vendidos">
             <Card><CardHeader><CardTitle className="text-base">{t('reports.cardBestSelling')}</CardTitle></CardHeader>
               <CardContent><ProdutosMaisVendidos t={t} /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="lucro">
+            <Card><CardHeader><CardTitle className="text-base">{t('reports.cardProfit')}</CardTitle></CardHeader>
+              <CardContent><LucroPorProduto t={t} /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="metas">
+            <Card><CardHeader><CardTitle className="text-base">{t('reports.cardGoals')}</CardTitle></CardHeader>
+              <CardContent><MetasProgresso t={t} /></CardContent></Card>
           </TabsContent>
           <TabsContent value="stock-critico">
             <Card><CardHeader><CardTitle className="text-base">{t('reports.cardCritical')}</CardTitle></CardHeader>

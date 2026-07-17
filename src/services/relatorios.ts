@@ -7,6 +7,8 @@ import type {
   RelatorioVendaCliente,
   ProdutoStockBaixo,
   ExtratoCliente,
+  RelatorioLucroProduto,
+  RelatorioMetasProgresso,
 } from '@/types'
 
 export const relatoriosService = {
@@ -31,4 +33,12 @@ export const relatoriosService = {
 
   extratoCliente: (clienteId: string) =>
     api.get<ExtratoCliente>(`/relatorios/clientes/${clienteId}/extrato`),
+
+  // Sem data_inicio/data_fim, considera todo o histórico de vendas.
+  lucroPorProduto: (params?: { data_inicio?: string; data_fim?: string; nome?: string; limite?: number }) =>
+    api.get<RelatorioLucroProduto[]>('/relatorios/produtos/lucro', params),
+
+  // `periodo` no formato YYYY-MM. Sem periodo/nome, traz as metas activas hoje.
+  metasProgresso: (params?: { periodo?: string; nome?: string; limite?: number; incluir_totais?: boolean }) =>
+    api.get<RelatorioMetasProgresso>('/relatorios/metas/progresso', params),
 }

@@ -1,4 +1,5 @@
 import type { VendaResponse, MovimentoResponse } from '@/types'
+import { exportHtmlToPdf } from '@/lib/pdf'
 
 const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -40,6 +41,11 @@ const CSS = `
   @media print{@page{margin:5mm}button{display:none!important}}
 `
 
+function extrairTitulo(html: string): string {
+  const m = html.match(/<title>(.*?)<\/title>/)
+  return (m ? m[1] : 'documento').replace(/\s+/g, '_')
+}
+
 function abrirJanela(html: string, autoPrint: boolean, width = 380, height = 680) {
   const win = window.open('', '_blank', `width=${width},height=${height},toolbar=no,menubar=no,location=no,scrollbars=yes`)
   if (!win) { alert('Por favor, permita pop-ups para imprimir.'); return }
@@ -51,17 +57,43 @@ function abrirJanela(html: string, autoPrint: boolean, width = 380, height = 680
       win.addEventListener('afterprint', () => win.close())
     })
   } else {
-    // O botão não usa onclick inline — o CSP do site (script-src 'self') pode
-    // ser herdado por este popup about:blank e bloquear handlers inline. O
-    // listener é ligado aqui, a partir do script já carregado da app.
+    // Os botões não usam onclick inline — o CSP do site (script-src 'self') pode
+    // ser herdado por este popup about:blank e bloquear handlers inline. Os
+    // listeners são ligados aqui, a partir do script já carregado da app (o
+    // popup about:blank partilha a origem do opener, por isso isto funciona).
+    win.document.getElementById('btn-voltar')?.addEventListener('click', () => win.close())
     win.document.getElementById('btn-imprimir')?.addEventListener('click', () => win.print())
+
+    const btnPdf = win.document.getElementById('btn-pdf') as HTMLButtonElement | null
+    const botoes = win.document.getElementById('botoes-preview') as HTMLElement | null
+    btnPdf?.addEventListener('click', async () => {
+      const original = btnPdf.textContent
+      btnPdf.disabled = true
+      btnPdf.textContent = 'A gerar...'
+      if (botoes) botoes.style.display = 'none'
+      try {
+        await exportHtmlToPdf(win.document.body, extrairTitulo(html))
+      } finally {
+        if (botoes) botoes.style.display = ''
+        btnPdf.disabled = false
+        btnPdf.textContent = original
+      }
+    })
   }
 }
 
 const BOTAO_IMPRIMIR = `
-  <button id="btn-imprimir" style="display:block;width:100%;margin-top:14px;padding:10px;border:none;border-radius:8px;background:#111;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">
-    Imprimir
-  </button>
+  <div id="botoes-preview" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:14px">
+    <button id="btn-voltar" type="button" style="flex:1;padding:10px;border:1px solid #ccc;border-radius:8px;background:#fff;color:#111;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">
+      Voltar
+    </button>
+    <button id="btn-pdf" type="button" style="flex:1;padding:10px;border:none;border-radius:8px;background:#0F6CB5;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">
+      Baixar PDF
+    </button>
+    <button id="btn-imprimir" type="button" style="flex:1;padding:10px;border:none;border-radius:8px;background:#111;color:#fff;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer">
+      Imprimir
+    </button>
+  </div>
 `
 
 // Documento largo tipo A4 — usado pela Factura Recibo/Crédito e pela Nota de
@@ -297,7 +329,7 @@ export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string |
   window.open(url, '_blank')
 }
 
-export function imprimirEntradaStock(m: MovimentoResponse) {
+function gerarEntradaStockHtml(m: MovimentoResponse, comBotaoImprimir: boolean): string {
   const totalHtml = m.preco_unitario
     ? `<hr><div class="row"><span>Preço unitário:</span><span>${fmtKz(m.preco_unitario)}</span></div>
        <div class="row bold"><span>TOTAL:</span><span>${fmtKz(m.preco_unitario * m.quantidade)}</span></div>`
@@ -307,7 +339,7 @@ export function imprimirEntradaStock(m: MovimentoResponse) {
     ? `<hr><div class="row"><span>Motivo:</span><span>${esc(m.motivo)}</span></div>`
     : ''
 
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nota de Entrada</title><style>${CSS}</style></head>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nota de Entrada</title><style>${CSS}</style></head>
 <body>
   <h1>ELECTRO VENDOS</h1>
   <p class="sub">Nota de Entrada de Stock</p>
@@ -321,7 +353,14 @@ export function imprimirEntradaStock(m: MovimentoResponse) {
   ${totalHtml}
   ${motivoHtml}
   <div class="footer"><p>Documento de uso interno</p><p>${new Date().getFullYear()} &copy; Electro Vendos</p></div>
+  ${comBotaoImprimir ? BOTAO_IMPRIMIR : ''}
 </body></html>`
+}
 
-  abrirJanela(html, true)
+export function imprimirEntradaStock(m: MovimentoResponse) {
+  abrirJanela(gerarEntradaStockHtml(m, false), true)
+}
+
+export function visualizarEntradaStock(m: MovimentoResponse) {
+  abrirJanela(gerarEntradaStockHtml(m, true), false)
 }
