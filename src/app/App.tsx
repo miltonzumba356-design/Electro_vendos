@@ -17,6 +17,7 @@ import FornecedoresPage from '@/app/pages/FornecedoresPage'
 import FornecedorExtratoPage from '@/app/pages/FornecedorExtratoPage'
 import DividaClienteDetalhePage from '@/app/pages/DividaClienteDetalhePage'
 import DividaFornecedorDetalhePage from '@/app/pages/DividaFornecedorDetalhePage'
+import ClienteExtratoPage from '@/app/pages/ClienteExtratoPage'
 
 function ProtectedRoute({ children, gestorOnly = false }: {
   children: React.ReactNode
@@ -58,6 +59,10 @@ function AppRoutes() {
       <Route
         path="/clientes"
         element={<ProtectedRoute><ClientesPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/clientes/:id"
+        element={<ProtectedRoute><ClienteExtratoPage /></ProtectedRoute>}
       />
       <Route
         path="/vendas"

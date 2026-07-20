@@ -512,6 +512,8 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
   const [clienteId, setClienteId] = useState('')
   const [extrato, setExtrato] = useState<ExtratoCliente | null>(null)
   const [loading, setLoading] = useState(false)
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -523,16 +525,18 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
   const clienteSelecionado = clientes.find((c) => c.id === clienteId) ?? null
   const vendasCliente = vendas
     .filter((v) => v.cliente_id === clienteId)
+    .filter((v) => (!dataInicio || new Date(v.criado_em) >= new Date(dataInicio)) && (!dataFim || new Date(v.criado_em) <= new Date(dataFim + 'T23:59:59')))
     .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
   const { page, pageItems, totalPages, setPage, resetPage } = usePagination(vendasCliente)
 
-  async function handleSelecionar(id: string) {
-    setClienteId(id)
-    resetPage()
+  async function carregarExtrato(id: string) {
     if (!id) { setExtrato(null); return }
     setLoading(true)
     try {
-      const res = await relatoriosService.extratoCliente(id)
+      const res = await relatoriosService.extratoCliente(id, {
+        data_inicio: dataInicio ? new Date(dataInicio).toISOString() : undefined,
+        data_fim: dataFim ? new Date(dataFim + 'T23:59:59').toISOString() : undefined,
+      })
       setExtrato(res)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('common.loadError'))
@@ -540,6 +544,16 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
       setLoading(false)
     }
   }
+
+  function handleSelecionar(id: string) {
+    setClienteId(id)
+    resetPage()
+    carregarExtrato(id)
+  }
+
+  useEffect(() => {
+    if (clienteId) carregarExtrato(clienteId)
+  }, [dataInicio, dataFim]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const clienteOptions = clientes.map((c) => ({ value: c.id, label: c.nome }))
 
@@ -556,6 +570,14 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
             searchPlaceholder={t('common.search')}
             emptyText={t('clients.empty')}
           />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">{t('reports.startDate')} <span className="text-muted-foreground">({t('reports.emptyIsAllTime')})</span></Label>
+          <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-36" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">{t('reports.endDate')} <span className="text-muted-foreground">({t('reports.emptyIsAllTime')})</span></Label>
+          <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-36" />
         </div>
         {clienteSelecionado && (
           <DownloadPdfButton

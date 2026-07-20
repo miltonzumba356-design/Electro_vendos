@@ -22,7 +22,7 @@ export const fornecedoresService = {
     api.post<DividaFornecedorResponse>(`/fornecedores/${fornecedorId}/compras`, data),
 
   dividas: {
-    listar: (params?: { fornecedor_id?: string; status?: 'DIVIDA' | 'PAGA'; skip?: number; limit?: number }) =>
+    listar: (params?: { fornecedor_id?: string; status?: 'DIVIDA' | 'PAGA'; data_inicio?: string; data_fim?: string; skip?: number; limit?: number }) =>
       api.get<DividaFornecedorResponse[]>('/fornecedores/dividas', params),
 
     total: () =>

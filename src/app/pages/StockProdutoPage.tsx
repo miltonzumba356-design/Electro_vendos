@@ -19,10 +19,11 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { ArrowLeft, ArrowUpCircle, ArrowDownCircle, Printer, Eye } from 'lucide-react'
+import { ArrowLeft, ArrowUpCircle, ArrowDownCircle, Printer, Eye, FileDown } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { imprimirEntradaStock, visualizarEntradaStock } from '@/lib/recibo'
+import { exportTablePdf } from '@/lib/pdf'
 
 function formatKz(value: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -57,20 +58,54 @@ export default function StockProdutoPage() {
   const saidas = movimentos.filter((m) => m.tipo === 'SAIDA').reduce((sum, m) => sum + m.quantidade, 0)
   const { page, pageItems, totalPages, setPage } = usePagination(movimentos)
 
+  function handleBaixarPdf() {
+    if (!produto || !id) return
+    exportTablePdf({
+      title: t('stock.detailsHistory'),
+      subtitle: produto.nome,
+      infoLines: [
+        `${t('stock.colCurrentStock')}: ${produto.stock_atual}`,
+        `${t('stock.colTotalIn')}: ${entradas}   ${t('stock.colTotalOut')}: ${saidas}`,
+      ],
+      columns: [
+        { header: t('stock.colDate'), key: 'data' },
+        { header: t('stock.colType'), key: 'tipo' },
+        { header: t('stock.colQuantity'), key: 'quantidade', align: 'right' },
+        { header: t('stock.colUnitPrice'), key: 'preco', align: 'right' },
+        { header: t('stock.colReason'), key: 'motivo' },
+        { header: t('stock.colUser'), key: 'utilizador' },
+      ],
+      rows: movimentos.map((m) => ({
+        data: format(new Date(m.criado_em), 'dd/MM/yyyy HH:mm'), tipo: m.tipo,
+        quantidade: `${m.tipo === 'SAIDA' ? '-' : '+'}${m.quantidade}`,
+        preco: m.preco_unitario != null ? formatKz(m.preco_unitario) : '—',
+        motivo: m.motivo ?? '—', utilizador: m.utilizador_nome,
+      })),
+      filename: `stock-${produto.nome}`,
+      qrUrl: `${window.location.origin}/stock/${id}`,
+    })
+  }
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" onClick={() => navigate('/stock')}>
-          <ArrowLeft className="size-4" />
-        </Button>
-        <div>
-          {loading ? (
-            <Skeleton className="h-7 w-48" />
-          ) : (
-            <h1 className="text-2xl font-bold tracking-tight">{produto?.nome ?? t('stock.title')}</h1>
-          )}
-          <p className="text-muted-foreground text-sm">{t('stock.detailsHistory')}</p>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="icon" onClick={() => navigate('/stock')}>
+            <ArrowLeft className="size-4" />
+          </Button>
+          <div>
+            {loading ? (
+              <Skeleton className="h-7 w-48" />
+            ) : (
+              <h1 className="text-2xl font-bold tracking-tight">{produto?.nome ?? t('stock.title')}</h1>
+            )}
+            <p className="text-muted-foreground text-sm">{t('stock.detailsHistory')}</p>
+          </div>
         </div>
+        <Button variant="outline" className="gap-2" disabled={movimentos.length === 0} onClick={handleBaixarPdf}>
+          <FileDown className="size-4" />
+          {t('common.downloadPdf')}
+        </Button>
       </div>
 
       {loading ? (

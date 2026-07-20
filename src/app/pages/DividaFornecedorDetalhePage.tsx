@@ -64,14 +64,29 @@ export default function DividaFornecedorDetalhePage() {
   const columns: PdfColumn[] = [
     { header: t('common.date'), key: 'data' },
     { header: t('common.total'), key: 'valor', align: 'right' },
+    { header: t('installments.colPaidToDate'), key: 'totalPago', align: 'right' },
+    { header: t('common.balance'), key: 'saldo', align: 'right' },
     { header: t('suppliers.paymentCurrency'), key: 'moeda' },
   ]
 
-  function buildRows() {
+  // Ordena por data e vai descontando do valor_total — cada pagamento mostra
+  // o total já pago e o saldo restante naquele momento, não só o valor isolado.
+  function pagamentosComSaldo() {
     if (!divida) return []
-    return divida.pagamentos.map((p) => ({
+    const ordenados = [...divida.pagamentos].sort(
+      (a, b) => new Date(a.data_pagamento).getTime() - new Date(b.data_pagamento).getTime()
+    )
+    let acumulado = 0
+    return ordenados.map((p) => {
+      acumulado += p.valor
+      return { ...p, totalPago: acumulado, saldo: Math.max(divida.valor_total - acumulado, 0) }
+    })
+  }
+
+  function buildRows() {
+    return pagamentosComSaldo().map((p) => ({
       data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
-      valor: formatKz(p.valor), moeda: p.moeda,
+      valor: formatKz(p.valor), totalPago: formatKz(p.totalPago), saldo: formatKz(p.saldo), moeda: p.moeda,
     }))
   }
 
@@ -93,6 +108,7 @@ export default function DividaFornecedorDetalhePage() {
       columns,
       rows: buildRows(),
       filename: `divida-fornecedor-${divida.id.slice(0, 8)}`,
+      qrUrl: `${window.location.origin}/fornecedores/dividas/${divida.id}`,
     })
   }
 
@@ -110,6 +126,7 @@ export default function DividaFornecedorDetalhePage() {
         infoLines: buildInfoLines(),
         columns,
         rows: buildRows(),
+        qrUrl: `${window.location.origin}/fornecedores/dividas/${divida.id}`,
       })
       const file = new File([blob], `divida-fornecedor-${divida.id.slice(0, 8)}.pdf`, { type: 'application/pdf' })
       const mensagem = [
@@ -117,7 +134,9 @@ export default function DividaFornecedorDetalhePage() {
         `${t('suppliers.colSupplier')}: ${divida.fornecedor_nome ?? '—'}`,
         `${t('suppliers.colProduct')}: ${divida.produto_nome ?? '—'}`,
         '',
-        ...divida.pagamentos.map((p) => `• ${format(new Date(p.data_pagamento), 'dd/MM/yyyy')} — ${formatKz(p.valor)} (${p.moeda})`),
+        ...pagamentosComSaldo().map((p) =>
+          `• ${format(new Date(p.data_pagamento), 'dd/MM/yyyy')} — ${formatKz(p.valor)} (${p.moeda}) — ${t('common.balance')}: ${formatKz(p.saldo)}`
+        ),
         '',
         `${t('common.total')}: ${formatKz(divida.valor_total)}`,
         `${t('common.paid')}: ${formatKz(divida.valor_pago)}`,
@@ -197,16 +216,20 @@ export default function DividaFornecedorDetalhePage() {
                   <TableRow>
                     <TableHead>{t('common.date')}</TableHead>
                     <TableHead className="text-right">{t('common.total')}</TableHead>
+                    <TableHead className="text-right">{t('installments.colPaidToDate')}</TableHead>
+                    <TableHead className="text-right">{t('common.balance')}</TableHead>
                     <TableHead>{t('suppliers.paymentCurrency')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {divida.pagamentos.map((p, i) => (
+                  {pagamentosComSaldo().map((p, i) => (
                     <TableRow key={i}>
                       <TableCell className="text-muted-foreground text-sm">
                         {format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm')}
                       </TableCell>
                       <TableCell className="text-right font-medium">{formatKz(p.valor)}</TableCell>
+                      <TableCell className="text-right text-green-600">{formatKz(p.totalPago)}</TableCell>
+                      <TableCell className="text-right font-medium text-destructive">{formatKz(p.saldo)}</TableCell>
                       <TableCell><Badge variant="outline">{p.moeda}</Badge></TableCell>
                     </TableRow>
                   ))}

@@ -96,6 +96,7 @@ export default function FornecedorExtratoPage() {
       columns,
       rows: buildRows(),
       filename: `fornecedor-${fornecedor.nome}`,
+      qrUrl: `${window.location.origin}/fornecedores/${fornecedor.id}`,
     })
   }
 
@@ -116,6 +117,7 @@ export default function FornecedorExtratoPage() {
         valor: formatKz(p.valor), moeda: p.moeda,
       }))),
       filename: `historico-pagamentos-${fornecedor.nome}`,
+      qrUrl: `${window.location.origin}/fornecedores/${fornecedor.id}`,
     })
   }
 
@@ -127,7 +129,10 @@ export default function FornecedorExtratoPage() {
     if (!fornecedor) return
     setSharing(true)
     try {
-      const blob = await getTablePdfBlob({ title: t('suppliers.extratoTitle'), subtitle: fornecedor.nome, columns, rows: buildRows() })
+      const blob = await getTablePdfBlob({
+        title: t('suppliers.extratoTitle'), subtitle: fornecedor.nome, columns, rows: buildRows(),
+        qrUrl: `${window.location.origin}/fornecedores/${fornecedor.id}`,
+      })
       const file = new File([blob], `extrato-${fornecedor.nome}.pdf`, { type: 'application/pdf' })
       const mensagem = montarMensagemExtratoFornecedor(
         fornecedor, dividas, { gasto: totalGasto, pago: totalPago, devido: totalDevido }

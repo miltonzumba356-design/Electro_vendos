@@ -532,6 +532,8 @@ function DividasFornecedorTab({
   const [loading, setLoading] = useState(true)
   const [statusFiltro, setStatusFiltro] = useState<'DIVIDA' | 'PAGA' | 'TODAS'>('DIVIDA')
   const [fornecedorFiltro, setFornecedorFiltro] = useState('')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
   const [pagarDivida, setPagarDivida] = useState<DividaFornecedorResponse | null>(null)
   const [novaCompraOpen, setNovaCompraOpen] = useState(false)
 
@@ -544,6 +546,8 @@ function DividasFornecedorTab({
         fornecedoresService.dividas.listar({
           status: statusFiltro === 'TODAS' ? undefined : statusFiltro,
           fornecedor_id: fornecedorFiltro || undefined,
+          data_inicio: dataInicio ? new Date(dataInicio).toISOString() : undefined,
+          data_fim: dataFim ? new Date(dataFim + 'T23:59:59').toISOString() : undefined,
         }),
         fornecedoresService.dividas.total(),
       ])
@@ -556,7 +560,7 @@ function DividasFornecedorTab({
     }
   }
 
-  useEffect(() => { load(); resetPage() }, [statusFiltro, fornecedorFiltro])
+  useEffect(() => { load(); resetPage() }, [statusFiltro, fornecedorFiltro, dataInicio, dataFim])
 
   function handlePago(updated: DividaFornecedorResponse) {
     setDividas((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
@@ -614,6 +618,14 @@ function DividasFornecedorTab({
               {t(`suppliers.debtStatus.${s}`)}
             </Button>
           ))}
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">{t('reports.startDate')}</Label>
+          <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-36" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">{t('reports.endDate')}</Label>
+          <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-36" />
         </div>
         <div className="flex-1" />
         <Button

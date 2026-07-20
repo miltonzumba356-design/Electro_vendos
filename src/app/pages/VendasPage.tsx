@@ -799,15 +799,21 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFiltro, setStatusFiltro] = useState<'DIVIDA' | 'PAGA' | 'TODAS'>('DIVIDA')
+  const [dataInicio, setDataInicio] = useState('')
+  const [dataFim, setDataFim] = useState('')
   const [pagarDivida, setPagarDivida] = useState<DividaResponse | null>(null)
 
   const filtered = dividas.filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
   const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
 
-  async function load(status: 'DIVIDA' | 'PAGA' | 'TODAS') {
+  async function load() {
     setLoading(true)
     try {
-      const data = await dividasService.listar(status === 'TODAS' ? undefined : { status })
+      const data = await dividasService.listar({
+        status: statusFiltro === 'TODAS' ? undefined : statusFiltro,
+        data_inicio: dataInicio ? new Date(dataInicio).toISOString() : undefined,
+        data_fim: dataFim ? new Date(dataFim + 'T23:59:59').toISOString() : undefined,
+      })
       setDividas(data)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('common.loadError'))
@@ -816,7 +822,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
     }
   }
 
-  useEffect(() => { load(statusFiltro); resetPage() }, [statusFiltro])
+  useEffect(() => { load(); resetPage() }, [statusFiltro, dataInicio, dataFim])
 
   function handlePago(updated: DividaResponse) {
     setDividas((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
@@ -847,6 +853,16 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
               {t(`sales.debtStatus.${s}`)}
             </Button>
           ))}
+        </div>
+        <div className="flex items-end gap-2">
+          <div className="space-y-1">
+            <Label className="text-xs">{t('reports.startDate')}</Label>
+            <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-36" />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">{t('reports.endDate')}</Label>
+            <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-36" />
+          </div>
         </div>
         <Button
           variant="outline"

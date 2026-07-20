@@ -1078,7 +1078,7 @@
           "Relatórios"
         ],
         "summary": "Extrato de dívidas e compras a crédito do cliente",
-        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve. Cada dívida traz também `pagamentos`: a lista de cada valor pago até zerar, com a moeda usada em cada um.",
+        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve. Cada dívida traz também `pagamentos`: a lista de cada valor pago até zerar, com a moeda usada em cada um. Sem data_inicio/data_fim, traz todo o histórico do cliente.",
         "operationId": "extrato_cliente_relatorios_clientes__cliente_id__extrato_get",
         "security": [
           {
@@ -1095,6 +1095,50 @@
               "format": "uuid",
               "title": "Cliente Id"
             }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
           }
         ],
         "responses": {
@@ -1579,7 +1623,7 @@
           "Dívidas"
         ],
         "summary": "Listar dívidas",
-        "description": "Lista paginada de dívidas. Filtro opcional por status (DIVIDA/PAGA).",
+        "description": "Lista paginada de dívidas. Filtro opcional por status (DIVIDA/PAGA) e por período (data_inicio/data_fim, com base na data de criação da dívida).",
         "operationId": "listar_dividas_dividas_get",
         "security": [
           {
@@ -1626,6 +1670,50 @@
               ],
               "title": "Status"
             }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
           }
         ],
         "responses": {
@@ -1940,6 +2028,7 @@
           "Fornecedores"
         ],
         "summary": "Listar dívidas a fornecedores",
+        "description": "Lista paginada de dívidas a fornecedores. Filtro opcional por fornecedor, status (DIVIDA/PAGA) e por período (data_inicio/data_fim, com base na data de criação da dívida).",
         "operationId": "listar_dividas_fornecedores_dividas_get",
         "security": [
           {
@@ -1980,6 +2069,50 @@
               ],
               "title": "Status"
             }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
           },
           {
             "name": "skip",

@@ -31,8 +31,9 @@ export const relatoriosService = {
   stockBaixo: () =>
     api.get<ProdutoStockBaixo[]>('/relatorios/stock/baixo'),
 
-  extratoCliente: (clienteId: string) =>
-    api.get<ExtratoCliente>(`/relatorios/clientes/${clienteId}/extrato`),
+  // Sem data_inicio/data_fim, traz todo o histórico do cliente.
+  extratoCliente: (clienteId: string, params?: { data_inicio?: string; data_fim?: string }) =>
+    api.get<ExtratoCliente>(`/relatorios/clientes/${clienteId}/extrato`, params),
 
   // Sem data_inicio/data_fim, considera todo o histórico de vendas.
   lucroPorProduto: (params?: { data_inicio?: string; data_fim?: string; nome?: string; limite?: number }) =>

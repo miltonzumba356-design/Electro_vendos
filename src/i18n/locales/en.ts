@@ -147,7 +147,7 @@ const en = {
     vencYear: 'Year', vencMonth: 'Month', consult: 'Consult', overdue: 'overdue payment(s)',
     vencEmpty: 'No due dates for this month',
     paymentHistoryTitle: 'Payment history', paymentHistoryEmpty: 'No payments recorded',
-    downloadPaymentHistory: 'Payment history',
+    downloadPaymentHistory: 'Payment history', colPaidToDate: 'Total paid to date',
     toasts: {
       selectSale: 'Select a sale', invalidInstallments: 'Installments: 1 to 48',
       planCreated: 'Plan created successfully', planCreateError: 'Error creating plan',

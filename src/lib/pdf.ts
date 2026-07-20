@@ -1,6 +1,7 @@
 import type { jsPDF as JsPDF } from 'jspdf'
+import logoUrl from '@/assets/vendos-logo.png'
 
-// jspdf/jspdf-autotable/html2canvas são pesados (~600kB) e só são precisos
+// jspdf/jspdf-autotable/html2canvas/qrcode são pesados e só são precisos
 // quando o utilizador realmente exporta/partilha um PDF — importados aqui em
 // separado para ficarem no seu próprio chunk, em vez de inflar o bundle
 // principal (o build falha acima de 2MB por causa do limite de pré-cache do
@@ -21,6 +22,35 @@ async function carregarHtml2Canvas() {
 }
 
 const BRAND = '#0F6CB5'
+const LOGO_ASPECT = 331 / 755 // altura/largura originais do logo
+
+let logoDataUrlCache: string | null | undefined
+
+async function carregarLogoDataUrl(): Promise<string | null> {
+  if (logoDataUrlCache !== undefined) return logoDataUrlCache
+  try {
+    const res = await fetch(logoUrl)
+    const blob = await res.blob()
+    logoDataUrlCache = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onloadend = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error)
+      reader.readAsDataURL(blob)
+    })
+  } catch {
+    logoDataUrlCache = null
+  }
+  return logoDataUrlCache
+}
+
+async function carregarQrDataUrl(url: string): Promise<string | null> {
+  try {
+    const QRCode = await import('qrcode')
+    return await QRCode.toDataURL(url, { margin: 1, width: 200, color: { dark: '#111111', light: '#ffffff' } })
+  } catch {
+    return null
+  }
+}
 
 export interface PdfColumn {
   header: string
@@ -38,37 +68,61 @@ export interface ExportTablePdfOptions {
   rows: Array<Record<string, string | number>>
   filename: string
   totalsRow?: Array<string | number>
+  // URL para um QR code no cabeçalho (ex.: link direto ao registo na app),
+  // usado para validar o documento — só faz sentido em PDFs de um registo
+  // específico (fornecedor, cliente, dívida, produto).
+  qrUrl?: string
 }
 
-function drawHeader(doc: JsPDF, title: string, subtitle?: string) {
+const HEADER_HEIGHT = 34
+
+async function drawHeader(doc: JsPDF, title: string, subtitle?: string, qrUrl?: string) {
   const pageWidth = doc.internal.pageSize.getWidth()
-  doc.setFillColor(BRAND)
-  doc.rect(0, 0, pageWidth, 22, 'F')
-  doc.setTextColor('#ffffff')
+  const [logoDataUrl, qrDataUrl] = await Promise.all([
+    carregarLogoDataUrl(),
+    qrUrl ? carregarQrDataUrl(qrUrl) : Promise.resolve(null),
+  ])
+
+  let textX = 12
+  if (logoDataUrl) {
+    const logoW = 30
+    const logoH = logoW * LOGO_ASPECT
+    doc.addImage(logoDataUrl, 'PNG', 12, 7, logoW, logoH)
+    textX = 12 + logoW + 6
+  }
+
   doc.setFont('helvetica', 'bold')
-  doc.setFontSize(14)
-  doc.text('ELECTRO VENDOS', 12, 10)
+  doc.setFontSize(13)
+  doc.setTextColor(BRAND)
+  doc.text(title, textX, 14)
+
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(9)
-  doc.text(title, 12, 17)
-
-  doc.setFontSize(8)
+  doc.setTextColor('#555555')
   const now = new Date()
-  const gerado = `Gerado em ${now.toLocaleDateString('pt-AO')} ${now.toLocaleTimeString('pt-AO')}`
-  doc.text(gerado, pageWidth - 12, 10, { align: 'right' })
-  if (subtitle) doc.text(subtitle, pageWidth - 12, 17, { align: 'right' })
+  doc.text(`Gerado em ${now.toLocaleDateString('pt-AO')} ${now.toLocaleTimeString('pt-AO')}`, textX, 20)
+  if (subtitle) doc.text(subtitle, textX, 25.5)
+
+  if (qrDataUrl) {
+    const qrSize = 20
+    doc.addImage(qrDataUrl, 'PNG', pageWidth - qrSize - 12, 6, qrSize, qrSize)
+  }
+
+  doc.setDrawColor(BRAND)
+  doc.setLineWidth(0.8)
+  doc.line(12, HEADER_HEIGHT - 2, pageWidth - 12, HEADER_HEIGHT - 2)
   doc.setTextColor('#111111')
 }
 
-async function buildTableDoc({ title, subtitle, infoLines, columns, rows, totalsRow }: Omit<ExportTablePdfOptions, 'filename'>): Promise<JsPDF> {
+async function buildTableDoc({ title, subtitle, infoLines, columns, rows, totalsRow, qrUrl }: Omit<ExportTablePdfOptions, 'filename'>): Promise<JsPDF> {
   const [jsPDF, autoTable] = await Promise.all([carregarJsPdf(), carregarAutoTable()])
 
   const landscape = columns.length > 5
   const doc = new jsPDF({ orientation: landscape ? 'landscape' : 'portrait', unit: 'mm', format: 'a4' })
 
-  drawHeader(doc, title, subtitle)
+  await drawHeader(doc, title, subtitle, qrUrl)
 
-  let startY = 28
+  let startY = HEADER_HEIGHT + 6
   if (infoLines && infoLines.length > 0) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(10)
@@ -89,14 +143,14 @@ async function buildTableDoc({ title, subtitle, infoLines, columns, rows, totals
     columnStyles: Object.fromEntries(
       columns.map((c, i) => [i, { halign: c.align ?? 'left' }])
     ),
-    margin: { top: 28, left: 12, right: 12 },
+    margin: { top: HEADER_HEIGHT + 6, left: 12, right: 12 },
   })
 
   return doc
 }
 
 // Exporta uma tabela de dados (relatórios, listas) para PDF, com cabeçalho
-// de marca e paginação automática do jspdf-autotable.
+// de marca (logótipo + QR opcional) e paginação automática do jspdf-autotable.
 export async function exportTablePdf({ filename, ...opts }: ExportTablePdfOptions) {
   const doc = await buildTableDoc(opts)
   doc.save(filename.endsWith('.pdf') ? filename : `${filename}.pdf`)

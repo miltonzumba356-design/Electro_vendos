@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { clientesService } from '@/services/clientes'
 import type { ClienteResponse, ClienteCreate, ClienteUpdate } from '@/types'
@@ -44,6 +45,7 @@ const defaultForm: FormData = {
 
 export default function ClientesPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [clientes, setClientes] = useState<ClienteResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -185,7 +187,11 @@ export default function ClientesPage() {
               </TableRow>
             ) : (
               pageItems.map((c) => (
-                <TableRow key={c.id}>
+                <TableRow
+                  key={c.id}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => navigate(`/clientes/${c.id}`)}
+                >
                   <TableCell className="font-medium">{c.nome}</TableCell>
                   <TableCell>{c.telefone ?? '—'}</TableCell>
                   <TableCell>{c.email ?? '—'}</TableCell>
@@ -195,7 +201,7 @@ export default function ClientesPage() {
                     {format(new Date(c.criado_em), 'dd/MM/yyyy')}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(c)}>
+                    <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openEdit(c) }}>
                       <Pencil className="size-4" />
                     </Button>
                   </TableCell>

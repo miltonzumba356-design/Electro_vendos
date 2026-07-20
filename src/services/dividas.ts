@@ -5,7 +5,7 @@ export const dividasService = {
   verificarCliente: (clienteId: string) =>
     api.get<DividaCheckResponse>(`/dividas/clientes/${clienteId}`),
 
-  listar: (params?: { skip?: number; limit?: number; status?: 'DIVIDA' | 'PAGA' }) =>
+  listar: (params?: { skip?: number; limit?: number; status?: 'DIVIDA' | 'PAGA'; data_inicio?: string; data_fim?: string }) =>
     api.get<DividaResponse[]>('/dividas', params),
 
   total: () =>
