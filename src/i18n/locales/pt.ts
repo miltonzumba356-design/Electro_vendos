@@ -257,6 +257,7 @@ const pt = {
     ledgerNotTracked: 'Não configurado', ledgerTotalInvoices: 'Total de Faturas',
     ledgerTotalReceipts: 'Total de Recibos', ledgerTimeline: 'Linha Temporal Financeira',
     ledgerInitialBalance: 'Saldo Inicial', ledgerTitle: 'Livro Razão',
+    ledgerClientData: 'Dados do Cliente', ledgerFinancialSummary: 'Resumo Financeiro',
     ledgerColDocument: 'Documento', ledgerColDebit: 'Débito', ledgerColCredit: 'Crédito',
     ledgerViewDocument: 'Ver documento',
     ledgerSearchPlaceholder: 'Pesquisar por documento, tipo, descrição ou valor...',

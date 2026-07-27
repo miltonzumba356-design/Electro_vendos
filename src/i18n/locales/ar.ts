@@ -243,6 +243,7 @@ const ar = {
     ledgerNotTracked: 'غير محدد', ledgerTotalInvoices: 'إجمالي الفواتير',
     ledgerTotalReceipts: 'إجمالي الإيصالات', ledgerTimeline: 'الخط الزمني المالي',
     ledgerInitialBalance: 'الرصيد الافتتاحي', ledgerTitle: 'دفتر الأستاذ',
+    ledgerClientData: 'بيانات العميل', ledgerFinancialSummary: 'الملخص المالي',
     ledgerColDocument: 'المستند', ledgerColDebit: 'مدين', ledgerColCredit: 'دائن',
     ledgerViewDocument: 'عرض المستند',
     ledgerSearchPlaceholder: 'البحث حسب المستند أو النوع أو الوصف أو القيمة...',

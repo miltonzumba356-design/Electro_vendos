@@ -251,6 +251,7 @@ const fr = {
     ledgerNotTracked: 'Non configuré', ledgerTotalInvoices: 'Total des Factures',
     ledgerTotalReceipts: 'Total des Reçus', ledgerTimeline: 'Chronologie Financière',
     ledgerInitialBalance: 'Solde Initial', ledgerTitle: 'Livre Comptable',
+    ledgerClientData: 'Données du Client', ledgerFinancialSummary: 'Résumé Financier',
     ledgerColDocument: 'Document', ledgerColDebit: 'Débit', ledgerColCredit: 'Crédit',
     ledgerViewDocument: 'Voir le document',
     ledgerSearchPlaceholder: 'Rechercher par document, type, description ou montant...',

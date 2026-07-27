@@ -5,6 +5,7 @@ import type { TFunction } from 'i18next'
 import type { ClienteResponse, VendaResponse, ExtratoCliente } from '@/types'
 import { Badge } from '@/app/components/ui/badge'
 import { Input } from '@/app/components/ui/input'
+import { Separator } from '@/app/components/ui/separator'
 import {
   Table,
   TableBody,
@@ -34,13 +35,25 @@ function formatKz(v: number) {
 }
 
 function MiniStat({
-  label, value, hint, danger, positive,
-}: { label: string; value: string; hint?: string; danger?: boolean; positive?: boolean }) {
+  label, value, hint, danger, positive, destaque,
+}: { label: string; value: string; hint?: string; danger?: boolean; positive?: boolean; destaque?: boolean }) {
   return (
     <div className="bg-muted/30 rounded-md p-3">
       <p className="text-xs text-muted-foreground mb-1">{label}</p>
-      <p className={`font-semibold text-sm truncate ${danger ? 'text-destructive' : positive ? 'text-green-600' : ''}`}>{value}</p>
+      <p className={`truncate ${destaque ? 'text-xl font-bold' : 'text-sm font-semibold'} ${danger ? 'text-destructive' : positive ? 'text-green-600' : ''}`}>{value}</p>
       {hint && <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{hint}</p>}
+    </div>
+  )
+}
+
+// Par label/valor simples, sem caixa própria — usado dentro do cartão de
+// perfil do cliente, que já é o contentor visual.
+function Field({ label, value, hint }: { label: string; value: string; hint?: string }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground mb-0.5">{label}</p>
+      <p className="text-sm font-medium truncate">{value}</p>
+      {hint && <p className="text-[11px] text-muted-foreground truncate">{hint}</p>}
     </div>
   )
 }
@@ -210,38 +223,51 @@ export default function ClienteLivroRazao({
   return (
     <div className="space-y-5">
       {/* 1. Resumo do Cliente */}
-      <div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-          <MiniStat label={t('common.client')} value={cliente.nome} />
-          <MiniStat label={t('reports.ledgerCode')} value={cliente.id.slice(0, 8).toUpperCase()} />
-          <MiniStat label={t('clients.fieldNif')} value={cliente.nif ?? '—'} />
-          <MiniStat
-            label={t('reports.ledgerContact')}
-            value={cliente.telefone ?? cliente.email ?? '—'}
-            hint={cliente.telefone && cliente.email ? cliente.email : undefined}
-          />
-          <MiniStat
-            label={t('common.status')}
-            value={temSaldoEmAberto ? t('reports.ledgerStatusOpen') : t('reports.ledgerStatusRegular')}
-            danger={temSaldoEmAberto}
-            positive={!temSaldoEmAberto}
-          />
-          <MiniStat label={t('reports.clientSince')} value={format(new Date(cliente.criado_em), 'dd/MM/yyyy')} />
-          <MiniStat label={t('reports.lastPurchase')} value={ultimaCompra ? format(new Date(ultimaCompra), 'dd/MM/yyyy') : '—'} />
+      <div className="space-y-4">
+        {/* Perfil — nome e estado em destaque, restante identificação como detalhe */}
+        <div>
+          <h4 className="text-sm font-semibold mb-2 text-muted-foreground">{t('reports.ledgerClientData')}</h4>
+          <div className="rounded-md border bg-card p-4">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-lg font-bold leading-tight truncate">{cliente.nome}</p>
+                <p className="text-xs text-muted-foreground font-mono mt-0.5">{t('reports.ledgerCode')}: {cliente.id.slice(0, 8).toUpperCase()}</p>
+              </div>
+              <Badge variant={temSaldoEmAberto ? 'destructive' : 'default'} className="shrink-0">
+                {temSaldoEmAberto ? t('reports.ledgerStatusOpen') : t('reports.ledgerStatusRegular')}
+              </Badge>
+            </div>
+            <Separator className="my-3" />
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <Field label={t('clients.fieldNif')} value={cliente.nif ?? '—'} />
+              <Field
+                label={t('reports.ledgerContact')}
+                value={cliente.telefone ?? cliente.email ?? '—'}
+                hint={cliente.telefone && cliente.email ? cliente.email : undefined}
+              />
+              <Field label={t('reports.clientSince')} value={format(new Date(cliente.criado_em), 'dd/MM/yyyy')} />
+              <Field label={t('reports.lastPurchase')} value={ultimaCompra ? format(new Date(ultimaCompra), 'dd/MM/yyyy') : '—'} />
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mt-3">
-          <MiniStat
-            label={t('reports.ledgerCurrentBalance')}
-            value={formatKz(Math.abs(saldoAtualExibido))}
-            danger={saldoAtualExibido < 0}
-            positive={saldoAtualExibido > 0}
-          />
-          <MiniStat label={t('reports.ledgerTotalPurchased')} value={formatKz(totalGasto)} />
-          <MiniStat label={t('reports.ledgerTotalPaid')} value={formatKz(totalPagoDerivado)} />
-          <MiniStat label={t('reports.ledgerAvailableCredit')} value="—" hint={t('reports.ledgerNotTracked')} />
-          <MiniStat label={t('reports.ledgerTotalInvoices')} value={String(totalFaturas)} />
-          <MiniStat label={t('reports.ledgerTotalReceipts')} value={String(totalRecibos)} />
+        {/* Indicadores financeiros — saldo atual em destaque, restante em apoio */}
+        <div>
+          <h4 className="text-sm font-semibold mb-2 text-muted-foreground">{t('reports.ledgerFinancialSummary')}</h4>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            <MiniStat
+              label={t('reports.ledgerCurrentBalance')}
+              value={formatKz(Math.abs(saldoAtualExibido))}
+              danger={saldoAtualExibido < 0}
+              positive={saldoAtualExibido > 0}
+              destaque
+            />
+            <MiniStat label={t('reports.ledgerTotalPurchased')} value={formatKz(totalGasto)} />
+            <MiniStat label={t('reports.ledgerTotalPaid')} value={formatKz(totalPagoDerivado)} />
+            <MiniStat label={t('reports.ledgerAvailableCredit')} value="—" hint={t('reports.ledgerNotTracked')} />
+            <MiniStat label={t('reports.ledgerTotalInvoices')} value={String(totalFaturas)} />
+            <MiniStat label={t('reports.ledgerTotalReceipts')} value={String(totalRecibos)} />
+          </div>
         </div>
       </div>
 

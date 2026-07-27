@@ -254,6 +254,7 @@ const en = {
     ledgerNotTracked: 'Not tracked', ledgerTotalInvoices: 'Total Invoices',
     ledgerTotalReceipts: 'Total Receipts', ledgerTimeline: 'Financial Timeline',
     ledgerInitialBalance: 'Initial Balance', ledgerTitle: 'Ledger',
+    ledgerClientData: 'Client Data', ledgerFinancialSummary: 'Financial Summary',
     ledgerColDocument: 'Document', ledgerColDebit: 'Debit', ledgerColCredit: 'Credit',
     ledgerViewDocument: 'View document',
     ledgerSearchPlaceholder: 'Search by document, type, description or amount...',

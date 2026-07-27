@@ -242,6 +242,7 @@ const zh = {
     ledgerNotTracked: '未设置', ledgerTotalInvoices: '发票总数',
     ledgerTotalReceipts: '收据总数', ledgerTimeline: '财务时间线',
     ledgerInitialBalance: '期初余额', ledgerTitle: '总账',
+    ledgerClientData: '客户资料', ledgerFinancialSummary: '财务摘要',
     ledgerColDocument: '单据', ledgerColDebit: '借方', ledgerColCredit: '贷方',
     ledgerViewDocument: '查看单据',
     ledgerSearchPlaceholder: '按单据、类型、描述或金额搜索...',
