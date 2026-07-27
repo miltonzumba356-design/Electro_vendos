@@ -37,7 +37,8 @@ import {
 } from '@/app/components/ui/dialog'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { exportTablePdf, type PdfColumn } from '@/lib/pdf'
+import { exportTablePdf, exportLedgerPdf, type PdfColumn, type LedgerMovimento, type LedgerEntidade } from '@/lib/pdf'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   Table,
   TableBody,
@@ -507,6 +508,7 @@ function VendasPorCliente({ t }: { t: TFunction }) {
 /* ── Histórico do cliente ───────────────────────────────────── */
 function HistoricoClienteTab({ t }: { t: TFunction }) {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [clientes, setClientes] = useState<ClienteResponse[]>([])
   const [vendas, setVendas] = useState<VendaResponse[]>([])
   const [clienteId, setClienteId] = useState('')
@@ -557,6 +559,48 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
 
   const clienteOptions = clientes.map((c) => ({ value: c.id, label: c.nome }))
 
+  // Constrói os movimentos do Livro Razão a partir do extrato já calculado
+  // pela API (extrato.documentos): cada dívida (Factura) é um débito e cada
+  // pagamento (Recibo) é um crédito. Puramente uma transformação de
+  // apresentação — os valores vêm exatamente como a API já os calcula.
+  function buildMovimentos(): LedgerMovimento[] {
+    return (extrato?.documentos ?? []).map((doc) => {
+      const isFactura = doc.tipo === 'Factura'
+      const codigo = doc.numero != null
+        ? `${isFactura ? 'FT' : 'RC'}${String(doc.numero).padStart(3, '0')}`
+        : doc.id.slice(0, 6).toUpperCase()
+      return {
+        data: doc.data,
+        documento: codigo,
+        tipo: isFactura ? 'Fatura' : 'Recebimento',
+        descricao: doc.produto_nome ?? (isFactura ? 'Venda a crédito' : 'Pagamento de dívida'),
+        debito: isFactura ? doc.valor : undefined,
+        credito: isFactura ? undefined : Math.abs(doc.valor),
+      }
+    })
+  }
+
+  function buildEntidade(): LedgerEntidade {
+    if (!clienteSelecionado) return { nome: '' }
+    return {
+      nome: clienteSelecionado.nome,
+      codigo: clienteSelecionado.id.slice(0, 8).toUpperCase(),
+      nif: clienteSelecionado.nif,
+      telefone: clienteSelecionado.telefone,
+      email: clienteSelecionado.email,
+      morada: clienteSelecionado.endereco,
+      estado: (extrato?.total_devido ?? 0) > 0 ? 'Com saldo em aberto' : 'Regularizado',
+      dataRegisto: clienteSelecionado.criado_em,
+    }
+  }
+
+  function buildPeriodoLabel(): string {
+    if (!dataInicio && !dataFim) return 'Todo o histórico'
+    const ini = dataInicio ? format(new Date(dataInicio), 'dd/MM/yyyy') : '—'
+    const fim = dataFim ? format(new Date(dataFim), 'dd/MM/yyyy') : '—'
+    return `${ini} a ${fim}`
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-3">
@@ -582,20 +626,14 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
         {clienteSelecionado && (
           <DownloadPdfButton
             t={t}
-            onClick={() => exportTablePdf({
-              title: t('reports.cardClientHistory'),
-              subtitle: clienteSelecionado.nome,
-              columns: [
-                { header: t('common.date'), key: 'data' },
-                { header: t('sales.colItems'), key: 'itens', align: 'right' },
-                { header: t('common.total'), key: 'total', align: 'right' },
-                { header: t('reports.colType'), key: 'tipo' },
-              ],
-              rows: vendasCliente.map((v) => ({
-                data: format(new Date(v.criado_em), 'dd/MM/yyyy'), itens: v.itens.length,
-                total: formatKz(v.total_final),
-                tipo: v.credito ? (v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')) : t('sales.cash'),
-              })),
+            onClick={() => exportLedgerPdf({
+              titulo: 'EXTRATO / HISTÓRICO DO CLIENTE',
+              entidadeLabel: 'Cliente',
+              entidade: buildEntidade(),
+              periodoLabel: buildPeriodoLabel(),
+              saldoInicial: 0,
+              movimentos: buildMovimentos(),
+              utilizador: user?.nome,
               filename: `historico-${clienteSelecionado.nome}`,
             })}
           />

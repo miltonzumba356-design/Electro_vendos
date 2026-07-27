@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { fornecedoresService } from '@/services/fornecedores'
+import { useAuth } from '@/contexts/AuthContext'
 import type { FornecedorResponse, ExtratoFornecedor } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
@@ -17,7 +18,10 @@ import {
 } from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
-import { exportMultiSectionPdf, getMultiSectionPdfBlob, exportTablePdf, type PdfSection } from '@/lib/pdf'
+import {
+  exportLedgerSectionsPdf, getLedgerSectionsPdfBlob, exportTablePdf,
+  type LedgerTableSection, type LedgerEntidade, type LedgerMovimento,
+} from '@/lib/pdf'
 import { partilharArquivoOuTexto } from '@/lib/share'
 import { ArrowLeft, FileDown, MessageCircle, Printer, History } from 'lucide-react'
 import { format } from 'date-fns'
@@ -46,6 +50,7 @@ export default function FornecedorExtratoPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { user } = useAuth()
 
   const [fornecedor, setFornecedor] = useState<FornecedorResponse | null>(null)
   const [extrato, setExtrato] = useState<ExtratoFornecedor | null>(null)
@@ -81,7 +86,7 @@ export default function FornecedorExtratoPage() {
   // Agrupa as facturas (compras) por produto — cada produto vira a sua
   // própria secção no PDF, com o custo de cada compra e o total pago ao
   // fornecedor por aquele produto.
-  function buildProdutoSections(): PdfSection[] {
+  function buildProdutoSections(): LedgerTableSection[] {
     const porProduto = new Map<string, { data: string; numero: number | string; valor: number }[]>()
     for (const d of facturas) {
       const nome = d.produto_nome ?? t('reports.colProduct')
@@ -93,28 +98,28 @@ export default function FornecedorExtratoPage() {
       })
     }
     return [...porProduto.entries()].map(([produto, linhas]) => ({
-      heading: produto,
-      columns: [
+      titulo: produto,
+      colunas: [
         { header: t('invoices.colNumber'), key: 'numero' },
         { header: t('common.date'), key: 'data' },
         { header: t('reports.totalCost'), key: 'valor', align: 'right' as const },
       ],
-      rows: linhas.map((l) => ({ numero: l.numero, data: l.data, valor: formatKz(l.valor) })),
+      linhas: linhas.map((l) => ({ numero: l.numero, data: l.data, valor: formatKz(l.valor) })),
       totalsRow: ['', t('common.total'), formatKz(linhas.reduce((s, l) => s + l.valor, 0))],
     }))
   }
 
-  function buildSections(): PdfSection[] {
+  function buildSections(): LedgerTableSection[] {
     return [
       {
-        heading: t('suppliers.sectionPurchases'),
-        columns: [
+        titulo: t('suppliers.sectionPurchases'),
+        colunas: [
           { header: t('invoices.colNumber'), key: 'numero' },
           { header: t('suppliers.colProduct'), key: 'produto' },
           { header: t('common.date'), key: 'data' },
           { header: t('common.total'), key: 'valor', align: 'right' },
         ],
-        rows: facturas.map((d) => ({
+        linhas: facturas.map((d) => ({
           numero: d.numero ?? '—', produto: d.produto_nome ?? '—',
           data: format(new Date(d.data), 'dd/MM/yyyy'), valor: formatKz(d.valor),
         })),
@@ -122,15 +127,15 @@ export default function FornecedorExtratoPage() {
         emptyLabel: t('suppliers.emptyPurchases'),
       },
       {
-        heading: t('suppliers.sectionPayments'),
-        columns: [
+        titulo: t('suppliers.sectionPayments'),
+        colunas: [
           { header: t('invoices.colNumber'), key: 'numero' },
           { header: t('suppliers.colProduct'), key: 'produto' },
           { header: t('common.date'), key: 'data' },
           { header: t('suppliers.paymentCurrency'), key: 'moeda' },
           { header: t('common.total'), key: 'valor', align: 'right' },
         ],
-        rows: recibos.map((d) => ({
+        linhas: recibos.map((d) => ({
           numero: d.numero ?? '—', produto: d.produto_nome ?? '—',
           data: format(new Date(d.data), 'dd/MM/yyyy HH:mm'), moeda: d.moeda ?? '—',
           valor: formatKz(Math.abs(d.valor)),
@@ -142,23 +147,51 @@ export default function FornecedorExtratoPage() {
     ]
   }
 
-  function buildInfoLines(): string[] {
-    if (!fornecedor) return []
-    return [
-      `${t('common.phone')}: ${fornecedor.telefone ?? '—'}   ${t('suppliers.fieldNif')}: ${fornecedor.nif ?? '—'}`,
-      `${t('suppliers.totalSpent')}: ${formatKz(totalComprado)}   ${t('common.paid')}: ${formatKz(totalPago)}   ${t('suppliers.totalOwed')}: ${formatKz(totalDevido)}`,
-    ]
+  // Movimentos usados só para calcular os cartões de resumo (débito =
+  // compra, crédito = pagamento) — as tabelas em si vêm de buildSections().
+  function buildMovimentos(): LedgerMovimento[] {
+    return documentos.map((d) => ({
+      data: d.data,
+      documento: d.numero != null ? String(d.numero) : d.id.slice(0, 6),
+      tipo: d.tipo,
+      descricao: d.produto_nome ?? '',
+      debito: d.tipo === 'Factura' ? d.valor : undefined,
+      credito: d.tipo === 'Factura' ? undefined : Math.abs(d.valor),
+    }))
+  }
+
+  function buildEntidade(): LedgerEntidade {
+    if (!fornecedor) return { nome: '' }
+    return {
+      nome: fornecedor.nome,
+      codigo: fornecedor.id.slice(0, 8).toUpperCase(),
+      nif: fornecedor.nif,
+      telefone: fornecedor.telefone,
+      morada: fornecedor.endereco,
+      estado: totalDevido > 0 ? 'Com saldo em aberto' : 'Regularizado',
+      dataRegisto: fornecedor.criado_em,
+    }
+  }
+
+  function buildPeriodoLabel(): string {
+    if (!dataInicio && !dataFim) return 'Todo o histórico'
+    const ini = dataInicio ? format(new Date(dataInicio), 'dd/MM/yyyy') : '—'
+    const fim = dataFim ? format(new Date(dataFim), 'dd/MM/yyyy') : '—'
+    return `${ini} a ${fim}`
   }
 
   function handleBaixarPdf() {
     if (!fornecedor) return
-    exportMultiSectionPdf({
-      title: t('suppliers.extratoTitle'),
-      subtitle: fornecedor.nome,
-      infoLines: buildInfoLines(),
+    exportLedgerSectionsPdf({
+      titulo: 'EXTRATO / HISTÓRICO DO FORNECEDOR',
+      entidadeLabel: 'Fornecedor',
+      entidade: buildEntidade(),
+      periodoLabel: buildPeriodoLabel(),
+      saldoInicial: 0,
+      movimentos: buildMovimentos(),
       sections: buildSections(),
+      utilizador: user?.nome,
       filename: `fornecedor-${fornecedor.nome}`,
-      qrUrl: `${window.location.origin}/fornecedores/${fornecedor.id}`,
     })
   }
 
@@ -192,12 +225,15 @@ export default function FornecedorExtratoPage() {
     if (!fornecedor) return
     setSharing(true)
     try {
-      const blob = await getMultiSectionPdfBlob({
-        title: t('suppliers.extratoTitle'),
-        subtitle: fornecedor.nome,
-        infoLines: buildInfoLines(),
+      const blob = await getLedgerSectionsPdfBlob({
+        titulo: 'EXTRATO / HISTÓRICO DO FORNECEDOR',
+        entidadeLabel: 'Fornecedor',
+        entidade: buildEntidade(),
+        periodoLabel: buildPeriodoLabel(),
+        saldoInicial: 0,
+        movimentos: buildMovimentos(),
         sections: buildSections(),
-        qrUrl: `${window.location.origin}/fornecedores/${fornecedor.id}`,
+        utilizador: user?.nome,
       })
       const file = new File([blob], `extrato-${fornecedor.nome}.pdf`, { type: 'application/pdf' })
       const mensagem = [

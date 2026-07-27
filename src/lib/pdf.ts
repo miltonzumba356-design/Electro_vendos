@@ -359,11 +359,31 @@ function desenharCabecalhoContinuacao(doc: JsPDF, entidadeLabel: string, entidad
   doc.setTextColor('#111111')
 }
 
-async function buildLedgerDoc(opts: Omit<ExportLedgerPdfOptions, 'filename'>): Promise<JsPDF> {
-  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, utilizador } = opts
-  const [jsPDF, autoTable] = await Promise.all([carregarJsPdf(), carregarAutoTable()])
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const logoDataUrl = await carregarLogoDataUrl()
+interface TopoLedgerResult {
+  y: number
+  rightX: number
+  paginasHeaderY: number
+  totalDebitos: number
+  totalCreditos: number
+  saldoFinal: number
+}
+
+// Desenha o bloco do topo, comum aos dois formatos de Livro Razão (tabela
+// única ou secções tituladas): cabeçalho da empresa + título/metadados,
+// dados da entidade e os 6 cartões de resumo financeiro. Devolve o Y onde o
+// conteúdo (tabela ou secções) deve começar, mais os totais já calculados a
+// partir dos movimentos (para os cartões finais) e as coordenadas que a
+// segunda passada de paginação precisa de reescrever.
+function desenharTopoLedger(doc: JsPDF, opts: {
+  titulo: string
+  entidadeLabel: string
+  entidade: LedgerEntidade
+  periodoLabel: string
+  saldoInicial: number
+  movimentos: LedgerMovimento[]
+  logoDataUrl: string | null
+}): TopoLedgerResult {
+  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl } = opts
 
   // ── Cabeçalho: empresa (esquerda) + título/metadados (direita) ──────
   let leftY = 13
@@ -487,6 +507,90 @@ async function buildLedgerDoc(opts: Omit<ExportLedgerPdfOptions, 'filename'>): P
   })
   const tableStartY = y + 2 * cardH + gap + 8
 
+  return { y: tableStartY, rightX, paginasHeaderY, totalDebitos, totalCreditos, saldoFinal }
+}
+
+// Cartões finais (totais + saldo final) e área de assinatura, no fecho do
+// documento — quebra de página automática se não houver espaço na página
+// atual, redesenhando cabeçalho de continuação e rodapé nessa nova página.
+function desenharFechoLedger(doc: JsPDF, params: {
+  entidadeLabel: string
+  entidadeNome: string
+  totalDebitos: number
+  totalCreditos: number
+  saldoFinal: number
+  utilizador?: string | null
+  cursorY: number
+}) {
+  const { entidadeLabel, entidadeNome, totalDebitos, totalCreditos, saldoFinal, utilizador } = params
+  let cursorY = params.cursorY
+
+  const ESPACO_FECHO = 62
+  if (cursorY > LEDGER_PAGE_H - ESPACO_FECHO) {
+    doc.addPage()
+    desenharCabecalhoContinuacao(doc, entidadeLabel, entidadeNome)
+    desenharRodapeLedger(doc, doc.internal.getNumberOfPages(), utilizador)
+    cursorY = 26
+  }
+
+  const gap = 5
+  const cardH = 15.5
+  let closeY = cursorY + 9
+  const closeCardW = (LEDGER_CONTENT_W - gap * 2) / 3
+  desenharCard(doc, LEDGER_MARGIN, closeY, closeCardW, cardH, 'Total de Débitos', fmtKzLedger(totalDebitos), LEDGER_DEBITO)
+  desenharCard(doc, LEDGER_MARGIN + closeCardW + gap, closeY, closeCardW, cardH, 'Total de Créditos', fmtKzLedger(totalCreditos), LEDGER_CREDITO)
+  desenharCard(doc, LEDGER_MARGIN + (closeCardW + gap) * 2, closeY, closeCardW, cardH, 'Saldo Final', fmtKzLedger(saldoFinal), saldoFinal > 0 ? LEDGER_DEBITO : '#111111')
+  closeY += cardH + 16
+
+  doc.setDrawColor('#333333')
+  doc.setLineWidth(0.3)
+  const assinaturaW = 78
+  doc.line(LEDGER_MARGIN, closeY, LEDGER_MARGIN + assinaturaW, closeY)
+  doc.line(LEDGER_PAGE_W - LEDGER_MARGIN - assinaturaW, closeY, LEDGER_PAGE_W - LEDGER_MARGIN, closeY)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(LEDGER_MUTED)
+  doc.text('Assinatura do Responsável', LEDGER_MARGIN + assinaturaW / 2, closeY + 5, { align: 'center' })
+  doc.text(`Assinatura do ${entidadeLabel}`, LEDGER_PAGE_W - LEDGER_MARGIN - assinaturaW / 2, closeY + 5, { align: 'center' })
+  doc.setTextColor('#111111')
+}
+
+// Segunda passada: agora que o número total de páginas é conhecido, reescreve
+// "Páginas: N" no cabeçalho da 1ª página e "Página X de N" no rodapé de
+// todas as páginas (a área é pintada de branco antes, por cima do texto
+// provisório desenhado durante a primeira passada).
+function patchPaginacaoLedger(doc: JsPDF, paginasHeaderY: number, rightX: number) {
+  const totalPaginas = doc.internal.getNumberOfPages()
+  for (let p = 1; p <= totalPaginas; p++) {
+    doc.setPage(p)
+    if (p === 1) {
+      doc.setFillColor('#ffffff')
+      doc.rect(LEDGER_PAGE_W - LEDGER_MARGIN - 40, paginasHeaderY - 3.5, 40, 5, 'F')
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(LEDGER_MUTED)
+      doc.text(`Páginas: ${totalPaginas}`, rightX, paginasHeaderY, { align: 'right' })
+    }
+    const footerY = LEDGER_PAGE_H - 16 + 5
+    doc.setFillColor('#ffffff')
+    doc.rect(LEDGER_PAGE_W - LEDGER_MARGIN - 34, footerY - 3.5, 34, 5, 'F')
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7.5)
+    doc.setTextColor(LEDGER_MUTED)
+    doc.text(`Página ${p} de ${totalPaginas}`, LEDGER_PAGE_W - LEDGER_MARGIN, footerY, { align: 'right' })
+  }
+  doc.setTextColor('#111111')
+}
+
+async function buildLedgerDoc(opts: Omit<ExportLedgerPdfOptions, 'filename'>): Promise<JsPDF> {
+  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, utilizador } = opts
+  const [jsPDF, autoTable] = await Promise.all([carregarJsPdf(), carregarAutoTable()])
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const logoDataUrl = await carregarLogoDataUrl()
+
+  const { y: tableStartY, rightX, paginasHeaderY, totalDebitos, totalCreditos, saldoFinal } =
+    desenharTopoLedger(doc, { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl })
+
   // ── Tabela de movimentos, com saldo acumulado linha a linha ────────
   let saldoCorrente = saldoInicial
   const body = [...movimentos]
@@ -537,56 +641,95 @@ async function buildLedgerDoc(opts: Omit<ExportLedgerPdfOptions, 'filename'>): P
     },
   })
 
-  // ── Totais finais + assinaturas (última página) ────────────────────
-  let finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
-  const ESPACO_FECHO = 62
-  if (finalY > LEDGER_PAGE_H - ESPACO_FECHO) {
-    doc.addPage()
-    desenharCabecalhoContinuacao(doc, entidadeLabel, entidade.nome)
-    desenharRodapeLedger(doc, doc.internal.getNumberOfPages(), utilizador)
-    finalY = 26
-  }
+  const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+  desenharFechoLedger(doc, { entidadeLabel, entidadeNome: entidade.nome, totalDebitos, totalCreditos, saldoFinal, utilizador, cursorY: finalY })
+  patchPaginacaoLedger(doc, paginasHeaderY, rightX)
 
-  let closeY = finalY + 9
-  const closeCardW = (LEDGER_CONTENT_W - gap * 2) / 3
-  desenharCard(doc, LEDGER_MARGIN, closeY, closeCardW, cardH, 'Total de Débitos', fmtKzLedger(totalDebitos), LEDGER_DEBITO)
-  desenharCard(doc, LEDGER_MARGIN + closeCardW + gap, closeY, closeCardW, cardH, 'Total de Créditos', fmtKzLedger(totalCreditos), LEDGER_CREDITO)
-  desenharCard(doc, LEDGER_MARGIN + (closeCardW + gap) * 2, closeY, closeCardW, cardH, 'Saldo Final', fmtKzLedger(saldoFinal), saldoFinal > 0 ? LEDGER_DEBITO : '#111111')
-  closeY += cardH + 16
+  return doc
+}
 
-  doc.setDrawColor('#333333')
-  doc.setLineWidth(0.3)
-  const assinaturaW = 78
-  doc.line(LEDGER_MARGIN, closeY, LEDGER_MARGIN + assinaturaW, closeY)
-  doc.line(LEDGER_PAGE_W - LEDGER_MARGIN - assinaturaW, closeY, LEDGER_PAGE_W - LEDGER_MARGIN, closeY)
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.setTextColor(LEDGER_MUTED)
-  doc.text('Assinatura do Responsável', LEDGER_MARGIN + assinaturaW / 2, closeY + 5, { align: 'center' })
-  doc.text(`Assinatura do ${entidadeLabel}`, LEDGER_PAGE_W - LEDGER_MARGIN - assinaturaW / 2, closeY + 5, { align: 'center' })
-  doc.setTextColor('#111111')
+// ── Livro Razão em secções tituladas (ex.: fornecedores: Compras, Pagamentos,
+// e uma secção por produto) — mesmo cabeçalho/dados da entidade/resumo e
+// rodapé/assinatura do formato de tabela única, mas o corpo é uma sequência
+// de tabelas com o seu próprio título, em vez de um único razão cronológico.
+export interface LedgerTableSection {
+  titulo: string
+  colunas: PdfColumn[]
+  linhas: Array<Record<string, string | number>>
+  totalsRow?: Array<string | number>
+  emptyLabel?: string
+}
 
-  // ── Segunda passada: paginação total (cabeçalho da 1ª página + rodapé) ─
-  const totalPaginas = doc.internal.getNumberOfPages()
-  for (let p = 1; p <= totalPaginas; p++) {
-    doc.setPage(p)
-    if (p === 1) {
-      doc.setFillColor('#ffffff')
-      doc.rect(LEDGER_PAGE_W - LEDGER_MARGIN - 40, paginasHeaderY - 3.5, 40, 5, 'F')
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(8)
-      doc.setTextColor(LEDGER_MUTED)
-      doc.text(`Páginas: ${totalPaginas}`, rightX, paginasHeaderY, { align: 'right' })
+export interface ExportLedgerSectionsPdfOptions {
+  titulo: string
+  entidadeLabel: string
+  entidade: LedgerEntidade
+  periodoLabel: string
+  saldoInicial: number
+  movimentos: LedgerMovimento[]
+  sections: LedgerTableSection[]
+  utilizador?: string | null
+  filename: string
+}
+
+async function buildLedgerSectionsDoc(opts: Omit<ExportLedgerSectionsPdfOptions, 'filename'>): Promise<JsPDF> {
+  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, sections, utilizador } = opts
+  const [jsPDF, autoTable] = await Promise.all([carregarJsPdf(), carregarAutoTable()])
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const logoDataUrl = await carregarLogoDataUrl()
+
+  const { y: startY, rightX, paginasHeaderY, totalDebitos, totalCreditos, saldoFinal } =
+    desenharTopoLedger(doc, { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl })
+
+  let y = startY
+  for (const section of sections) {
+    if (y > LEDGER_PAGE_H - 40) {
+      doc.addPage()
+      desenharCabecalhoContinuacao(doc, entidadeLabel, entidade.nome)
+      desenharRodapeLedger(doc, doc.internal.getNumberOfPages(), utilizador)
+      y = 26
     }
-    const footerY = LEDGER_PAGE_H - 16 + 5
-    doc.setFillColor('#ffffff')
-    doc.rect(LEDGER_PAGE_W - LEDGER_MARGIN - 34, footerY - 3.5, 34, 5, 'F')
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7.5)
-    doc.setTextColor(LEDGER_MUTED)
-    doc.text(`Página ${p} de ${totalPaginas}`, LEDGER_PAGE_W - LEDGER_MARGIN, footerY, { align: 'right' })
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(BRAND)
+    doc.text(section.titulo, LEDGER_MARGIN, y)
+    y += 5
+    doc.setTextColor('#111111')
+
+    if (section.linhas.length === 0) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8.5)
+      doc.setTextColor(LEDGER_MUTED)
+      doc.text(section.emptyLabel ?? '—', LEDGER_MARGIN, y + 3)
+      doc.setTextColor('#111111')
+      y += 12
+      continue
+    }
+
+    autoTable(doc, {
+      startY: y,
+      head: [section.colunas.map((c) => c.header)],
+      body: section.linhas.map((r) => section.colunas.map((c) => r[c.key] ?? '—')),
+      foot: section.totalsRow ? [section.totalsRow] : undefined,
+      showHead: 'everyPage',
+      styles: { fontSize: 8.3, cellPadding: 2.2, lineColor: LEDGER_BORDER, lineWidth: 0.1, textColor: '#111111' },
+      headStyles: { fillColor: BRAND, textColor: '#ffffff', fontStyle: 'bold', fontSize: 8.3 },
+      footStyles: { fillColor: LEDGER_CARD_BG, textColor: '#111111', fontStyle: 'bold', fontSize: 8.3 },
+      alternateRowStyles: { fillColor: LEDGER_ZEBRA },
+      columnStyles: Object.fromEntries(section.colunas.map((c, i) => [i, { halign: c.align ?? 'left' }])),
+      margin: { top: 24, left: LEDGER_MARGIN, right: LEDGER_MARGIN, bottom: 26 },
+      didDrawPage: (data: { pageNumber: number }) => {
+        if (data.pageNumber > 1) desenharCabecalhoContinuacao(doc, entidadeLabel, entidade.nome)
+        desenharRodapeLedger(doc, data.pageNumber, utilizador)
+      },
+    })
+
+    y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
   }
-  doc.setTextColor('#111111')
+
+  desenharFechoLedger(doc, { entidadeLabel, entidadeNome: entidade.nome, totalDebitos, totalCreditos, saldoFinal, utilizador, cursorY: y - 10 })
+  patchPaginacaoLedger(doc, paginasHeaderY, rightX)
 
   return doc
 }
@@ -603,6 +746,21 @@ export async function exportLedgerPdf({ filename, ...opts }: ExportLedgerPdfOpti
 // descarregar — usado para partilhar o ficheiro (ex.: Web Share API).
 export async function getLedgerPdfBlob(opts: Omit<ExportLedgerPdfOptions, 'filename'>): Promise<Blob> {
   const doc = await buildLedgerDoc(opts)
+  return doc.output('blob')
+}
+
+// Exporta um Livro Razão em secções tituladas (cada uma com a sua própria
+// tabela) — mesmo cabeçalho, dados da entidade, resumo financeiro, rodapé e
+// assinaturas do formato de tabela única.
+export async function exportLedgerSectionsPdf({ filename, ...opts }: ExportLedgerSectionsPdfOptions) {
+  const doc = await buildLedgerSectionsDoc(opts)
+  doc.save(filename.endsWith('.pdf') ? filename : `${filename}.pdf`)
+}
+
+// Igual a exportLedgerSectionsPdf, mas devolve o PDF como Blob em vez de o
+// descarregar — usado para partilhar o ficheiro (ex.: Web Share API).
+export async function getLedgerSectionsPdfBlob(opts: Omit<ExportLedgerSectionsPdfOptions, 'filename'>): Promise<Blob> {
+  const doc = await buildLedgerSectionsDoc(opts)
   return doc.output('blob')
 }
 
