@@ -134,6 +134,8 @@ export interface VendaResponse {
   total_final: number
   credito: boolean
   credito_pago: boolean
+  // Nº sequencial da factura (dívida) gerada, preenchido só quando credito=true.
+  numero_factura?: number | null
   criado_em: string
   itens: VendaItemResponse[]
 }
@@ -230,6 +232,8 @@ export const MOEDAS_PAGAMENTO: MoedaPagamento[] = ['KZ', 'AOA', 'USD', 'EUR']
 // ── Dívidas (vendas a crédito) ─────────────────────────────────
 export interface PagamentoDividaResponse {
   id: string
+  // Nº sequencial do recibo.
+  numero?: number | null
   valor: number
   moeda: string
   data_pagamento: string
@@ -237,6 +241,8 @@ export interface PagamentoDividaResponse {
 
 export interface DividaResponse {
   id: string
+  // Nº sequencial da factura, usado para buscar por /dividas/numero/{numero}.
+  numero?: number | null
   cliente_id: string
   cliente_nome: string | null
   venda_id: string | null
@@ -295,6 +301,8 @@ export interface CompraFornecedorCreate {
 
 export interface PagamentoDividaFornecedorResponse {
   id: string
+  // Nº sequencial do recibo.
+  numero?: number | null
   valor: number
   moeda: string
   data_pagamento: string
@@ -302,6 +310,8 @@ export interface PagamentoDividaFornecedorResponse {
 
 export interface DividaFornecedorResponse {
   id: string
+  // Nº sequencial da factura, usado para buscar por /fornecedores/dividas/numero/{numero}.
+  numero?: number | null
   fornecedor_id: string
   fornecedor_nome: string | null
   produto_id: string | null
@@ -325,6 +335,15 @@ export interface PagarDividaFornecedorRequest {
 export interface TotalDividasFornecedorResponse {
   quantidade_dividas: number
   total_devido: number
+}
+
+export interface ExtratoFornecedor {
+  fornecedor_id: string
+  fornecedor_nome: string
+  telefone: string | null
+  nif: string | null
+  total_devido: number
+  documentos: DocumentoExtratoItem[]
 }
 
 // ── Relatórios ──────────────────────────────────────────────────
@@ -442,6 +461,8 @@ export interface RelatorioMetasProgresso {
 }
 
 export interface PagamentoDividaExtratoItem {
+  // Nº sequencial do recibo.
+  numero?: number | null
   valor: number
   moeda: string
   data_pagamento: string
@@ -449,6 +470,8 @@ export interface PagamentoDividaExtratoItem {
 
 export interface DividaExtratoItem {
   divida_id: string
+  // Nº sequencial da factura.
+  numero?: number | null
   produto_nome: string | null
   data_compra: string
   valor_total: number
@@ -456,6 +479,19 @@ export interface DividaExtratoItem {
   saldo: number
   status: string
   pagamentos: PagamentoDividaExtratoItem[]
+}
+
+// Item do histórico cronológico de um extrato (cliente ou fornecedor): cada
+// dívida vira uma 'Factura' (valor positivo) e cada pagamento vira um
+// 'Recibo' (valor negativo).
+export interface DocumentoExtratoItem {
+  id: string
+  tipo: 'Factura' | 'Recibo'
+  numero?: number | null
+  data: string
+  produto_nome?: string | null
+  valor: number
+  moeda?: string | null
 }
 
 export interface PrestacaoExtratoItem {
@@ -476,6 +512,8 @@ export interface ExtratoCliente {
   total_devido: number
   dividas: DividaExtratoItem[]
   prestacoes: PrestacaoExtratoItem[]
+  // Histórico cronológico: cada dívida vira uma 'Factura' e cada pagamento vira um 'Recibo'.
+  documentos?: DocumentoExtratoItem[]
 }
 
 // ── Fluxo de Caixa ──────────────────────────────────────────────

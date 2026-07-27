@@ -63,6 +63,7 @@ export default function DividaClienteDetalhePage() {
   }, [id])
 
   const columns: PdfColumn[] = [
+    { header: t('invoices.colNumber'), key: 'numero' },
     { header: t('common.date'), key: 'data' },
     { header: t('common.total'), key: 'valor', align: 'right' },
     { header: t('installments.colPaidToDate'), key: 'totalPago', align: 'right' },
@@ -86,6 +87,7 @@ export default function DividaClienteDetalhePage() {
 
   function buildRows() {
     return pagamentosComSaldo().map((p) => ({
+      numero: p.numero ?? '—',
       data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
       valor: formatKz(p.valor), totalPago: formatKz(p.totalPago), saldo: formatKz(p.saldo), moeda: p.moeda,
     }))
@@ -94,7 +96,7 @@ export default function DividaClienteDetalhePage() {
   function buildInfoLines(): string[] {
     if (!divida) return []
     return [
-      `${t('common.client')}: ${divida.cliente_nome ?? '—'}`,
+      `${t('common.client')}: ${divida.cliente_nome ?? '—'}${divida.numero != null ? `   ${t('invoices.colNumber')}: ${divida.numero}` : ''}`,
       `${t('reports.colProduct')}: ${divida.produto_nome ?? '—'}`,
       `${t('common.total')}: ${formatKz(divida.valor_total)}   ${t('common.paid')}: ${formatKz(divida.valor_pago)}   ${t('common.balance')}: ${formatKz(divida.saldo)}`,
     ]
@@ -176,6 +178,7 @@ export default function DividaClienteDetalhePage() {
         <div className="space-y-4">
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <span>{t('common.client')}: {divida.cliente_nome ?? '—'}</span>
+            {divida.numero != null && <span>{t('invoices.colNumber')}: {divida.numero}</span>}
             <Badge variant={divida.status === 'PAGA' ? 'default' : 'destructive'}>{divida.status}</Badge>
             <span>{format(new Date(divida.criado_em), 'dd/MM/yyyy')}</span>
           </div>
@@ -215,6 +218,7 @@ export default function DividaClienteDetalhePage() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>{t('invoices.colNumber')}</TableHead>
                     <TableHead>{t('common.date')}</TableHead>
                     <TableHead className="text-right">{t('common.total')}</TableHead>
                     <TableHead className="text-right">{t('installments.colPaidToDate')}</TableHead>
@@ -225,6 +229,7 @@ export default function DividaClienteDetalhePage() {
                 <TableBody>
                   {pagamentosComSaldo().map((p, i) => (
                     <TableRow key={i}>
+                      <TableCell className="text-muted-foreground text-sm">{p.numero ?? '—'}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm')}
                       </TableCell>

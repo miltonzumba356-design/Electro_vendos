@@ -207,6 +207,8 @@ const pt = {
     allSuppliers: 'Todos os fornecedores',
     totalDebts: 'Total de dívidas', totalOwed: 'Total devido', totalSpent: 'Total gasto',
     extratoTitle: 'Extrato de Fornecedor',
+    sectionPurchases: 'Compras', sectionPayments: 'Pagamentos',
+    emptyPurchases: 'Nenhuma compra a crédito encontrada', emptyPayments: 'Nenhum pagamento encontrado',
     colSupplier: 'Fornecedor', colProduct: 'Produto', colQuantity: 'Quantidade', colDate: 'Data',
     debtStatus: { DIVIDA: 'Em dívida', PAGA: 'Pagas', TODAS: 'Todas' },
     debtEmpty: 'Nenhuma dívida a fornecedores encontrada',

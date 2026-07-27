@@ -605,7 +605,7 @@
         },
         "responses": {
           "201": {
-            "description": "Venda criada. Se `credito=true`, uma `Divida` é gerada automaticamente.",
+            "description": "Venda criada. Se `credito=true`, uma `Divida` é gerada automaticamente e seu `numero_factura` já vem na resposta.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1078,7 +1078,7 @@
           "Relatórios"
         ],
         "summary": "Extrato de dívidas e compras a crédito do cliente",
-        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve. Cada dívida traz também `pagamentos`: a lista de cada valor pago até zerar, com a moeda usada em cada um. Sem data_inicio/data_fim, traz todo o histórico do cliente.",
+        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve. Cada dívida traz também `pagamentos`: a lista de cada valor pago até zerar, com a moeda usada em cada um. Sem data_inicio/data_fim, traz todo o histórico do cliente. Se informar `numero`, traz só aquela factura (e ignora prestações, já que o número é específico da dívida).",
         "operationId": "extrato_cliente_relatorios_clientes__cliente_id__extrato_get",
         "security": [
           {
@@ -1139,6 +1139,25 @@
               "title": "Data Fim"
             },
             "description": "Data fim. Omite para todo o histórico"
+          },
+          {
+            "name": "numero",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra pelo número exato da factura (dívida)",
+              "examples": [1],
+              "title": "Numero"
+            },
+            "description": "Filtra pelo número exato da factura (dívida)"
           }
         ],
         "responses": {
@@ -1623,7 +1642,7 @@
           "Dívidas"
         ],
         "summary": "Listar dívidas",
-        "description": "Lista paginada de dívidas. Filtro opcional por status (DIVIDA/PAGA) e por período (data_inicio/data_fim, com base na data de criação da dívida).",
+        "description": "Lista paginada de dívidas. Filtro opcional por status (DIVIDA/PAGA), por período (data_inicio/data_fim, com base na data de criação da dívida), por nome do cliente (pesquisa parcial) e por número exato da factura — combináveis.",
         "operationId": "listar_dividas_dividas_get",
         "security": [
           {
@@ -1714,6 +1733,46 @@
               "title": "Data Fim"
             },
             "description": "Data fim. Omite para todo o histórico"
+          },
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pesquisa por nome do cliente (parcial, sem distinguir maiúsculas)",
+              "examples": [
+                "Carlos"
+              ],
+              "title": "Nome"
+            },
+            "description": "Pesquisa por nome do cliente (parcial, sem distinguir maiúsculas)"
+          },
+          {
+            "name": "numero",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra pelo número exato da factura",
+              "examples": [1],
+              "title": "Numero"
+            },
+            "description": "Filtra pelo número exato da factura"
           }
         ],
         "responses": {
@@ -1769,6 +1828,57 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/dividas/numero/{numero}": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Buscar factura (dívida) por número",
+        "description": "Busca a dívida (factura) pelo número sequencial, trazendo os seus recibos (pagamentos) e o saldo total em aberto.",
+        "operationId": "buscar_divida_por_numero_dividas_numero__numero__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Factura não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/dividas/{divida_id}": {
@@ -2166,6 +2276,57 @@
         }
       }
     },
+    "/fornecedores/dividas/numero/{numero}": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Buscar factura (dívida) a fornecedor por número",
+        "description": "Busca a dívida (factura) pelo número sequencial, trazendo os seus recibos (pagamentos) e o saldo total em aberto.",
+        "operationId": "buscar_divida_por_numero_fornecedores_dividas_numero__numero__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaFornecedorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Factura não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/fornecedores/dividas/{divida_id}": {
       "get": {
         "tags": [
@@ -2268,6 +2429,102 @@
             "HTTPBearer": []
           }
         ]
+      }
+    },
+    "/fornecedores/{fornecedor_id}/extrato": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Extrato de dívidas e compras a crédito do fornecedor",
+        "description": "Histórico cronológico de documentos do fornecedor: cada compra a crédito vira uma 'Factura' e cada pagamento feito vira um 'Recibo', com o saldo total ainda em aberto. Filtro opcional por período (data_inicio/data_fim, com base na data de criação da dívida). Sem as datas, traz todo o histórico.",
+        "operationId": "extrato_fornecedor_fornecedores__fornecedor_id__extrato_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fornecedor Id"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtratoFornecedor"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/fornecedores/{fornecedor_id}": {
@@ -4011,6 +4268,19 @@
             "format": "uuid",
             "title": "Divida Id"
           },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial da factura",
+            "examples": [1]
+          },
           "produto_nome": {
             "anyOf": [
               {
@@ -4069,6 +4339,19 @@
             "type": "string",
             "format": "uuid",
             "title": "Id"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial da factura",
+            "examples": [1]
           },
           "fornecedor_id": {
             "type": "string",
@@ -4180,6 +4463,19 @@
             "type": "string",
             "format": "uuid",
             "title": "Id"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial da factura",
+            "examples": [1]
           },
           "cliente_id": {
             "type": "string",
@@ -4324,6 +4620,14 @@
             },
             "type": "array",
             "title": "Prestacoes"
+          },
+          "documentos": {
+            "items": {
+              "$ref": "#/components/schemas/app__schemas__relatorio__DocumentoExtratoItem"
+            },
+            "type": "array",
+            "title": "Documentos",
+            "description": "Histórico cronológico: cada dívida vira uma 'Factura' e cada pagamento vira um 'Recibo'"
           }
         },
         "type": "object",
@@ -4340,15 +4644,18 @@
             {
               "data_compra": "2026-07-01T10:00:00Z",
               "divida_id": "c2f0129e-5bcf-4aa5-9ff5-a067067c9139",
+              "numero": 1,
               "pagamentos": [
                 {
                   "data_pagamento": "2026-07-05T09:00:00Z",
                   "moeda": "KZ",
+                  "numero": 1,
                   "valor": 5000
                 },
                 {
                   "data_pagamento": "2026-07-10T14:00:00Z",
                   "moeda": "USD",
+                  "numero": 2,
                   "valor": 5000
                 }
               ],
@@ -4357,6 +4664,34 @@
               "status": "DIVIDA",
               "valor_pago": 10000,
               "valor_total": 25000
+            }
+          ],
+          "documentos": [
+            {
+              "data": "2026-07-01T10:00:00Z",
+              "id": "c2f0129e-5bcf-4aa5-9ff5-a067067c9139",
+              "numero": 1,
+              "produto_nome": "Arroz 5kg",
+              "tipo": "Factura",
+              "valor": 25000
+            },
+            {
+              "data": "2026-07-05T09:00:00Z",
+              "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+              "moeda": "KZ",
+              "numero": 1,
+              "produto_nome": "Arroz 5kg",
+              "tipo": "Recibo",
+              "valor": -5000
+            },
+            {
+              "data": "2026-07-10T14:00:00Z",
+              "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+              "moeda": "USD",
+              "numero": 2,
+              "produto_nome": "Arroz 5kg",
+              "tipo": "Recibo",
+              "valor": -5000
             }
           ],
           "nif": "123456789",
@@ -4373,6 +4708,85 @@
           ],
           "telefone": "923456789",
           "total_devido": 75000
+        }
+      },
+      "ExtratoFornecedor": {
+        "properties": {
+          "fornecedor_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Fornecedor Id"
+          },
+          "fornecedor_nome": {
+            "type": "string",
+            "title": "Fornecedor Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido"
+          },
+          "documentos": {
+            "items": {
+              "$ref": "#/components/schemas/app__schemas__fornecedor__DocumentoExtratoItem"
+            },
+            "type": "array",
+            "title": "Documentos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fornecedor_id",
+          "fornecedor_nome",
+          "total_devido"
+        ],
+        "title": "ExtratoFornecedor",
+        "example": {
+          "documentos": [
+            {
+              "data": "2026-07-17T13:41:30Z",
+              "id": "bcce753e-4a2a-48dd-8837-9e24bcd86f59",
+              "numero": 1,
+              "produto_nome": "CHOCOLAT AKSU 12 X 1000g",
+              "tipo": "Factura",
+              "valor": 300
+            },
+            {
+              "data": "2026-07-17T14:00:00Z",
+              "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+              "moeda": "USD",
+              "numero": 1,
+              "produto_nome": "CHOCOLAT AKSU 12 X 1000g",
+              "tipo": "Recibo",
+              "valor": -40
+            }
+          ],
+          "fornecedor_id": "6ae62e88-eb54-4d65-9e8e-865f75ac53c5",
+          "fornecedor_nome": "Diakubama Paulo",
+          "nif": "123456789",
+          "telefone": "923456789",
+          "total_devido": 210
         }
       },
       "FaturaCreate": {
@@ -5392,6 +5806,19 @@
       },
       "PagamentoDividaExtratoItem": {
         "properties": {
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial do recibo",
+            "examples": [1]
+          },
           "valor": {
             "type": "number",
             "title": "Valor",
@@ -5424,6 +5851,19 @@
             "type": "string",
             "format": "uuid",
             "title": "Id"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial do recibo",
+            "examples": [1]
           },
           "valor": {
             "type": "number",
@@ -5458,6 +5898,19 @@
             "type": "string",
             "format": "uuid",
             "title": "Id"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial do recibo",
+            "examples": [1]
           },
           "valor": {
             "type": "number",
@@ -7596,6 +8049,19 @@
             "title": "Credito Pago",
             "description": "Se true, dívida do crédito foi paga"
           },
+          "numero_factura": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Factura",
+            "description": "Número sequencial da factura (dívida) gerada, se a venda foi a crédito",
+            "examples": [1]
+          },
           "criado_em": {
             "type": "string",
             "format": "date-time",
@@ -7627,6 +8093,154 @@
           "itens"
         ],
         "title": "VendaResponse"
+      },
+      "app__schemas__fornecedor__DocumentoExtratoItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "'Factura' (compra a crédito) ou 'Recibo' (pagamento feito)",
+            "examples": [
+              "Factura"
+            ]
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "examples": [1]
+          },
+          "data": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "Positivo para Factura, negativo para Recibo",
+            "examples": [300]
+          },
+          "moeda": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moeda",
+            "description": "Preenchido só nos Recibos",
+            "examples": [
+              "USD"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "data",
+          "valor"
+        ],
+        "title": "DocumentoExtratoItem"
+      },
+      "app__schemas__relatorio__DocumentoExtratoItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "'Factura' (compra a crédito) ou 'Recibo' (pagamento feito)",
+            "examples": [
+              "Factura"
+            ]
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "examples": [1]
+          },
+          "data": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "Positivo para Factura, negativo para Recibo",
+            "examples": [25000]
+          },
+          "moeda": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moeda",
+            "description": "Preenchido só nos Recibos",
+            "examples": [
+              "USD"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "data",
+          "valor"
+        ],
+        "title": "DocumentoExtratoItem"
       }
     },
     "securitySchemes": {

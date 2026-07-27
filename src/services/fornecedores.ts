@@ -6,6 +6,7 @@ import type {
   DividaFornecedorResponse,
   PagarDividaFornecedorRequest,
   TotalDividasFornecedorResponse,
+  ExtratoFornecedor,
 } from '@/types'
 
 export const fornecedoresService = {
@@ -21,6 +22,11 @@ export const fornecedoresService = {
   comprar: (fornecedorId: string, data: CompraFornecedorCreate) =>
     api.post<DividaFornecedorResponse>(`/fornecedores/${fornecedorId}/compras`, data),
 
+  // Histórico cronológico de facturas (compras a crédito) e recibos (pagamentos)
+  // do fornecedor. Sem data_inicio/data_fim, traz todo o histórico.
+  extrato: (fornecedorId: string, params?: { data_inicio?: string; data_fim?: string }) =>
+    api.get<ExtratoFornecedor>(`/fornecedores/${fornecedorId}/extrato`, params),
+
   dividas: {
     listar: (params?: { fornecedor_id?: string; status?: 'DIVIDA' | 'PAGA'; data_inicio?: string; data_fim?: string; skip?: number; limit?: number }) =>
       api.get<DividaFornecedorResponse[]>('/fornecedores/dividas', params),
@@ -30,6 +36,10 @@ export const fornecedoresService = {
 
     buscar: (id: string) =>
       api.get<DividaFornecedorResponse>(`/fornecedores/dividas/${id}`),
+
+    // Busca a factura (dívida) a fornecedor pelo número sequencial.
+    buscarPorNumero: (numero: number) =>
+      api.get<DividaFornecedorResponse>(`/fornecedores/dividas/numero/${numero}`),
 
     pagar: (data: PagarDividaFornecedorRequest) =>
       api.post<DividaFornecedorResponse>('/fornecedores/dividas/pagar', data),

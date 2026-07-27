@@ -163,6 +163,99 @@ export async function getTablePdfBlob(opts: Omit<ExportTablePdfOptions, 'filenam
   return doc.output('blob')
 }
 
+// Uma secção de um PDF com várias tabelas (ex.: histórico do cliente: vendas,
+// dívidas, prestações, e depois uma tabela por produto). Secções sem linhas
+// são omitidas.
+export interface PdfSection {
+  heading: string
+  columns: PdfColumn[]
+  rows: Array<Record<string, string | number>>
+  totalsRow?: Array<string | number>
+  emptyLabel?: string
+}
+
+export interface ExportMultiSectionPdfOptions {
+  title: string
+  subtitle?: string
+  infoLines?: string[]
+  sections: PdfSection[]
+  filename: string
+  qrUrl?: string
+}
+
+async function buildMultiSectionDoc({ title, subtitle, infoLines, sections, qrUrl }: Omit<ExportMultiSectionPdfOptions, 'filename'>): Promise<JsPDF> {
+  const [jsPDF, autoTable] = await Promise.all([carregarJsPdf(), carregarAutoTable()])
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const pageHeight = doc.internal.pageSize.getHeight()
+
+  await drawHeader(doc, title, subtitle, qrUrl)
+
+  let y = HEADER_HEIGHT + 6
+  if (infoLines && infoLines.length > 0) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+    doc.setTextColor('#333333')
+    infoLines.forEach((line, i) => doc.text(line, 12, y + i * 5.5))
+    y += infoLines.length * 5.5 + 6
+    doc.setTextColor('#111111')
+  }
+
+  for (const section of sections) {
+    if (y > pageHeight - 30) { doc.addPage(); y = 16 }
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(BRAND)
+    doc.text(section.heading, 12, y)
+    y += 5
+    doc.setTextColor('#111111')
+
+    if (section.rows.length === 0) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(9)
+      doc.setTextColor('#777777')
+      doc.text(section.emptyLabel ?? '—', 12, y + 3)
+      doc.setTextColor('#111111')
+      y += 12
+      continue
+    }
+
+    autoTable(doc, {
+      startY: y,
+      head: [section.columns.map((c) => c.header)],
+      body: section.rows.map((r) => section.columns.map((c) => r[c.key] ?? '—')),
+      foot: section.totalsRow ? [section.totalsRow] : undefined,
+      styles: { fontSize: 9, cellPadding: 2.5 },
+      headStyles: { fillColor: BRAND, textColor: '#ffffff', fontStyle: 'bold' },
+      footStyles: { fillColor: '#f0f4f8', textColor: '#111111', fontStyle: 'bold' },
+      columnStyles: Object.fromEntries(
+        section.columns.map((c, i) => [i, { halign: c.align ?? 'left' }])
+      ),
+      margin: { left: 12, right: 12 },
+    })
+
+    const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+    y = finalY + 10
+  }
+
+  return doc
+}
+
+// Exporta várias tabelas num único PDF (ex.: histórico do cliente: vendas,
+// dívidas, prestações, e depois uma secção por produto), com o mesmo
+// cabeçalho de marca das restantes exportações.
+export async function exportMultiSectionPdf({ filename, ...opts }: ExportMultiSectionPdfOptions) {
+  const doc = await buildMultiSectionDoc(opts)
+  doc.save(filename.endsWith('.pdf') ? filename : `${filename}.pdf`)
+}
+
+// Igual a exportMultiSectionPdf, mas devolve o PDF como Blob em vez de o
+// descarregar — usado para partilhar o ficheiro (ex.: Web Share API).
+export async function getMultiSectionPdfBlob(opts: Omit<ExportMultiSectionPdfOptions, 'filename'>): Promise<Blob> {
+  const doc = await buildMultiSectionDoc(opts)
+  return doc.output('blob')
+}
+
 // Converte um documento HTML já renderizado (ex.: o popup de recibo/nota) em
 // PDF real, capturando-o como imagem paginada — preserva o layout exato do
 // documento em vez de reconstruir o texto via API do jsPDF.

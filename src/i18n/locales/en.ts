@@ -204,6 +204,8 @@ const en = {
     allSuppliers: 'All suppliers',
     totalDebts: 'Total debts', totalOwed: 'Total owed', totalSpent: 'Total spent',
     extratoTitle: 'Supplier Statement',
+    sectionPurchases: 'Purchases', sectionPayments: 'Payments',
+    emptyPurchases: 'No credit purchases found', emptyPayments: 'No payments found',
     colSupplier: 'Supplier', colProduct: 'Product', colQuantity: 'Quantity', colDate: 'Date',
     debtStatus: { DIVIDA: 'Outstanding', PAGA: 'Paid', TODAS: 'All' },
     debtEmpty: 'No supplier debts found',

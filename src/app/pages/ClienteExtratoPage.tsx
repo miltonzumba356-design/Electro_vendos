@@ -19,7 +19,7 @@ import {
 } from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
-import { exportTablePdf, getTablePdfBlob, type PdfColumn } from '@/lib/pdf'
+import { exportMultiSectionPdf, getMultiSectionPdfBlob, type PdfSection } from '@/lib/pdf'
 import { partilharArquivoOuTexto } from '@/lib/share'
 import { ArrowLeft, FileDown, MessageCircle, Printer } from 'lucide-react'
 import { format } from 'date-fns'
@@ -78,22 +78,120 @@ export default function ClienteExtratoPage() {
 
   const totalGasto = vendasCliente.reduce((s, v) => s + v.total_final, 0)
 
-  function handleBaixarPdf() {
-    if (!cliente) return
-    exportTablePdf({
-      title: t('reports.cardClientHistory'),
-      subtitle: cliente.nome,
+  // Agrupa os itens de todas as vendas por produto — cada produto vira a sua
+  // própria secção no PDF, com a tabela das transações desse produto e o
+  // lucro (subtotal - custo) de cada uma, usando preco_custo_unitario que a
+  // API já traz por item vendido.
+  function buildProdutoSections(): PdfSection[] {
+    const porProduto = new Map<string, { data: string; quantidade: number; precoUnitario: number; precoCusto: number; subtotal: number; lucro: number }[]>()
+    for (const v of vendasCliente) {
+      for (const item of v.itens) {
+        if (!porProduto.has(item.produto_nome)) porProduto.set(item.produto_nome, [])
+        porProduto.get(item.produto_nome)!.push({
+          data: format(new Date(v.criado_em), 'dd/MM/yyyy'),
+          quantidade: item.quantidade,
+          precoUnitario: item.preco_unitario,
+          precoCusto: item.preco_custo_unitario,
+          subtotal: item.subtotal,
+          lucro: item.subtotal - item.preco_custo_unitario * item.quantidade,
+        })
+      }
+    }
+    return [...porProduto.entries()].map(([produto, linhas]) => ({
+      heading: produto,
       columns: [
         { header: t('common.date'), key: 'data' },
-        { header: t('sales.colItems'), key: 'itens', align: 'right' },
-        { header: t('common.total'), key: 'total', align: 'right' },
-        { header: t('reports.colType'), key: 'tipo' },
+        { header: t('sales.qty'), key: 'quantidade', align: 'right' as const },
+        { header: t('invoices.itemPrice'), key: 'precoUnitario', align: 'right' as const },
+        { header: t('sales.subtotal'), key: 'subtotal', align: 'right' as const },
+        { header: t('reports.totalCost'), key: 'precoCusto', align: 'right' as const },
+        { header: t('reports.profit'), key: 'lucro', align: 'right' as const },
       ],
-      rows: vendasCliente.map((v) => ({
-        data: format(new Date(v.criado_em), 'dd/MM/yyyy'), itens: v.itens.length,
-        total: formatKz(v.total_final),
-        tipo: v.credito ? (v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')) : t('sales.cash'),
+      rows: linhas.map((l) => ({
+        data: l.data, quantidade: l.quantidade,
+        precoUnitario: formatKz(l.precoUnitario), subtotal: formatKz(l.subtotal),
+        precoCusto: formatKz(l.precoCusto * l.quantidade), lucro: formatKz(l.lucro),
       })),
+      totalsRow: [
+        t('common.total'), '', '',
+        formatKz(linhas.reduce((s, l) => s + l.subtotal, 0)),
+        formatKz(linhas.reduce((s, l) => s + l.precoCusto * l.quantidade, 0)),
+        formatKz(linhas.reduce((s, l) => s + l.lucro, 0)),
+      ],
+    }))
+  }
+
+  function buildSections(): PdfSection[] {
+    return [
+      {
+        heading: t('reports.sectionSales'),
+        columns: [
+          { header: t('invoices.colNumber'), key: 'numero' },
+          { header: t('common.date'), key: 'data' },
+          { header: t('sales.colItems'), key: 'itens', align: 'right' },
+          { header: t('common.total'), key: 'total', align: 'right' },
+          { header: t('reports.colType'), key: 'tipo' },
+        ],
+        rows: vendasCliente.map((v) => ({
+          numero: v.numero_factura ?? '—',
+          data: format(new Date(v.criado_em), 'dd/MM/yyyy'), itens: v.itens.length,
+          total: formatKz(v.total_final),
+          tipo: v.credito ? (v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')) : t('sales.cash'),
+        })),
+        emptyLabel: t('reports.emptySales'),
+      },
+      {
+        heading: t('reports.sectionCreditDebts'),
+        columns: [
+          { header: t('invoices.colNumber'), key: 'numero' },
+          { header: t('reports.colProduct'), key: 'produto' },
+          { header: t('common.date'), key: 'data' },
+          { header: t('common.total'), key: 'total', align: 'right' },
+          { header: t('common.paid'), key: 'pago', align: 'right' },
+          { header: t('common.balance'), key: 'saldo', align: 'right' },
+          { header: t('common.status'), key: 'status' },
+        ],
+        rows: (extrato?.dividas ?? []).map((d) => ({
+          numero: d.numero ?? '—', produto: d.produto_nome ?? '—', data: format(new Date(d.data_compra), 'dd/MM/yyyy'),
+          total: formatKz(d.valor_total), pago: formatKz(d.valor_pago), saldo: formatKz(d.saldo), status: d.status,
+        })),
+        emptyLabel: t('reports.emptyDebts'),
+      },
+      {
+        heading: t('reports.sectionInstallments'),
+        columns: [
+          { header: t('reports.colProduct'), key: 'produto' },
+          { header: t('common.date'), key: 'data' },
+          { header: t('common.total'), key: 'total', align: 'right' },
+          { header: t('common.paid'), key: 'pago', align: 'right' },
+          { header: t('common.balance'), key: 'saldo', align: 'right' },
+          { header: t('common.status'), key: 'status' },
+        ],
+        rows: (extrato?.prestacoes ?? []).map((p) => ({
+          produto: p.produto_nome ?? '—', data: format(new Date(p.data_compra), 'dd/MM/yyyy'),
+          total: formatKz(p.valor_total), pago: formatKz(p.valor_pago), saldo: formatKz(p.saldo), status: p.situacao,
+        })),
+        emptyLabel: t('reports.emptyInstallments'),
+      },
+      ...buildProdutoSections(),
+    ]
+  }
+
+  function buildInfoLines(): string[] {
+    if (!cliente) return []
+    return [
+      `${t('common.phone')}: ${cliente.telefone ?? '—'}   ${t('common.email')}: ${cliente.email ?? '—'}`,
+      `${t('sales.title')}: ${vendasCliente.length}   ${t('reports.totalSpent')}: ${formatKz(totalGasto)}   ${t('reports.totalOwed')}: ${formatKz(extrato?.total_devido ?? 0)}`,
+    ]
+  }
+
+  function handleBaixarPdf() {
+    if (!cliente) return
+    exportMultiSectionPdf({
+      title: t('reports.cardClientHistory'),
+      subtitle: cliente.nome,
+      infoLines: buildInfoLines(),
+      sections: buildSections(),
       filename: `historico-${cliente.nome}`,
       qrUrl: `${window.location.origin}/clientes/${cliente.id}`,
     })
@@ -107,21 +205,11 @@ export default function ClienteExtratoPage() {
     if (!cliente) return
     setSharing(true)
     try {
-      const columns: PdfColumn[] = [
-        { header: t('common.date'), key: 'data' },
-        { header: t('sales.colItems'), key: 'itens', align: 'right' },
-        { header: t('common.total'), key: 'total', align: 'right' },
-        { header: t('reports.colType'), key: 'tipo' },
-      ]
-      const blob = await getTablePdfBlob({
+      const blob = await getMultiSectionPdfBlob({
         title: t('reports.cardClientHistory'),
         subtitle: cliente.nome,
-        columns,
-        rows: vendasCliente.map((v) => ({
-          data: format(new Date(v.criado_em), 'dd/MM/yyyy'), itens: v.itens.length,
-          total: formatKz(v.total_final),
-          tipo: v.credito ? (v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')) : t('sales.cash'),
-        })),
+        infoLines: buildInfoLines(),
+        sections: buildSections(),
         qrUrl: `${window.location.origin}/clientes/${cliente.id}`,
       })
       const file = new File([blob], `historico-${cliente.nome}.pdf`, { type: 'application/pdf' })
@@ -237,9 +325,14 @@ export default function ClienteExtratoPage() {
                         <TableCell className="text-right font-semibold">{formatKz(v.total_final)}</TableCell>
                         <TableCell>
                           {v.credito ? (
-                            <Badge variant={v.credito_pago ? 'default' : 'destructive'}>
-                              {v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
-                            </Badge>
+                            <div className="flex items-center gap-1.5">
+                              <Badge variant={v.credito_pago ? 'default' : 'destructive'}>
+                                {v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
+                              </Badge>
+                              {v.numero_factura != null && (
+                                <span className="text-muted-foreground text-xs">{t('invoices.colNumber')} {v.numero_factura}</span>
+                              )}
+                            </div>
                           ) : (
                             <span className="text-muted-foreground text-xs">{t('sales.cash')}</span>
                           )}
@@ -261,6 +354,7 @@ export default function ClienteExtratoPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>{t('invoices.colNumber')}</TableHead>
                       <TableHead>{t('reports.colProduct')}</TableHead>
                       <TableHead>{t('common.date')}</TableHead>
                       <TableHead className="text-right">{t('common.total')}</TableHead>
@@ -276,6 +370,7 @@ export default function ClienteExtratoPage() {
                         className="cursor-pointer hover:bg-muted/40"
                         onClick={() => navigate(`/dividas/${d.divida_id}`)}
                       >
+                        <TableCell className="text-muted-foreground text-sm">{d.numero ?? '—'}</TableCell>
                         <TableCell className="font-medium">{d.produto_nome ?? '—'}</TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           {format(new Date(d.data_compra), 'dd/MM/yyyy')}
