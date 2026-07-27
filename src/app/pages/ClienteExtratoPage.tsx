@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router'
+import { useParams, useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { clientesService } from '@/services/clientes'
 import { vendasService } from '@/services/vendas'
@@ -7,19 +7,11 @@ import { relatoriosService } from '@/services/relatorios'
 import { useAuth } from '@/contexts/AuthContext'
 import type { ClienteResponse, VendaResponse, ExtratoCliente } from '@/types'
 import { Button } from '@/app/components/ui/button'
-import { Badge } from '@/app/components/ui/badge'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
+import ClienteLivroRazao from '@/app/components/ClienteLivroRazao'
 import { exportLedgerPdf, getLedgerPdfBlob, type LedgerMovimento, type LedgerEntidade } from '@/lib/pdf'
 import { partilharArquivoOuTexto } from '@/lib/share'
 import { ArrowLeft, FileDown, MessageCircle, Printer } from 'lucide-react'
@@ -34,28 +26,38 @@ function formatKz(v: number) {
   }).format(v)
 }
 
-function MiniStat({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
-  return (
-    <div className="bg-muted/30 rounded-md p-3">
-      <p className="text-xs text-muted-foreground mb-1">{label}</p>
-      <p className={`font-semibold text-sm ${danger ? 'text-destructive' : ''}`}>{value}</p>
-    </div>
-  )
-}
-
 export default function ClienteExtratoPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
   const { user } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const [cliente, setCliente] = useState<ClienteResponse | null>(null)
   const [vendas, setVendas] = useState<VendaResponse[]>([])
   const [extrato, setExtrato] = useState<ExtratoCliente | null>(null)
   const [loading, setLoading] = useState(true)
   const [sharing, setSharing] = useState(false)
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
+  // Os filtros de data ficam na própria URL — assim, ao abrir um documento e
+  // voltar (botão "Voltar" reutiliza o histórico do browser), os filtros
+  // aplicados aqui continuam preservados.
+  const dataInicio = searchParams.get('inicio') ?? ''
+  const dataFim = searchParams.get('fim') ?? ''
+
+  function setDataInicio(valor: string) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (valor) next.set('inicio', valor); else next.delete('inicio')
+      return next
+    })
+  }
+  function setDataFim(valor: string) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (valor) next.set('fim', valor); else next.delete('fim')
+      return next
+    })
+  }
 
   useEffect(() => {
     if (!id) return
@@ -186,21 +188,14 @@ export default function ClienteExtratoPage() {
           ) : (
             <h1 className="text-2xl font-bold tracking-tight">{cliente?.nome ?? t('clients.title')}</h1>
           )}
-          <p className="text-muted-foreground text-sm">{t('reports.cardClientHistory')}</p>
+          <p className="text-muted-foreground text-sm">{t('reports.ledgerTitle')} — {t('reports.cardClientHistory')}</p>
         </div>
       </div>
 
       {loading ? (
         <Skeleton className="h-32 w-full" />
       ) : cliente ? (
-        <div className="space-y-4">
-          <div className="text-sm text-muted-foreground space-x-4">
-            {cliente.telefone && <span>{t('common.phone')}: {cliente.telefone}</span>}
-            {cliente.email && <span>{t('common.email')}: {cliente.email}</span>}
-            {cliente.nif && <span>{t('clients.fieldNif')}: {cliente.nif}</span>}
-            {cliente.endereco && <span>{t('common.address')}: {cliente.endereco}</span>}
-          </div>
-
+        <div className="space-y-5">
           <div className="flex flex-wrap items-end gap-3">
             <div className="space-y-1">
               <Label className="text-xs">{t('reports.startDate')} <span className="text-muted-foreground">({t('reports.emptyIsAllTime')})</span></Label>
@@ -210,12 +205,6 @@ export default function ClienteExtratoPage() {
               <Label className="text-xs">{t('reports.endDate')} <span className="text-muted-foreground">({t('reports.emptyIsAllTime')})</span></Label>
               <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-36" />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <MiniStat label={t('sales.title')} value={String(vendasCliente.length)} />
-            <MiniStat label={t('reports.totalSpent')} value={formatKz(totalGasto)} />
-            <MiniStat label={t('reports.totalOwed')} value={formatKz(extrato?.total_devido ?? 0)} danger={(extrato?.total_devido ?? 0) > 0} />
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -240,134 +229,7 @@ export default function ClienteExtratoPage() {
 
           <Separator />
 
-          <div>
-            <h4 className="text-sm font-semibold mb-2 text-muted-foreground">{t('reports.sectionSales')}</h4>
-            {vendasCliente.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t('reports.emptySales')}</p>
-            ) : (
-              <div className="rounded-md border bg-card overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('common.date')}</TableHead>
-                      <TableHead className="text-right">{t('sales.colItems')}</TableHead>
-                      <TableHead className="text-right">{t('common.total')}</TableHead>
-                      <TableHead>{t('reports.colType')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {vendasCliente.map((v) => (
-                      <TableRow key={v.id}>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {format(new Date(v.criado_em), 'dd/MM/yyyy')}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Badge variant="secondary">{v.itens.length}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">{formatKz(v.total_final)}</TableCell>
-                        <TableCell>
-                          {v.credito ? (
-                            <div className="flex items-center gap-1.5">
-                              <Badge variant={v.credito_pago ? 'default' : 'destructive'}>
-                                {v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
-                              </Badge>
-                              {v.numero_factura != null && (
-                                <span className="text-muted-foreground text-xs">{t('invoices.colNumber')} {v.numero_factura}</span>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-xs">{t('sales.cash')}</span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <h4 className="text-sm font-semibold mb-2 text-muted-foreground">{t('reports.sectionCreditDebts')}</h4>
-            {!extrato || extrato.dividas.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t('reports.emptyDebts')}</p>
-            ) : (
-              <div className="rounded-md border bg-card overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('invoices.colNumber')}</TableHead>
-                      <TableHead>{t('reports.colProduct')}</TableHead>
-                      <TableHead>{t('common.date')}</TableHead>
-                      <TableHead className="text-right">{t('common.total')}</TableHead>
-                      <TableHead className="text-right">{t('common.paid')}</TableHead>
-                      <TableHead className="text-right">{t('common.balance')}</TableHead>
-                      <TableHead>{t('common.status')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {extrato.dividas.map((d) => (
-                      <TableRow
-                        key={d.divida_id}
-                        className="cursor-pointer hover:bg-muted/40"
-                        onClick={() => navigate(`/dividas/${d.divida_id}`)}
-                      >
-                        <TableCell className="text-muted-foreground text-sm">{d.numero ?? '—'}</TableCell>
-                        <TableCell className="font-medium">{d.produto_nome ?? '—'}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {format(new Date(d.data_compra), 'dd/MM/yyyy')}
-                        </TableCell>
-                        <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
-                        <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
-                        <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
-                        <TableCell>
-                          <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
-
-          <div>
-            <h4 className="text-sm font-semibold mb-2 text-muted-foreground">{t('reports.sectionInstallments')}</h4>
-            {!extrato || extrato.prestacoes.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t('reports.emptyInstallments')}</p>
-            ) : (
-              <div className="rounded-md border bg-card overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('reports.colProduct')}</TableHead>
-                      <TableHead>{t('common.date')}</TableHead>
-                      <TableHead className="text-right">{t('common.total')}</TableHead>
-                      <TableHead className="text-right">{t('common.paid')}</TableHead>
-                      <TableHead className="text-right">{t('common.balance')}</TableHead>
-                      <TableHead>{t('common.status')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {extrato.prestacoes.map((p) => (
-                      <TableRow key={p.prestacao_id}>
-                        <TableCell className="font-medium">{p.produto_nome ?? '—'}</TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {format(new Date(p.data_compra), 'dd/MM/yyyy')}
-                        </TableCell>
-                        <TableCell className="text-right">{formatKz(p.valor_total)}</TableCell>
-                        <TableCell className="text-right text-green-600">{formatKz(p.valor_pago)}</TableCell>
-                        <TableCell className="text-right font-medium text-destructive">{formatKz(p.saldo)}</TableCell>
-                        <TableCell>
-                          <Badge variant={p.situacao === 'PAGO' ? 'default' : 'secondary'}>{p.situacao}</Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </div>
+          <ClienteLivroRazao cliente={cliente} extrato={extrato} vendasCliente={vendasCliente} />
         </div>
       ) : null}
     </div>
