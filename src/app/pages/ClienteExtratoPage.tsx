@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { clientesService } from '@/services/clientes'
 import { vendasService } from '@/services/vendas'
 import { relatoriosService } from '@/services/relatorios'
+import { useAuth } from '@/contexts/AuthContext'
 import type { ClienteResponse, VendaResponse, ExtratoCliente } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
@@ -19,7 +20,7 @@ import {
 } from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
-import { exportMultiSectionPdf, getMultiSectionPdfBlob, type PdfSection } from '@/lib/pdf'
+import { exportLedgerPdf, getLedgerPdfBlob, type LedgerMovimento, type LedgerEntidade } from '@/lib/pdf'
 import { partilharArquivoOuTexto } from '@/lib/share'
 import { ArrowLeft, FileDown, MessageCircle, Printer } from 'lucide-react'
 import { format } from 'date-fns'
@@ -46,6 +47,7 @@ export default function ClienteExtratoPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { user } = useAuth()
 
   const [cliente, setCliente] = useState<ClienteResponse | null>(null)
   const [vendas, setVendas] = useState<VendaResponse[]>([])
@@ -78,122 +80,60 @@ export default function ClienteExtratoPage() {
 
   const totalGasto = vendasCliente.reduce((s, v) => s + v.total_final, 0)
 
-  // Agrupa os itens de todas as vendas por produto — cada produto vira a sua
-  // própria secção no PDF, com a tabela das transações desse produto e o
-  // lucro (subtotal - custo) de cada uma, usando preco_custo_unitario que a
-  // API já traz por item vendido.
-  function buildProdutoSections(): PdfSection[] {
-    const porProduto = new Map<string, { data: string; quantidade: number; precoUnitario: number; precoCusto: number; subtotal: number; lucro: number }[]>()
-    for (const v of vendasCliente) {
-      for (const item of v.itens) {
-        if (!porProduto.has(item.produto_nome)) porProduto.set(item.produto_nome, [])
-        porProduto.get(item.produto_nome)!.push({
-          data: format(new Date(v.criado_em), 'dd/MM/yyyy'),
-          quantidade: item.quantidade,
-          precoUnitario: item.preco_unitario,
-          precoCusto: item.preco_custo_unitario,
-          subtotal: item.subtotal,
-          lucro: item.subtotal - item.preco_custo_unitario * item.quantidade,
-        })
+  // Constrói os movimentos do Livro Razão a partir do extrato já calculado
+  // pela API (extrato.documentos): cada dívida (Factura) é um débito e cada
+  // pagamento (Recibo) é um crédito. Puramente uma transformação de
+  // apresentação — os valores vêm exatamente como a API já os calcula, nada
+  // é recalculado aqui além do saldo acumulado exibido linha a linha.
+  function buildMovimentos(): LedgerMovimento[] {
+    return (extrato?.documentos ?? []).map((doc) => {
+      const isFactura = doc.tipo === 'Factura'
+      const codigo = doc.numero != null
+        ? `${isFactura ? 'FT' : 'RC'}${String(doc.numero).padStart(3, '0')}`
+        : doc.id.slice(0, 6).toUpperCase()
+      return {
+        data: doc.data,
+        documento: codigo,
+        tipo: isFactura ? 'Fatura' : 'Recebimento',
+        descricao: doc.produto_nome ?? (isFactura ? 'Venda a crédito' : 'Pagamento de dívida'),
+        debito: isFactura ? doc.valor : undefined,
+        credito: isFactura ? undefined : Math.abs(doc.valor),
       }
+    })
+  }
+
+  function buildEntidade(): LedgerEntidade {
+    if (!cliente) return { nome: '' }
+    return {
+      nome: cliente.nome,
+      codigo: cliente.id.slice(0, 8).toUpperCase(),
+      nif: cliente.nif,
+      telefone: cliente.telefone,
+      email: cliente.email,
+      morada: cliente.endereco,
+      estado: (extrato?.total_devido ?? 0) > 0 ? 'Com saldo em aberto' : 'Regularizado',
+      dataRegisto: cliente.criado_em,
     }
-    return [...porProduto.entries()].map(([produto, linhas]) => ({
-      heading: produto,
-      columns: [
-        { header: t('common.date'), key: 'data' },
-        { header: t('sales.qty'), key: 'quantidade', align: 'right' as const },
-        { header: t('invoices.itemPrice'), key: 'precoUnitario', align: 'right' as const },
-        { header: t('sales.subtotal'), key: 'subtotal', align: 'right' as const },
-        { header: t('reports.totalCost'), key: 'precoCusto', align: 'right' as const },
-        { header: t('reports.profit'), key: 'lucro', align: 'right' as const },
-      ],
-      rows: linhas.map((l) => ({
-        data: l.data, quantidade: l.quantidade,
-        precoUnitario: formatKz(l.precoUnitario), subtotal: formatKz(l.subtotal),
-        precoCusto: formatKz(l.precoCusto * l.quantidade), lucro: formatKz(l.lucro),
-      })),
-      totalsRow: [
-        t('common.total'), '', '',
-        formatKz(linhas.reduce((s, l) => s + l.subtotal, 0)),
-        formatKz(linhas.reduce((s, l) => s + l.precoCusto * l.quantidade, 0)),
-        formatKz(linhas.reduce((s, l) => s + l.lucro, 0)),
-      ],
-    }))
   }
 
-  function buildSections(): PdfSection[] {
-    return [
-      {
-        heading: t('reports.sectionSales'),
-        columns: [
-          { header: t('invoices.colNumber'), key: 'numero' },
-          { header: t('common.date'), key: 'data' },
-          { header: t('sales.colItems'), key: 'itens', align: 'right' },
-          { header: t('common.total'), key: 'total', align: 'right' },
-          { header: t('reports.colType'), key: 'tipo' },
-        ],
-        rows: vendasCliente.map((v) => ({
-          numero: v.numero_factura ?? '—',
-          data: format(new Date(v.criado_em), 'dd/MM/yyyy'), itens: v.itens.length,
-          total: formatKz(v.total_final),
-          tipo: v.credito ? (v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')) : t('sales.cash'),
-        })),
-        emptyLabel: t('reports.emptySales'),
-      },
-      {
-        heading: t('reports.sectionCreditDebts'),
-        columns: [
-          { header: t('invoices.colNumber'), key: 'numero' },
-          { header: t('reports.colProduct'), key: 'produto' },
-          { header: t('common.date'), key: 'data' },
-          { header: t('common.total'), key: 'total', align: 'right' },
-          { header: t('common.paid'), key: 'pago', align: 'right' },
-          { header: t('common.balance'), key: 'saldo', align: 'right' },
-          { header: t('common.status'), key: 'status' },
-        ],
-        rows: (extrato?.dividas ?? []).map((d) => ({
-          numero: d.numero ?? '—', produto: d.produto_nome ?? '—', data: format(new Date(d.data_compra), 'dd/MM/yyyy'),
-          total: formatKz(d.valor_total), pago: formatKz(d.valor_pago), saldo: formatKz(d.saldo), status: d.status,
-        })),
-        emptyLabel: t('reports.emptyDebts'),
-      },
-      {
-        heading: t('reports.sectionInstallments'),
-        columns: [
-          { header: t('reports.colProduct'), key: 'produto' },
-          { header: t('common.date'), key: 'data' },
-          { header: t('common.total'), key: 'total', align: 'right' },
-          { header: t('common.paid'), key: 'pago', align: 'right' },
-          { header: t('common.balance'), key: 'saldo', align: 'right' },
-          { header: t('common.status'), key: 'status' },
-        ],
-        rows: (extrato?.prestacoes ?? []).map((p) => ({
-          produto: p.produto_nome ?? '—', data: format(new Date(p.data_compra), 'dd/MM/yyyy'),
-          total: formatKz(p.valor_total), pago: formatKz(p.valor_pago), saldo: formatKz(p.saldo), status: p.situacao,
-        })),
-        emptyLabel: t('reports.emptyInstallments'),
-      },
-      ...buildProdutoSections(),
-    ]
-  }
-
-  function buildInfoLines(): string[] {
-    if (!cliente) return []
-    return [
-      `${t('common.phone')}: ${cliente.telefone ?? '—'}   ${t('common.email')}: ${cliente.email ?? '—'}`,
-      `${t('sales.title')}: ${vendasCliente.length}   ${t('reports.totalSpent')}: ${formatKz(totalGasto)}   ${t('reports.totalOwed')}: ${formatKz(extrato?.total_devido ?? 0)}`,
-    ]
+  function buildPeriodoLabel(): string {
+    if (!dataInicio && !dataFim) return 'Todo o histórico'
+    const ini = dataInicio ? format(new Date(dataInicio), 'dd/MM/yyyy') : '—'
+    const fim = dataFim ? format(new Date(dataFim), 'dd/MM/yyyy') : '—'
+    return `${ini} a ${fim}`
   }
 
   function handleBaixarPdf() {
     if (!cliente) return
-    exportMultiSectionPdf({
-      title: t('reports.cardClientHistory'),
-      subtitle: cliente.nome,
-      infoLines: buildInfoLines(),
-      sections: buildSections(),
+    exportLedgerPdf({
+      titulo: 'EXTRATO / HISTÓRICO DO CLIENTE',
+      entidadeLabel: 'Cliente',
+      entidade: buildEntidade(),
+      periodoLabel: buildPeriodoLabel(),
+      saldoInicial: 0,
+      movimentos: buildMovimentos(),
+      utilizador: user?.nome,
       filename: `historico-${cliente.nome}`,
-      qrUrl: `${window.location.origin}/clientes/${cliente.id}`,
     })
   }
 
@@ -205,12 +145,14 @@ export default function ClienteExtratoPage() {
     if (!cliente) return
     setSharing(true)
     try {
-      const blob = await getMultiSectionPdfBlob({
-        title: t('reports.cardClientHistory'),
-        subtitle: cliente.nome,
-        infoLines: buildInfoLines(),
-        sections: buildSections(),
-        qrUrl: `${window.location.origin}/clientes/${cliente.id}`,
+      const blob = await getLedgerPdfBlob({
+        titulo: 'EXTRATO / HISTÓRICO DO CLIENTE',
+        entidadeLabel: 'Cliente',
+        entidade: buildEntidade(),
+        periodoLabel: buildPeriodoLabel(),
+        saldoInicial: 0,
+        movimentos: buildMovimentos(),
+        utilizador: user?.nome,
       })
       const file = new File([blob], `historico-${cliente.nome}.pdf`, { type: 'application/pdf' })
       const mensagem = [

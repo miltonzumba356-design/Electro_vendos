@@ -1,5 +1,6 @@
 import type { jsPDF as JsPDF } from 'jspdf'
 import logoUrl from '@/assets/vendos-logo.png'
+import { EMPRESA } from './empresa'
 
 // jspdf/jspdf-autotable/html2canvas/qrcode são pesados e só são precisos
 // quando o utilizador realmente exporta/partilha um PDF — importados aqui em
@@ -253,6 +254,355 @@ export async function exportMultiSectionPdf({ filename, ...opts }: ExportMultiSe
 // descarregar — usado para partilhar o ficheiro (ex.: Web Share API).
 export async function getMultiSectionPdfBlob(opts: Omit<ExportMultiSectionPdfOptions, 'filename'>): Promise<Blob> {
   const doc = await buildMultiSectionDoc(opts)
+  return doc.output('blob')
+}
+
+// ── Livro Razão / Extrato de conta corrente (cliente ou fornecedor) ───────
+// Template de PDF no formato de livro-razão profissional: cabeçalho com os
+// dados da empresa, dados da entidade, cartões de resumo financeiro e uma
+// tabela de movimentos (Débito/Crédito/Saldo acumulado), com rodapé e área
+// de assinatura repetidos em todas as páginas. Puramente de apresentação —
+// quem chama já traz os valores calculados (nenhum cálculo de negócio
+// acontece aqui, só formatação e acumulação de saldo para exibição).
+
+const LEDGER_DEBITO = '#B91C1C'
+const LEDGER_CREDITO = '#15803D'
+const LEDGER_MUTED = '#6B7280'
+const LEDGER_BORDER = '#D9DEE5'
+const LEDGER_ZEBRA = '#F7F9FC'
+const LEDGER_CARD_BG = '#F3F6FA'
+const LEDGER_MARGIN = 12
+const LEDGER_PAGE_W = 210
+const LEDGER_PAGE_H = 297
+const LEDGER_CONTENT_W = LEDGER_PAGE_W - LEDGER_MARGIN * 2
+
+export interface LedgerEntidade {
+  nome: string
+  codigo?: string
+  nif?: string | null
+  telefone?: string | null
+  email?: string | null
+  morada?: string | null
+  estado?: string
+  dataRegisto?: string
+}
+
+export interface LedgerMovimento {
+  data: string
+  documento: string
+  tipo: string
+  descricao: string
+  debito?: number
+  credito?: number
+}
+
+export interface ExportLedgerPdfOptions {
+  titulo: string
+  entidadeLabel: string
+  entidade: LedgerEntidade
+  periodoLabel: string
+  saldoInicial: number
+  movimentos: LedgerMovimento[]
+  utilizador?: string | null
+  filename: string
+}
+
+function fmtKzLedger(v: number) {
+  return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(v)
+}
+
+function desenharCard(doc: JsPDF, x: number, y: number, w: number, h: number, label: string, value: string, cor = '#111111') {
+  doc.setFillColor(LEDGER_CARD_BG)
+  doc.roundedRect(x, y, w, h, 1.5, 1.5, 'F')
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.setTextColor(LEDGER_MUTED)
+  doc.text(label, x + 4, y + 6)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10.5)
+  doc.setTextColor(cor)
+  doc.text(value, x + 4, y + 12.5)
+  doc.setTextColor('#111111')
+}
+
+function desenharRodapeLedger(doc: JsPDF, pageNumber: number, utilizador?: string | null) {
+  const y = LEDGER_PAGE_H - 16
+  doc.setDrawColor(LEDGER_BORDER)
+  doc.setLineWidth(0.3)
+  doc.line(LEDGER_MARGIN, y, LEDGER_PAGE_W - LEDGER_MARGIN, y)
+
+  const now = new Date()
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.setTextColor(LEDGER_MUTED)
+  doc.text('Electro Vendos', LEDGER_MARGIN, y + 5)
+  const emitido = `Emitido em ${now.toLocaleDateString('pt-AO')} ${now.toLocaleTimeString('pt-AO')}${utilizador ? ` por ${utilizador}` : ''}`
+  doc.text(emitido, LEDGER_PAGE_W / 2, y + 5, { align: 'center' })
+  // Reserva a área "Página N" — a numeração total é escrita numa segunda
+  // passada, quando o número final de páginas já é conhecido.
+  doc.text(`Página ${pageNumber}`, LEDGER_PAGE_W - LEDGER_MARGIN, y + 5, { align: 'right' })
+  doc.setTextColor('#111111')
+}
+
+function desenharCabecalhoContinuacao(doc: JsPDF, entidadeLabel: string, entidadeNome: string) {
+  doc.setDrawColor(BRAND)
+  doc.setLineWidth(0.6)
+  doc.line(LEDGER_MARGIN, 18, LEDGER_PAGE_W - LEDGER_MARGIN, 18)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(BRAND)
+  doc.text('EXTRATO / HISTÓRICO — Livro Razão (continuação)', LEDGER_MARGIN, 12)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8.5)
+  doc.setTextColor(LEDGER_MUTED)
+  doc.text(`${entidadeLabel}: ${entidadeNome}`, LEDGER_PAGE_W - LEDGER_MARGIN, 12, { align: 'right' })
+  doc.setTextColor('#111111')
+}
+
+async function buildLedgerDoc(opts: Omit<ExportLedgerPdfOptions, 'filename'>): Promise<JsPDF> {
+  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, utilizador } = opts
+  const [jsPDF, autoTable] = await Promise.all([carregarJsPdf(), carregarAutoTable()])
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const logoDataUrl = await carregarLogoDataUrl()
+
+  // ── Cabeçalho: empresa (esquerda) + título/metadados (direita) ──────
+  let leftY = 13
+  let textX = LEDGER_MARGIN
+  if (logoDataUrl) {
+    const logoW = 24
+    const logoH = logoW * LOGO_ASPECT
+    doc.addImage(logoDataUrl, 'PNG', LEDGER_MARGIN, 8, logoW, logoH)
+    textX = LEDGER_MARGIN + logoW + 5
+  }
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(12)
+  doc.setTextColor('#111111')
+  doc.text(EMPRESA.nome, textX, leftY)
+  leftY += 4.5
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(7.5)
+  doc.setTextColor(LEDGER_MUTED)
+  const linhasEmpresa = [
+    EMPRESA.nif ? `NIF: ${EMPRESA.nif}` : null,
+    EMPRESA.morada || null,
+    [EMPRESA.telefone, EMPRESA.email].filter(Boolean).join('  •  ') || null,
+    EMPRESA.website || null,
+  ].filter((l): l is string => Boolean(l))
+  for (const linha of linhasEmpresa) {
+    doc.text(linha, textX, leftY)
+    leftY += 4
+  }
+
+  const rightX = LEDGER_PAGE_W - LEDGER_MARGIN
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(13)
+  doc.setTextColor(BRAND)
+  doc.text(titulo, rightX, 13, { align: 'right' })
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(LEDGER_MUTED)
+  const agora = new Date()
+  doc.text(`Data de emissão: ${agora.toLocaleDateString('pt-AO')} ${agora.toLocaleTimeString('pt-AO')}`, rightX, 19, { align: 'right' })
+  doc.text(`Período: ${periodoLabel}`, rightX, 24, { align: 'right' })
+  // "Páginas" é preenchido na segunda passada, quando o total é conhecido.
+  const paginasHeaderY = 29
+
+  let y = Math.max(leftY, 34) + 3
+  doc.setDrawColor(BRAND)
+  doc.setLineWidth(0.8)
+  doc.line(LEDGER_MARGIN, y, LEDGER_PAGE_W - LEDGER_MARGIN, y)
+  y += 7
+  doc.setTextColor('#111111')
+
+  // ── Dados da entidade ─────────────────────────────────────────────
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9.5)
+  doc.setTextColor(BRAND)
+  doc.text(`DADOS DO ${entidadeLabel.toUpperCase()}`, LEDGER_MARGIN, y)
+  y += 4
+  doc.setTextColor('#111111')
+
+  const boxTop = y
+  const linhasEntidade: [string, string][][] = [
+    [['Nome', entidade.nome || '—'], ['Código', entidade.codigo || '—']],
+    [['NIF', entidade.nif || '—'], ['Telefone', entidade.telefone || '—']],
+    [['Email', entidade.email || '—'], ['Morada', entidade.morada || '—']],
+    [['Estado', entidade.estado || '—'], ['Data de registo', entidade.dataRegisto ? new Date(entidade.dataRegisto).toLocaleDateString('pt-AO') : '—']],
+  ]
+  const rowH = 6.2
+  const boxH = linhasEntidade.length * rowH + 4
+  doc.setDrawColor(LEDGER_BORDER)
+  doc.setLineWidth(0.3)
+  doc.roundedRect(LEDGER_MARGIN, boxTop, LEDGER_CONTENT_W, boxH, 1.5, 1.5)
+
+  let rowY = boxTop + 5.5
+  const col1X = LEDGER_MARGIN + 4
+  const col2X = LEDGER_MARGIN + LEDGER_CONTENT_W / 2 + 2
+  for (const [[l1, v1], [l2, v2]] of linhasEntidade) {
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7.5)
+    doc.setTextColor(LEDGER_MUTED)
+    doc.text(`${l1}:`, col1X, rowY)
+    doc.text(`${l2}:`, col2X, rowY)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8.5)
+    doc.setTextColor('#111111')
+    doc.text(String(v1), col1X + 22, rowY)
+    doc.text(String(v2), col2X + 26, rowY)
+    rowY += rowH
+  }
+  y = boxTop + boxH + 8
+
+  // ── Resumo financeiro ────────────────────────────────────────────
+  const totalDebitos = movimentos.reduce((s, m) => s + (m.debito ?? 0), 0)
+  const totalCreditos = movimentos.reduce((s, m) => s + (m.credito ?? 0), 0)
+  const saldoFinal = saldoInicial + totalDebitos - totalCreditos
+  const numFaturas = movimentos.filter((m) => (m.debito ?? 0) > 0).length
+  const numPagamentos = movimentos.filter((m) => (m.credito ?? 0) > 0).length
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9.5)
+  doc.setTextColor(BRAND)
+  doc.text('RESUMO FINANCEIRO', LEDGER_MARGIN, y)
+  y += 4
+  doc.setTextColor('#111111')
+
+  const gap = 5
+  const cardW = (LEDGER_CONTENT_W - gap * 2) / 3
+  const cardH = 15.5
+  const cards: [string, string, string][] = [
+    ['Saldo Inicial', fmtKzLedger(saldoInicial), '#111111'],
+    ['Total de Débitos', fmtKzLedger(totalDebitos), LEDGER_DEBITO],
+    ['Total de Créditos', fmtKzLedger(totalCreditos), LEDGER_CREDITO],
+    ['Saldo Final', fmtKzLedger(saldoFinal), saldoFinal > 0 ? LEDGER_DEBITO : '#111111'],
+    ['Nº de Faturas', String(numFaturas), '#111111'],
+    ['Nº de Pagamentos', String(numPagamentos), '#111111'],
+  ]
+  cards.forEach(([label, value, cor], i) => {
+    const col = i % 3
+    const row = Math.floor(i / 3)
+    desenharCard(doc, LEDGER_MARGIN + col * (cardW + gap), y + row * (cardH + gap), cardW, cardH, label, value, cor)
+  })
+  const tableStartY = y + 2 * cardH + gap + 8
+
+  // ── Tabela de movimentos, com saldo acumulado linha a linha ────────
+  let saldoCorrente = saldoInicial
+  const body = [...movimentos]
+    .sort((a, b) => new Date(a.data).getTime() - new Date(b.data).getTime())
+    .map((m) => {
+      saldoCorrente += (m.debito ?? 0) - (m.credito ?? 0)
+      return {
+        data: new Date(m.data).toLocaleDateString('pt-AO'),
+        documento: m.documento,
+        tipo: m.tipo,
+        descricao: m.descricao,
+        debito: m.debito ? fmtKzLedger(m.debito) : '—',
+        credito: m.credito ? fmtKzLedger(m.credito) : '—',
+        saldo: fmtKzLedger(saldoCorrente),
+        _isDebito: (m.debito ?? 0) > 0,
+        _isCredito: (m.credito ?? 0) > 0,
+      }
+    })
+
+  autoTable(doc, {
+    startY: tableStartY,
+    head: [['Data', 'Documento', 'Tipo', 'Descrição', 'Débito', 'Crédito', 'Saldo']],
+    body: body.map((r) => [r.data, r.documento, r.tipo, r.descricao, r.debito, r.credito, r.saldo]),
+    showHead: 'everyPage',
+    styles: { fontSize: 8.3, cellPadding: 2.2, lineColor: LEDGER_BORDER, lineWidth: 0.1, textColor: '#111111' },
+    headStyles: { fillColor: BRAND, textColor: '#ffffff', fontStyle: 'bold', fontSize: 8.3 },
+    alternateRowStyles: { fillColor: LEDGER_ZEBRA },
+    columnStyles: {
+      0: { halign: 'center', cellWidth: 20 },
+      1: { halign: 'center', cellWidth: 18 },
+      2: { halign: 'left', cellWidth: 24 },
+      3: { halign: 'left' },
+      4: { halign: 'right', cellWidth: 20 },
+      5: { halign: 'right', cellWidth: 20 },
+      6: { halign: 'right', cellWidth: 22, fontStyle: 'bold' },
+    },
+    margin: { top: 24, left: LEDGER_MARGIN, right: LEDGER_MARGIN, bottom: 26 },
+    didParseCell: (data: { section: string; column: { index: number }; row: { index: number }; cell: { styles: { textColor: string | number[] } } }) => {
+      if (data.section !== 'body') return
+      const row = body[data.row.index]
+      if (!row) return
+      if (data.column.index === 4 && row._isDebito) data.cell.styles.textColor = LEDGER_DEBITO
+      if (data.column.index === 5 && row._isCredito) data.cell.styles.textColor = LEDGER_CREDITO
+    },
+    didDrawPage: (data: { pageNumber: number }) => {
+      if (data.pageNumber > 1) desenharCabecalhoContinuacao(doc, entidadeLabel, entidade.nome)
+      desenharRodapeLedger(doc, data.pageNumber, utilizador)
+    },
+  })
+
+  // ── Totais finais + assinaturas (última página) ────────────────────
+  let finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
+  const ESPACO_FECHO = 62
+  if (finalY > LEDGER_PAGE_H - ESPACO_FECHO) {
+    doc.addPage()
+    desenharCabecalhoContinuacao(doc, entidadeLabel, entidade.nome)
+    desenharRodapeLedger(doc, doc.internal.getNumberOfPages(), utilizador)
+    finalY = 26
+  }
+
+  let closeY = finalY + 9
+  const closeCardW = (LEDGER_CONTENT_W - gap * 2) / 3
+  desenharCard(doc, LEDGER_MARGIN, closeY, closeCardW, cardH, 'Total de Débitos', fmtKzLedger(totalDebitos), LEDGER_DEBITO)
+  desenharCard(doc, LEDGER_MARGIN + closeCardW + gap, closeY, closeCardW, cardH, 'Total de Créditos', fmtKzLedger(totalCreditos), LEDGER_CREDITO)
+  desenharCard(doc, LEDGER_MARGIN + (closeCardW + gap) * 2, closeY, closeCardW, cardH, 'Saldo Final', fmtKzLedger(saldoFinal), saldoFinal > 0 ? LEDGER_DEBITO : '#111111')
+  closeY += cardH + 16
+
+  doc.setDrawColor('#333333')
+  doc.setLineWidth(0.3)
+  const assinaturaW = 78
+  doc.line(LEDGER_MARGIN, closeY, LEDGER_MARGIN + assinaturaW, closeY)
+  doc.line(LEDGER_PAGE_W - LEDGER_MARGIN - assinaturaW, closeY, LEDGER_PAGE_W - LEDGER_MARGIN, closeY)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(LEDGER_MUTED)
+  doc.text('Assinatura do Responsável', LEDGER_MARGIN + assinaturaW / 2, closeY + 5, { align: 'center' })
+  doc.text(`Assinatura do ${entidadeLabel}`, LEDGER_PAGE_W - LEDGER_MARGIN - assinaturaW / 2, closeY + 5, { align: 'center' })
+  doc.setTextColor('#111111')
+
+  // ── Segunda passada: paginação total (cabeçalho da 1ª página + rodapé) ─
+  const totalPaginas = doc.internal.getNumberOfPages()
+  for (let p = 1; p <= totalPaginas; p++) {
+    doc.setPage(p)
+    if (p === 1) {
+      doc.setFillColor('#ffffff')
+      doc.rect(LEDGER_PAGE_W - LEDGER_MARGIN - 40, paginasHeaderY - 3.5, 40, 5, 'F')
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(LEDGER_MUTED)
+      doc.text(`Páginas: ${totalPaginas}`, rightX, paginasHeaderY, { align: 'right' })
+    }
+    const footerY = LEDGER_PAGE_H - 16 + 5
+    doc.setFillColor('#ffffff')
+    doc.rect(LEDGER_PAGE_W - LEDGER_MARGIN - 34, footerY - 3.5, 34, 5, 'F')
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7.5)
+    doc.setTextColor(LEDGER_MUTED)
+    doc.text(`Página ${p} de ${totalPaginas}`, LEDGER_PAGE_W - LEDGER_MARGIN, footerY, { align: 'right' })
+  }
+  doc.setTextColor('#111111')
+
+  return doc
+}
+
+// Exporta o histórico/extrato de uma entidade (cliente ou fornecedor) em
+// formato de Livro Razão digital — cabeçalho com dados da empresa, dados da
+// entidade, cartões de resumo e tabela de movimentos com saldo acumulado.
+export async function exportLedgerPdf({ filename, ...opts }: ExportLedgerPdfOptions) {
+  const doc = await buildLedgerDoc(opts)
+  doc.save(filename.endsWith('.pdf') ? filename : `${filename}.pdf`)
+}
+
+// Igual a exportLedgerPdf, mas devolve o PDF como Blob em vez de o
+// descarregar — usado para partilhar o ficheiro (ex.: Web Share API).
+export async function getLedgerPdfBlob(opts: Omit<ExportLedgerPdfOptions, 'filename'>): Promise<Blob> {
+  const doc = await buildLedgerDoc(opts)
   return doc.output('blob')
 }
 
