@@ -95,6 +95,7 @@ const ar = {
     debtStatus: { DIVIDA: 'مستحق', PAGA: 'مسدد', TODAS: 'الكل' },
     debtProduct: 'المنتج', debtEmpty: 'لم يتم العثور على ديون ائتمانية',
     payDebtTitle: 'تسجيل سداد الدين',
+    searchByNumber: 'رقم الفاتورة', searchByNumberPlaceholder: 'مثال: 12',
     toasts: {
       minOneProduct: 'أضف منتجًا واحدًا على الأقل', registered: 'تم تسجيل البيع بنجاح',
       loadError: 'خطأ في تحميل البيانات', registerError: 'خطأ في تسجيل البيع',
@@ -158,6 +159,7 @@ const ar = {
     allClients: 'جميع العملاء', totalCount: 'فاتورة',
     dateFrom: 'من', dateTo: 'إلى',
     colNumber: 'رقم', colItems: 'العناصر', colDate: 'التاريخ', colStatus: 'الحالة',
+    searchByNumber: 'رقم الفاتورة', searchByNumberPlaceholder: 'مثال: 12',
     items: 'العناصر', addItem: 'إضافة عنصر',
     itemName: 'الوصف', itemNamePlaceholder: 'مثال: منتج X', itemQty: 'الكمية', itemPrice: 'سعر الوحدة',
     fieldDiscount: 'خصم',
@@ -202,6 +204,7 @@ const ar = {
     debtStatus: { DIVIDA: 'مستحق', PAGA: 'مدفوعة', TODAS: 'الكل' },
     debtEmpty: 'لا توجد ديون للموردين',
     payDebtTitle: 'دفع دين المورد', fieldValue: 'القيمة (Kz)',
+    searchByNumber: 'رقم الفاتورة', searchByNumberPlaceholder: 'مثال: 12',
     toasts: {
       nameRequired: 'اسم المورد مطلوب', created: 'تم إنشاء المورد بنجاح',
       saveError: 'خطأ في حفظ المورد', loadError: 'خطأ في تحميل الموردين',
@@ -236,7 +239,8 @@ const ar = {
     sectionInstallments: 'الأقساط', emptySales: 'لا توجد مبيعات لهذا العميل',
     emptyDebts: 'لا توجد ديون ائتمانية', emptyInstallments: 'لا توجد أقساط',
     colType: 'النوع', totalOwed: 'إجمالي المستحق',
-    totalCost: 'التكلفة الإجمالية', profit: 'الربح', margin: 'الهامش',
+    totalCost: 'التكلفة الإجمالية', profit: 'الربح', margin: 'الهامش', totalProfit: 'إجمالي الربح',
+    searchByNumber: 'رقم الفاتورة', searchByNumberPlaceholder: 'مثال: 12',
     ledgerCode: 'الرمز', ledgerContact: 'جهة الاتصال',
     ledgerCurrentBalance: 'الرصيد الحالي', ledgerTotalPurchased: 'إجمالي المشتريات',
     ledgerTotalPaid: 'إجمالي المدفوع', ledgerAvailableCredit: 'الرصيد الائتماني المتاح',

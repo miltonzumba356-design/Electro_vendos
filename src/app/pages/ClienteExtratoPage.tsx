@@ -43,6 +43,7 @@ export default function ClienteExtratoPage() {
   // aplicados aqui continuam preservados.
   const dataInicio = searchParams.get('inicio') ?? ''
   const dataFim = searchParams.get('fim') ?? ''
+  const numeroFiltro = searchParams.get('numero') ?? ''
 
   function setDataInicio(valor: string) {
     setSearchParams((prev) => {
@@ -58,6 +59,13 @@ export default function ClienteExtratoPage() {
       return next
     })
   }
+  function setNumeroFiltro(valor: string) {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (valor) next.set('numero', valor); else next.delete('numero')
+      return next
+    })
+  }
 
   useEffect(() => {
     if (!id) return
@@ -68,12 +76,13 @@ export default function ClienteExtratoPage() {
       relatoriosService.extratoCliente(id, {
         data_inicio: dataInicio ? new Date(dataInicio).toISOString() : undefined,
         data_fim: dataFim ? new Date(dataFim + 'T23:59:59').toISOString() : undefined,
+        numero: numeroFiltro ? Number(numeroFiltro) : undefined,
       }),
     ])
       .then(([c, v, e]) => { setCliente(c); setVendas(v); setExtrato(e) })
       .catch((err) => toast.error(err instanceof Error ? err.message : t('common.loadError')))
       .finally(() => setLoading(false))
-  }, [id, dataInicio, dataFim]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [id, dataInicio, dataFim, numeroFiltro]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const vendasCliente = vendas
     .filter((v) => v.cliente_id === id)
@@ -204,6 +213,16 @@ export default function ClienteExtratoPage() {
             <div className="space-y-1">
               <Label className="text-xs">{t('reports.endDate')} <span className="text-muted-foreground">({t('reports.emptyIsAllTime')})</span></Label>
               <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-36" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">{t('reports.searchByNumber')}</Label>
+              <Input
+                placeholder={t('reports.searchByNumberPlaceholder')}
+                value={numeroFiltro}
+                onChange={(e) => setNumeroFiltro(e.target.value)}
+                className="w-32"
+                inputMode="numeric"
+              />
             </div>
           </div>
 

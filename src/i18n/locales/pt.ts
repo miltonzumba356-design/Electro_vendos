@@ -99,6 +99,7 @@ const pt = {
     debtStatus: { DIVIDA: 'Em dívida', PAGA: 'Pagas', TODAS: 'Todas' },
     debtProduct: 'Produto', debtEmpty: 'Nenhuma dívida de crédito encontrada',
     payDebtTitle: 'Registar pagamento de dívida',
+    searchByNumber: 'Nº da factura', searchByNumberPlaceholder: 'Ex: 12',
     toasts: {
       minOneProduct: 'Adicione pelo menos um produto à venda', registered: 'Venda registada com sucesso',
       loadError: 'Erro ao carregar dados', registerError: 'Erro ao registar venda',
@@ -168,6 +169,7 @@ const pt = {
     allClients: 'Todos os clientes', totalCount: 'fatura(s)',
     dateFrom: 'De', dateTo: 'Até',
     colNumber: 'Nº', colItems: 'Itens', colDate: 'Data', colStatus: 'Estado',
+    searchByNumber: 'Nº da fatura', searchByNumberPlaceholder: 'Ex: 12',
     items: 'Itens', addItem: 'Adicionar item',
     itemName: 'Descrição', itemNamePlaceholder: 'Ex: Produto X', itemQty: 'Qtd', itemPrice: 'Preço Unit.',
     fieldDiscount: 'Desconto',
@@ -213,6 +215,7 @@ const pt = {
     debtStatus: { DIVIDA: 'Em dívida', PAGA: 'Pagas', TODAS: 'Todas' },
     debtEmpty: 'Nenhuma dívida a fornecedores encontrada',
     payDebtTitle: 'Pagar dívida a fornecedor', fieldValue: 'Valor (Kz)',
+    searchByNumber: 'Nº da factura', searchByNumberPlaceholder: 'Ex: 12',
     toasts: {
       nameRequired: 'O nome do fornecedor é obrigatório', created: 'Fornecedor criado com sucesso',
       saveError: 'Erro ao guardar fornecedor', loadError: 'Erro ao carregar fornecedores',
@@ -250,7 +253,8 @@ const pt = {
     sectionInstallments: 'Prestações', emptySales: 'Nenhuma venda encontrada para este cliente',
     emptyDebts: 'Sem dívidas de crédito', emptyInstallments: 'Sem prestações',
     colType: 'Tipo', totalOwed: 'Total em dívida',
-    totalCost: 'Custo total', profit: 'Lucro', margin: 'Margem',
+    totalCost: 'Custo total', profit: 'Lucro', margin: 'Margem', totalProfit: 'Lucro total',
+    searchByNumber: 'Nº da factura', searchByNumberPlaceholder: 'Ex: 12',
     ledgerCode: 'Código', ledgerContact: 'Contacto',
     ledgerCurrentBalance: 'Saldo Atual', ledgerTotalPurchased: 'Total Comprado',
     ledgerTotalPaid: 'Total Pago', ledgerAvailableCredit: 'Crédito Disponível',

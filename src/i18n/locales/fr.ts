@@ -99,6 +99,7 @@ const fr = {
     debtStatus: { DIVIDA: 'En cours', PAGA: 'Payées', TODAS: 'Toutes' },
     debtProduct: 'Produit', debtEmpty: 'Aucune dette de crédit trouvée',
     payDebtTitle: 'Enregistrer le paiement de la dette',
+    searchByNumber: 'N° de facture', searchByNumberPlaceholder: 'Ex: 12',
     toasts: {
       minOneProduct: 'Ajoutez au moins un produit à la vente',
       registered: 'Vente enregistrée avec succès',
@@ -166,6 +167,7 @@ const fr = {
     allClients: 'Tous les clients', totalCount: 'facture(s)',
     dateFrom: 'Du', dateTo: 'Au',
     colNumber: 'N°', colItems: 'Articles', colDate: 'Date', colStatus: 'Statut',
+    searchByNumber: 'N° de facture', searchByNumberPlaceholder: 'Ex: 12',
     items: 'Articles', addItem: 'Ajouter un article',
     itemName: 'Description', itemNamePlaceholder: 'Ex: Produit X', itemQty: 'Qté', itemPrice: 'Prix unit.',
     fieldDiscount: 'Remise',
@@ -210,6 +212,7 @@ const fr = {
     debtStatus: { DIVIDA: 'En dette', PAGA: 'Payées', TODAS: 'Toutes' },
     debtEmpty: 'Aucune dette fournisseur trouvée',
     payDebtTitle: 'Payer la dette fournisseur', fieldValue: 'Valeur (Kz)',
+    searchByNumber: 'N° de facture', searchByNumberPlaceholder: 'Ex: 12',
     toasts: {
       nameRequired: 'Le nom du fournisseur est obligatoire', created: 'Fournisseur créé avec succès',
       saveError: "Erreur lors de l'enregistrement du fournisseur", loadError: 'Erreur de chargement des fournisseurs',
@@ -244,7 +247,8 @@ const fr = {
     sectionInstallments: 'Échéances', emptySales: 'Aucune vente trouvée pour ce client',
     emptyDebts: 'Aucune dette à crédit', emptyInstallments: 'Aucune échéance',
     colType: 'Type', totalOwed: 'Total dû',
-    totalCost: 'Coût total', profit: 'Bénéfice', margin: 'Marge',
+    totalCost: 'Coût total', profit: 'Bénéfice', margin: 'Marge', totalProfit: 'Bénéfice total',
+    searchByNumber: 'N° de facture', searchByNumberPlaceholder: 'Ex: 12',
     ledgerCode: 'Code', ledgerContact: 'Contact',
     ledgerCurrentBalance: 'Solde Actuel', ledgerTotalPurchased: 'Total Acheté',
     ledgerTotalPaid: 'Total Payé', ledgerAvailableCredit: 'Crédit Disponible',

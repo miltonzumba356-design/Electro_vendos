@@ -798,12 +798,15 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   const [dividas, setDividas] = useState<DividaResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [searchNumero, setSearchNumero] = useState('')
   const [statusFiltro, setStatusFiltro] = useState<'DIVIDA' | 'PAGA' | 'TODAS'>('DIVIDA')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
   const [pagarDivida, setPagarDivida] = useState<DividaResponse | null>(null)
 
-  const filtered = dividas.filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
+  const filtered = dividas
+    .filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
+    .filter((d) => !searchNumero || String(d.numero ?? '').includes(searchNumero.trim()))
   const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
 
   async function load() {
@@ -839,6 +842,16 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
             value={search}
             onChange={(e) => { setSearch(e.target.value); resetPage() }}
             className="pl-9"
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">{t('sales.searchByNumber')}</Label>
+          <Input
+            placeholder={t('sales.searchByNumberPlaceholder')}
+            value={searchNumero}
+            onChange={(e) => { setSearchNumero(e.target.value); resetPage() }}
+            className="w-32"
+            inputMode="numeric"
           />
         </div>
         <div className="flex gap-2">
@@ -920,6 +933,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>{t('invoices.colNumber')}</TableHead>
               <TableHead>{t('sales.colClient')}</TableHead>
               <TableHead>{t('sales.debtProduct')}</TableHead>
               <TableHead className="text-right">{t('installments.colTotal')}</TableHead>
@@ -934,14 +948,14 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 8 }).map((_, j) => (
+                  {Array.from({ length: 9 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                   {t('sales.debtEmpty')}
                 </TableCell>
               </TableRow>
@@ -954,6 +968,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
                     className={somenteHistorico ? 'cursor-pointer hover:bg-muted/40' : undefined}
                     onClick={somenteHistorico ? () => navigate(`/dividas/${d.id}`) : undefined}
                   >
+                    <TableCell className="text-muted-foreground text-sm">{d.numero ?? '—'}</TableCell>
                     <TableCell className="font-medium">{d.cliente_nome ?? '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
                     <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>

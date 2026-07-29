@@ -95,6 +95,7 @@ const zh = {
     debtStatus: { DIVIDA: '未结', PAGA: '已还', TODAS: '全部' },
     debtProduct: '产品', debtEmpty: '未找到信用债务',
     payDebtTitle: '登记债务还款',
+    searchByNumber: '发票编号', searchByNumberPlaceholder: '例如：12',
     toasts: {
       minOneProduct: '请至少添加一个产品', registered: '销售记录成功',
       loadError: '加载数据时出错', registerError: '登记销售时出错',
@@ -157,6 +158,7 @@ const zh = {
     allClients: '所有客户', totalCount: '张发票',
     dateFrom: '从', dateTo: '至',
     colNumber: '编号', colItems: '项目', colDate: '日期', colStatus: '状态',
+    searchByNumber: '发票编号', searchByNumberPlaceholder: '例如：12',
     items: '项目', addItem: '添加项目',
     itemName: '描述', itemNamePlaceholder: '例如: 产品X', itemQty: '数量', itemPrice: '单价',
     fieldDiscount: '折扣',
@@ -201,6 +203,7 @@ const zh = {
     debtStatus: { DIVIDA: '未结清', PAGA: '已结清', TODAS: '全部' },
     debtEmpty: '未找到供应商欠款',
     payDebtTitle: '支付供应商欠款', fieldValue: '金额 (Kz)',
+    searchByNumber: '发票编号', searchByNumberPlaceholder: '例如：12',
     toasts: {
       nameRequired: '供应商名称为必填项', created: '供应商创建成功',
       saveError: '保存供应商时出错', loadError: '加载供应商时出错',
@@ -235,7 +238,8 @@ const zh = {
     sectionInstallments: '分期付款', emptySales: '未找到该客户的销售记录',
     emptyDebts: '没有赊销欠款', emptyInstallments: '没有分期付款',
     colType: '类型', totalOwed: '欠款总额',
-    totalCost: '总成本', profit: '利润', margin: '利润率',
+    totalCost: '总成本', profit: '利润', margin: '利润率', totalProfit: '总利润',
+    searchByNumber: '发票编号', searchByNumberPlaceholder: '例如：12',
     ledgerCode: '编号', ledgerContact: '联系方式',
     ledgerCurrentBalance: '当前余额', ledgerTotalPurchased: '总购买额',
     ledgerTotalPaid: '总已付款', ledgerAvailableCredit: '可用信用额度',

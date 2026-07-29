@@ -40,6 +40,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -512,6 +513,7 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
   const [loading, setLoading] = useState(false)
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
+  const [numeroFiltro, setNumeroFiltro] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -533,6 +535,7 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
       const res = await relatoriosService.extratoCliente(id, {
         data_inicio: dataInicio ? new Date(dataInicio).toISOString() : undefined,
         data_fim: dataFim ? new Date(dataFim + 'T23:59:59').toISOString() : undefined,
+        numero: numeroFiltro ? Number(numeroFiltro) : undefined,
       })
       setExtrato(res)
     } catch (err) {
@@ -549,7 +552,7 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
 
   useEffect(() => {
     if (clienteId) carregarExtrato(clienteId)
-  }, [dataInicio, dataFim]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dataInicio, dataFim, numeroFiltro]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const clienteOptions = clientes.map((c) => ({ value: c.id, label: c.nome }))
 
@@ -616,6 +619,16 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
         <div className="space-y-1">
           <Label className="text-xs">{t('reports.endDate')} <span className="text-muted-foreground">({t('reports.emptyIsAllTime')})</span></Label>
           <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-36" />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">{t('reports.searchByNumber')}</Label>
+          <Input
+            placeholder={t('reports.searchByNumberPlaceholder')}
+            value={numeroFiltro}
+            onChange={(e) => setNumeroFiltro(e.target.value)}
+            className="w-32"
+            inputMode="numeric"
+          />
         </div>
         {clienteSelecionado && (
           <DownloadPdfButton
@@ -775,6 +788,20 @@ function LucroPorProduto({ t }: { t: TFunction }) {
     { header: t('reports.margin'), key: 'margem', align: 'right' },
   ]
 
+  // Totais agregados de todos os produtos devolvidos pela pesquisa atual —
+  // o backend só devolve o lucro por produto individualmente, então o
+  // "lucro total" é sempre calculado aqui, no cliente, a partir da lista.
+  const totais = result.reduce(
+    (acc, r) => ({
+      quantidade: acc.quantidade + r.quantidade_vendida,
+      receita: acc.receita + r.total_receita,
+      custo: acc.custo + r.total_custo,
+      lucro: acc.lucro + r.lucro,
+    }),
+    { quantidade: 0, receita: 0, custo: 0, lucro: 0 }
+  )
+  const margemMedia = totais.receita > 0 ? (totais.lucro / totais.receita) * 100 : 0
+
   return (
     <div className="space-y-4">
       <form onSubmit={carregar} className="flex flex-wrap items-end gap-3">
@@ -807,6 +834,10 @@ function LucroPorProduto({ t }: { t: TFunction }) {
                 produto: r.produto_nome, qtd: r.quantidade_vendida, receita: formatKz(r.total_receita),
                 custo: formatKz(r.total_custo), lucro: formatKz(r.lucro), margem: `${r.margem_percentual.toFixed(1)}%`,
               })),
+              totalsRow: [
+                t('reports.totalProfit'), String(totais.quantidade), formatKz(totais.receita),
+                formatKz(totais.custo), formatKz(totais.lucro), `${margemMedia.toFixed(1)}%`,
+              ],
               filename: 'lucro-por-produto',
             })}
           />
@@ -814,32 +845,51 @@ function LucroPorProduto({ t }: { t: TFunction }) {
       </form>
       {loading && <Skeleton className="h-32 w-full" />}
       {result.length > 0 && (
-        <div className="rounded-md border bg-card overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('reports.colProduct')}</TableHead>
-                <TableHead className="text-right">{t('reports.soldQty')}</TableHead>
-                <TableHead className="text-right">{t('reports.totalIncome')}</TableHead>
-                <TableHead className="text-right">{t('reports.totalCost')}</TableHead>
-                <TableHead className="text-right">{t('reports.profit')}</TableHead>
-                <TableHead className="text-right">{t('reports.margin')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {result.map((r) => (
-                <TableRow key={r.produto_id}>
-                  <TableCell className="font-medium">{r.produto_nome}</TableCell>
-                  <TableCell className="text-right">{r.quantidade_vendida}</TableCell>
-                  <TableCell className="text-right">{formatKz(r.total_receita)}</TableCell>
-                  <TableCell className="text-right text-muted-foreground">{formatKz(r.total_custo)}</TableCell>
-                  <TableCell className="text-right font-semibold text-green-600">{formatKz(r.lucro)}</TableCell>
-                  <TableCell className="text-right">{r.margem_percentual.toFixed(1)}%</TableCell>
+        <>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <StatCard label={t('reports.quantityProducts')} value={result.length} />
+            <StatCard label={t('reports.soldQty')} value={totais.quantidade} />
+            <StatCard label={t('reports.totalIncome')} value={formatKz(totais.receita)} />
+            <StatCard label={t('reports.totalCost')} value={formatKz(totais.custo)} />
+            <StatCard label={t('reports.totalProfit')} value={formatKz(totais.lucro)} />
+          </div>
+          <div className="rounded-md border bg-card overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t('reports.colProduct')}</TableHead>
+                  <TableHead className="text-right">{t('reports.soldQty')}</TableHead>
+                  <TableHead className="text-right">{t('reports.totalIncome')}</TableHead>
+                  <TableHead className="text-right">{t('reports.totalCost')}</TableHead>
+                  <TableHead className="text-right">{t('reports.profit')}</TableHead>
+                  <TableHead className="text-right">{t('reports.margin')}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {result.map((r) => (
+                  <TableRow key={r.produto_id}>
+                    <TableCell className="font-medium">{r.produto_nome}</TableCell>
+                    <TableCell className="text-right">{r.quantidade_vendida}</TableCell>
+                    <TableCell className="text-right">{formatKz(r.total_receita)}</TableCell>
+                    <TableCell className="text-right text-muted-foreground">{formatKz(r.total_custo)}</TableCell>
+                    <TableCell className="text-right font-semibold text-green-600">{formatKz(r.lucro)}</TableCell>
+                    <TableCell className="text-right">{r.margem_percentual.toFixed(1)}%</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell>{t('reports.totalProfit')}</TableCell>
+                  <TableCell className="text-right">{totais.quantidade}</TableCell>
+                  <TableCell className="text-right">{formatKz(totais.receita)}</TableCell>
+                  <TableCell className="text-right">{formatKz(totais.custo)}</TableCell>
+                  <TableCell className="text-right text-green-600">{formatKz(totais.lucro)}</TableCell>
+                  <TableCell className="text-right">{margemMedia.toFixed(1)}%</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        </>
       )}
     </div>
   )

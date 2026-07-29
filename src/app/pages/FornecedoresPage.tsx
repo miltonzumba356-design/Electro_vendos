@@ -534,10 +534,16 @@ function DividasFornecedorTab({
   const [fornecedorFiltro, setFornecedorFiltro] = useState('')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
+  const [searchNumero, setSearchNumero] = useState('')
   const [pagarDivida, setPagarDivida] = useState<DividaFornecedorResponse | null>(null)
   const [novaCompraOpen, setNovaCompraOpen] = useState(false)
 
-  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(dividas)
+  // A API de listagem de dívidas a fornecedores não suporta filtro por
+  // número de factura, então a pesquisa é feita aqui sobre os dados já
+  // carregados (mesmo princípio usado na busca por número em VendasPage).
+  const filtered = dividas.filter((d) => !searchNumero || String(d.numero ?? '').includes(searchNumero.trim()))
+
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
 
   async function load() {
     setLoading(true)
@@ -620,6 +626,16 @@ function DividasFornecedorTab({
           ))}
         </div>
         <div className="space-y-1">
+          <Label className="text-xs">{t('suppliers.searchByNumber')}</Label>
+          <Input
+            placeholder={t('suppliers.searchByNumberPlaceholder')}
+            value={searchNumero}
+            onChange={(e) => { setSearchNumero(e.target.value); resetPage() }}
+            className="w-32"
+            inputMode="numeric"
+          />
+        </div>
+        <div className="space-y-1">
           <Label className="text-xs">{t('reports.startDate')}</Label>
           <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="w-36" />
         </div>
@@ -631,10 +647,11 @@ function DividasFornecedorTab({
         <Button
           variant="outline"
           className="gap-2"
-          disabled={dividas.length === 0}
+          disabled={filtered.length === 0}
           onClick={() => exportTablePdf({
             title: t('suppliers.tabDebts'),
             columns: [
+              { header: t('invoices.colNumber'), key: 'numero' },
               { header: t('suppliers.colSupplier'), key: 'fornecedor' },
               { header: t('suppliers.colProduct'), key: 'produto' },
               { header: t('suppliers.colQuantity'), key: 'quantidade', align: 'right' },
@@ -645,7 +662,8 @@ function DividasFornecedorTab({
               { header: t('common.status'), key: 'status' },
               { header: t('suppliers.colDate'), key: 'data' },
             ],
-            rows: dividas.map((d) => ({
+            rows: filtered.map((d) => ({
+              numero: d.numero ?? '—',
               fornecedor: d.fornecedor_nome ?? '—', produto: d.produto_nome ?? '—',
               quantidade: d.quantidade ?? '—', total: formatKz(d.valor_total),
               pago: formatKz(d.valor_pago), saldo: formatKz(d.saldo),
@@ -661,7 +679,7 @@ function DividasFornecedorTab({
         <Button
           variant="outline"
           className="gap-2"
-          disabled={dividas.every((d) => d.pagamentos.length === 0)}
+          disabled={filtered.every((d) => d.pagamentos.length === 0)}
           onClick={() => exportTablePdf({
             title: t('installments.paymentHistoryTitle'),
             columns: [
@@ -671,7 +689,7 @@ function DividasFornecedorTab({
               { header: t('common.total'), key: 'valor', align: 'right' },
               { header: t('suppliers.paymentCurrency'), key: 'moeda' },
             ],
-            rows: dividas.flatMap((d) => d.pagamentos.map((p) => ({
+            rows: filtered.flatMap((d) => d.pagamentos.map((p) => ({
               fornecedor: d.fornecedor_nome ?? '—', produto: d.produto_nome ?? '—',
               data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
               valor: formatKz(p.valor), moeda: p.moeda,
@@ -693,6 +711,7 @@ function DividasFornecedorTab({
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>{t('invoices.colNumber')}</TableHead>
               <TableHead>{t('suppliers.colSupplier')}</TableHead>
               <TableHead>{t('suppliers.colProduct')}</TableHead>
               <TableHead className="text-right">{t('suppliers.colQuantity')}</TableHead>
@@ -709,20 +728,21 @@ function DividasFornecedorTab({
             {loading ? (
               Array.from({ length: 4 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: isGestor ? 10 : 9 }).map((_, j) => (
+                  {Array.from({ length: isGestor ? 11 : 10 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
-            ) : dividas.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isGestor ? 10 : 9} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={isGestor ? 11 : 10} className="text-center text-muted-foreground py-8">
                   {t('suppliers.debtEmpty')}
                 </TableCell>
               </TableRow>
             ) : (
               pageItems.map((d) => (
                 <TableRow key={d.id}>
+                  <TableCell className="text-muted-foreground text-sm">{d.numero ?? '—'}</TableCell>
                   <TableCell className="font-medium">
                     <button
                       type="button"

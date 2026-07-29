@@ -98,6 +98,7 @@ const en = {
     debtStatus: { DIVIDA: 'Outstanding', PAGA: 'Paid', TODAS: 'All' },
     debtProduct: 'Product', debtEmpty: 'No credit debt found',
     payDebtTitle: 'Register debt payment',
+    searchByNumber: 'Invoice No.', searchByNumberPlaceholder: 'E.g.: 12',
     toasts: {
       minOneProduct: 'Add at least one product to the sale', registered: 'Sale registered successfully',
       loadError: 'Error loading data', registerError: 'Error registering sale',
@@ -165,6 +166,7 @@ const en = {
     allClients: 'All clients', totalCount: 'invoice(s)',
     dateFrom: 'From', dateTo: 'To',
     colNumber: 'No.', colItems: 'Items', colDate: 'Date', colStatus: 'Status',
+    searchByNumber: 'Invoice No.', searchByNumberPlaceholder: 'E.g.: 12',
     items: 'Items', addItem: 'Add item',
     itemName: 'Description', itemNamePlaceholder: 'E.g.: Product X', itemQty: 'Qty', itemPrice: 'Unit price',
     fieldDiscount: 'Discount',
@@ -210,6 +212,7 @@ const en = {
     debtStatus: { DIVIDA: 'Outstanding', PAGA: 'Paid', TODAS: 'All' },
     debtEmpty: 'No supplier debts found',
     payDebtTitle: 'Pay supplier debt', fieldValue: 'Value (Kz)',
+    searchByNumber: 'Invoice No.', searchByNumberPlaceholder: 'E.g.: 12',
     toasts: {
       nameRequired: 'Supplier name is required', created: 'Supplier created successfully',
       saveError: 'Error saving supplier', loadError: 'Error loading suppliers',
@@ -247,7 +250,8 @@ const en = {
     sectionInstallments: 'Installments', emptySales: 'No sales found for this client',
     emptyDebts: 'No credit debts', emptyInstallments: 'No installments',
     colType: 'Type', totalOwed: 'Total owed',
-    totalCost: 'Total cost', profit: 'Profit', margin: 'Margin',
+    totalCost: 'Total cost', profit: 'Profit', margin: 'Margin', totalProfit: 'Total profit',
+    searchByNumber: 'Invoice No.', searchByNumberPlaceholder: 'E.g.: 12',
     ledgerCode: 'Code', ledgerContact: 'Contact',
     ledgerCurrentBalance: 'Current Balance', ledgerTotalPurchased: 'Total Purchased',
     ledgerTotalPaid: 'Total Paid', ledgerAvailableCredit: 'Available Credit',

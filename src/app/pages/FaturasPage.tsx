@@ -379,8 +379,13 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
   const [filtroCliente, setFiltroCliente] = useState('')
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
+  const [filtroNumero, setFiltroNumero] = useState('')
 
-  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(faturas)
+  // A API de listagem de faturas não suporta pesquisa por número, então o
+  // filtro é aplicado aqui sobre as faturas já carregadas do período/cliente.
+  const faturasFiltradas = faturas.filter((f) => !filtroNumero || f.numero.toLowerCase().includes(filtroNumero.trim().toLowerCase()))
+
+  const { page, pageItems, totalPages, setPage, resetPage } = usePagination(faturasFiltradas)
 
   async function load() {
     setLoading(true)
@@ -458,6 +463,16 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
           <Label htmlFor="ff">{t('invoices.dateTo')}</Label>
           <Input id="ff" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-36" />
         </div>
+        <div className="space-y-1">
+          <Label htmlFor="fn">{t('invoices.searchByNumber')}</Label>
+          <Input
+            id="fn"
+            placeholder={t('invoices.searchByNumberPlaceholder')}
+            value={filtroNumero}
+            onChange={(e) => { setFiltroNumero(e.target.value); resetPage() }}
+            className="w-32"
+          />
+        </div>
         <Button variant="outline" onClick={load} className="gap-2">
           <RefreshCw className="size-4" /> {t('common.filter')}
         </Button>
@@ -465,7 +480,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
         <Button
           variant="outline"
           className="gap-2"
-          disabled={faturas.length === 0}
+          disabled={faturasFiltradas.length === 0}
           onClick={() => exportTablePdf({
             title: t('invoices.title'),
             columns: [
@@ -476,7 +491,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
               { header: t('invoices.colDate'), key: 'data' },
               { header: t('invoices.colStatus'), key: 'status' },
             ],
-            rows: faturas.map((f) => ({
+            rows: faturasFiltradas.map((f) => ({
               numero: f.numero, cliente: f.cliente_nome, itens: f.total_itens, total: formatKz(f.total_final),
               data: format(new Date(f.emitida_em), 'dd/MM/yyyy HH:mm'), status: f.cancelada_em ? 'Cancelada' : 'Activa',
             })),
@@ -514,7 +529,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
                   ))}
                 </TableRow>
               ))
-            ) : faturas.length === 0 ? (
+            ) : faturasFiltradas.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                   <div className="flex flex-col items-center gap-2">
