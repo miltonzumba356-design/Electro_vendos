@@ -191,6 +191,8 @@ const pt = {
     fieldPlate: 'Matrícula do veículo', platePlaceholder: 'Ex: LD-12-34-AB',
     fieldNotes: 'Observações', notesPlaceholder: 'Notas adicionais sobre o transporte',
     preview: 'Pré-visualizar', printOrDownload: 'Imprimir / Baixar',
+    fieldFormat: 'Formato de impressão', formatA4: 'A4 (folha inteira)',
+    formatThermal80: 'Impressora térmica (80mm)', formatTpa58: 'TPA / Térmica estreita (58mm)',
   },
   suppliers: {
     title: 'Fornecedores', subtitle: 'Fornecedores, compras a crédito e dívidas',

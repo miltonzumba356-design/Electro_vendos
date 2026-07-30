@@ -188,6 +188,8 @@ const en = {
     fieldPlate: 'Vehicle plate', platePlaceholder: 'E.g: LD-12-34-AB',
     fieldNotes: 'Notes', notesPlaceholder: 'Additional notes about the transport',
     preview: 'Preview', printOrDownload: 'Print / Download',
+    fieldFormat: 'Print format', formatA4: 'A4 (full sheet)',
+    formatThermal80: 'Thermal printer (80mm)', formatTpa58: 'TPA / Narrow thermal (58mm)',
   },
   suppliers: {
     title: 'Suppliers', subtitle: 'Suppliers, credit purchases and debts',

@@ -184,6 +184,8 @@ const zh = {
     fieldPlate: '车牌号', platePlaceholder: '例如: LD-12-34-AB',
     fieldNotes: '备注', notesPlaceholder: '有关运输的其他说明',
     preview: '预览', printOrDownload: '打印/下载',
+    fieldFormat: '打印格式', formatA4: 'A4（整页）',
+    formatThermal80: '热敏打印机（80毫米）', formatTpa58: 'TPA / 窄幅热敏纸（58毫米）',
   },
   suppliers: {
     title: '供应商', subtitle: '供应商、赊购和欠款',

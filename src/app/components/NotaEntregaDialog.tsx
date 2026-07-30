@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { TFunction } from 'i18next'
 import { imprimirNotaEntrega, visualizarNotaEntrega } from '@/lib/recibo'
-import type { NotaEntregaItem } from '@/lib/recibo'
+import type { NotaEntregaItem, NotaEntregaFormato } from '@/lib/recibo'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -20,6 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/app/components/ui/table'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { Separator } from '@/app/components/ui/separator'
 import { Eye, Printer } from 'lucide-react'
 
@@ -43,6 +44,7 @@ export function NotaEntregaDialog({
   const [motorista, setMotorista] = useState('')
   const [matricula, setMatricula] = useState('')
   const [observacoes, setObservacoes] = useState('')
+  const [formato, setFormato] = useState<NotaEntregaFormato>('a4')
 
   useEffect(() => {
     if (origem) {
@@ -52,6 +54,7 @@ export function NotaEntregaDialog({
       setMotorista('')
       setMatricula('')
       setObservacoes('')
+      setFormato('a4')
     }
   }, [origem])
 
@@ -76,12 +79,12 @@ export function NotaEntregaDialog({
 
   function handlePreview() {
     const dados = buildDados()
-    if (dados) visualizarNotaEntrega(dados)
+    if (dados) visualizarNotaEntrega(dados, formato)
   }
 
   function handlePrint() {
     const dados = buildDados()
-    if (dados) imprimirNotaEntrega(dados)
+    if (dados) imprimirNotaEntrega(dados, formato)
   }
 
   return (
@@ -146,6 +149,17 @@ export function NotaEntregaDialog({
                 placeholder={t('deliveryNotes.notesPlaceholder')}
                 rows={3}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('deliveryNotes.fieldFormat')}</Label>
+              <Select value={formato} onValueChange={(v) => setFormato(v as NotaEntregaFormato)}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="a4">{t('deliveryNotes.formatA4')}</SelectItem>
+                  <SelectItem value="termica80">{t('deliveryNotes.formatThermal80')}</SelectItem>
+                  <SelectItem value="tpa58">{t('deliveryNotes.formatTpa58')}</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">

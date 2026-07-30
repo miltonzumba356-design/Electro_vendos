@@ -241,7 +241,13 @@ export interface NotaEntregaData {
   itens: NotaEntregaItem[]
 }
 
-function gerarNotaEntregaHtml(dados: NotaEntregaData, comBotaoImprimir: boolean): string {
+// Formato de impressão escolhido pelo utilizador no diálogo da Nota de
+// Entrega — folha A4 inteira, rolo de impressora térmica (80mm, o mais comum
+// em impressoras de talão) ou o rolo estreito típico dos terminais de
+// pagamento automático (TPA, 58mm).
+export type NotaEntregaFormato = 'a4' | 'termica80' | 'tpa58'
+
+function gerarNotaEntregaA4Html(dados: NotaEntregaData, comBotaoImprimir: boolean): string {
   const linhas = dados.itens.map((item) => `
     <tr>
       <td>${esc(item.descricao || item.produto_nome)}</td>
@@ -319,12 +325,88 @@ function gerarNotaEntregaHtml(dados: NotaEntregaData, comBotaoImprimir: boolean)
 </body></html>`
 }
 
-export function imprimirNotaEntrega(dados: NotaEntregaData) {
-  abrirJanela(gerarNotaEntregaHtml(dados, false), true, 900, 1000)
+// CSS do formato estreito (rolo contínuo), partilhado pela térmica de 80mm e
+// pelo rolo de 58mm dos terminais TPA — só a largura muda entre os dois.
+function cssNotaEntregaTermica(larguraPx: number, larguraMm: number): string {
+  return `
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Courier New',monospace;font-size:11px;width:${larguraPx}px;margin:0 auto;padding:10px 6px;color:#111}
+    .logo{display:block;max-width:100%;height:auto;margin:0 auto 4px}
+    .empresa-info{text-align:center;font-size:9px;line-height:1.4;margin-bottom:6px}
+    .empresa-info strong{font-size:12px;letter-spacing:0.5px}
+    .sub{text-align:center;font-size:11px;font-weight:700;margin-bottom:4px}
+    hr{border:none;border-top:1px dashed #555;margin:6px 0}
+    .row{display:flex;justify-content:space-between;padding:1px 0;font-size:10px;gap:6px}
+    .row span:first-child{color:#444}
+    .row span:last-child{text-align:right;flex-shrink:0;font-weight:600}
+    table{width:100%;border-collapse:collapse;font-size:10px;margin:4px 0}
+    th{border-bottom:1px solid #555;padding:2px 0;text-align:left;font-size:9px}
+    th.r,td.r{text-align:right}
+    td{padding:3px 0;vertical-align:top}
+    .obs{font-size:9px;margin-top:6px;color:#333}
+    .assinatura{margin-top:18px;text-align:center;font-size:9px;color:#333}
+    .assinatura .linha{border-top:1px solid #111;margin:16px 8px 3px}
+    .footer{text-align:center;font-size:9px;margin-top:10px;line-height:1.5;color:#444}
+    @media print{@page{size:${larguraMm}mm auto;margin:2mm}button{display:none!important}}
+  `
 }
 
-export function visualizarNotaEntrega(dados: NotaEntregaData) {
-  abrirJanela(gerarNotaEntregaHtml(dados, true), false, 900, 1000)
+function gerarNotaEntregaTermicaHtml(dados: NotaEntregaData, comBotaoImprimir: boolean, larguraPx: number, larguraMm: number): string {
+  const linhas = dados.itens.map((item) => `
+    <tr>
+      <td>${esc(item.descricao || item.produto_nome)}</td>
+      <td class="r">${item.quantidade}</td>
+    </tr>`).join('')
+
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nota de Entrega</title><style>${cssNotaEntregaTermica(larguraPx, larguraMm)}</style></head>
+<body>
+  <img class="logo" src="${GOLDENMARK_LOGO_DATA_URL}" alt="${esc(EMPRESA_NOTA_ENTREGA.nome)}">
+  <div class="empresa-info">
+    <strong>${esc(EMPRESA_NOTA_ENTREGA.nome)}</strong><br>
+    ${esc(EMPRESA_NOTA_ENTREGA.local)} — ${esc(EMPRESA_NOTA_ENTREGA.razaoSocial)}<br>
+    NIF: ${esc(EMPRESA_NOTA_ENTREGA.nif)}<br>
+    ${esc(EMPRESA_NOTA_ENTREGA.morada)}<br>
+    Tel: ${esc(EMPRESA_NOTA_ENTREGA.telefones)}
+  </div>
+  <p class="sub">NOTA DE ENTREGA</p>
+  <hr>
+  <div class="row"><span>Ref.:</span><span>${esc(dados.origemRef)} (${dados.origemTipo === 'venda' ? 'Venda' : 'Fatura'})</span></div>
+  <div class="row"><span>Data:</span><span>${fmtData(dados.data)}</span></div>
+  <hr>
+  <div class="row"><span>Cliente:</span><span>${esc(dados.clienteNome)}</span></div>
+  ${dados.clienteNif ? `<div class="row"><span>NIF:</span><span>${esc(dados.clienteNif)}</span></div>` : ''}
+  ${dados.motorista ? `<div class="row"><span>Motorista:</span><span>${esc(dados.motorista)}</span></div>` : ''}
+  ${dados.matricula ? `<div class="row"><span>Matrícula:</span><span>${esc(dados.matricula)}</span></div>` : ''}
+  <hr>
+  <table>
+    <thead><tr><th>Descrição</th><th class="r">Qtd</th></tr></thead>
+    <tbody>${linhas}</tbody>
+  </table>
+  ${dados.observacoes ? `<hr><p class="obs"><strong>Obs:</strong> ${esc(dados.observacoes)}</p>` : ''}
+  <div class="assinatura">
+    <div class="linha"></div>Assinatura do Camionista
+    <div class="linha"></div>Assinatura do Cliente
+    <div class="linha"></div>Assinatura do Administrador
+  </div>
+  <div class="footer"><p>${new Date().getFullYear()} &copy; ${esc(EMPRESA_NOTA_ENTREGA.nome)}</p></div>
+  ${comBotaoImprimir ? BOTAO_IMPRIMIR : ''}
+</body></html>`
+}
+
+function gerarNotaEntregaHtmlPorFormato(dados: NotaEntregaData, comBotaoImprimir: boolean, formato: NotaEntregaFormato): string {
+  if (formato === 'termica80') return gerarNotaEntregaTermicaHtml(dados, comBotaoImprimir, 302, 80)
+  if (formato === 'tpa58') return gerarNotaEntregaTermicaHtml(dados, comBotaoImprimir, 219, 58)
+  return gerarNotaEntregaA4Html(dados, comBotaoImprimir)
+}
+
+export function imprimirNotaEntrega(dados: NotaEntregaData, formato: NotaEntregaFormato = 'a4') {
+  const estreito = formato !== 'a4'
+  abrirJanela(gerarNotaEntregaHtmlPorFormato(dados, false, formato), true, estreito ? 380 : 900, estreito ? 680 : 1000)
+}
+
+export function visualizarNotaEntrega(dados: NotaEntregaData, formato: NotaEntregaFormato = 'a4') {
+  const estreito = formato !== 'a4'
+  abrirJanela(gerarNotaEntregaHtmlPorFormato(dados, true, formato), false, estreito ? 380 : 900, estreito ? 680 : 1000)
 }
 
 // Constrói o link wa.me com um resumo em texto da venda. Sem número de

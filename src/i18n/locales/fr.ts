@@ -193,6 +193,8 @@ const fr = {
     fieldPlate: 'Immatriculation du véhicule', platePlaceholder: 'Ex: LD-12-34-AB',
     fieldNotes: 'Observations', notesPlaceholder: 'Notes supplémentaires sur le transport',
     preview: 'Aperçu', printOrDownload: 'Imprimer / Télécharger',
+    fieldFormat: "Format d'impression", formatA4: 'A4 (feuille entière)',
+    formatThermal80: 'Imprimante thermique (80mm)', formatTpa58: 'TPA / Thermique étroite (58mm)',
   },
   suppliers: {
     title: 'Fournisseurs', subtitle: 'Fournisseurs, achats à crédit et dettes',
