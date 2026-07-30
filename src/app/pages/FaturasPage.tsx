@@ -53,7 +53,7 @@ import {
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { exportTablePdf } from '@/lib/pdf'
+import { exportTablePdf, formatPeriodoPdf } from '@/lib/pdf'
 
 function formatKz(v: number) {
   return new Intl.NumberFormat('pt-AO', {
@@ -483,6 +483,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
           disabled={faturasFiltradas.length === 0}
           onClick={() => exportTablePdf({
             title: t('invoices.title'),
+            infoLines: [`${t('reports.period')}: ${formatPeriodoPdf(dataInicio, dataFim, t('reports.periodAllTime'))}`],
             columns: [
               { header: t('invoices.colNumber'), key: 'numero' },
               { header: t('common.client'), key: 'cliente' },

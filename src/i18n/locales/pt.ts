@@ -238,6 +238,7 @@ const pt = {
     cardProfit: 'Lucro por produto', cardGoals: 'Progresso das metas',
     cardCritical: 'Produtos com stock crítico', startDate: 'Data início', endDate: 'Data fim',
     emptyIsToday: 'vazio = hoje', emptyIsAllTime: 'vazio = todo o histórico',
+    periodToday: 'Hoje', periodAllTime: 'Todo o histórico',
     consult: 'Consultar', loading: 'A carregar...', year: 'Ano', month: 'Mês (1–12)',
     limit: 'Limite', daysSince: 'Dias sem comprar', totalSales: 'Total de vendas',
     totalRevenue: 'Total recebido', totalPending: 'Total pendente', netRevenue: 'Total s/ IVA', totalVat: 'Total IVA',

@@ -41,7 +41,7 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { exportTablePdf } from '@/lib/pdf'
+import { exportTablePdf, formatPeriodoPdf } from '@/lib/pdf'
 import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -650,6 +650,7 @@ function DividasFornecedorTab({
           disabled={filtered.length === 0}
           onClick={() => exportTablePdf({
             title: t('suppliers.tabDebts'),
+            infoLines: [`${t('reports.period')}: ${formatPeriodoPdf(dataInicio, dataFim, t('reports.periodAllTime'))}`],
             columns: [
               { header: t('invoices.colNumber'), key: 'numero' },
               { header: t('suppliers.colSupplier'), key: 'fornecedor' },
@@ -682,6 +683,7 @@ function DividasFornecedorTab({
           disabled={filtered.every((d) => d.pagamentos.length === 0)}
           onClick={() => exportTablePdf({
             title: t('installments.paymentHistoryTitle'),
+            infoLines: [`${t('reports.period')}: ${formatPeriodoPdf(dataInicio, dataFim, t('reports.periodAllTime'))}`],
             columns: [
               { header: t('suppliers.colSupplier'), key: 'fornecedor' },
               { header: t('suppliers.colProduct'), key: 'produto' },

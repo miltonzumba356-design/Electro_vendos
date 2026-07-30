@@ -33,7 +33,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/dialog'
-import { exportTablePdf, exportLedgerPdf, type PdfColumn, type LedgerMovimento, type LedgerEntidade } from '@/lib/pdf'
+import { exportTablePdf, exportLedgerPdf, formatPeriodoPdf, type PdfColumn, type LedgerMovimento, type LedgerEntidade } from '@/lib/pdf'
 import { useAuth } from '@/contexts/AuthContext'
 import ClienteLivroRazao from '@/app/components/ClienteLivroRazao'
 import {
@@ -162,6 +162,7 @@ function VendasPeriodo({ t }: { t: TFunction }) {
             t={t}
             onClick={() => exportTablePdf({
               title: t('reports.cardPeriod'),
+              infoLines: [`${t('reports.period')}: ${formatPeriodoPdf(inicio, fim, t('reports.periodToday'))}`],
               columns: [
                 { header: t('reports.colProduct'), key: 'produto' },
                 { header: t('reports.soldQty'), key: 'qtd', align: 'right' },
@@ -652,6 +653,7 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
             onClick={() => exportTablePdf({
               title: t('installments.paymentHistoryTitle'),
               subtitle: clienteSelecionado.nome,
+              infoLines: [`${t('reports.period')}: ${buildPeriodoLabel()}`],
               columns: [
                 { header: t('reports.colProduct'), key: 'produto' },
                 { header: t('common.date'), key: 'data' },
@@ -829,6 +831,7 @@ function LucroPorProduto({ t }: { t: TFunction }) {
             t={t}
             onClick={() => exportTablePdf({
               title: t('reports.cardProfit'),
+              infoLines: [`${t('reports.period')}: ${formatPeriodoPdf(inicio, fim, t('reports.periodAllTime'))}`],
               columns,
               rows: result.map((r) => ({
                 produto: r.produto_nome, qtd: r.quantidade_vendida, receita: formatKz(r.total_receita),

@@ -1,5 +1,18 @@
 import type { VendaResponse, MovimentoResponse, DividaFornecedorResponse } from '@/types'
 import { exportHtmlToPdf } from '@/lib/pdf'
+import { GOLDENMARK_LOGO_DATA_URL } from '@/assets/goldenmarkLogo'
+
+// Dados da empresa impressos exclusivamente no cabeçalho da Nota de Entrega
+// (pedido explícito: não deve aparecer em mais nenhum documento/PDF do
+// sistema — factura, recibo, extratos, etc. continuam com "Electro Vendos").
+const EMPRESA_NOTA_ENTREGA = {
+  nome: 'GOLDENMARK ANGOLA',
+  local: 'Luanda, Angola',
+  razaoSocial: 'COMÉRCIO GERAL, LDA',
+  nif: '5001004182',
+  morada: 'Rua da Ex Moagem, Bairro Boa Esperança, Hoji Ya Henda',
+  telefones: '923 256 261 ; 933 361 728',
+}
 
 const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
@@ -250,9 +263,15 @@ function gerarNotaEntregaHtml(dados: NotaEntregaData, comBotaoImprimir: boolean)
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nota de Entrega</title><style>${CSS_FATURA}</style></head>
 <body>
   <div class="header">
-    <div class="empresa">
-      <h1>ELECTRO VENDOS</h1>
-      <p>Sistema de Gestão de Vendas</p>
+    <div class="empresa" style="display:flex;align-items:center;gap:14px">
+      <img src="${GOLDENMARK_LOGO_DATA_URL}" alt="${esc(EMPRESA_NOTA_ENTREGA.nome)}" style="height:52px;width:auto;flex-shrink:0">
+      <div>
+        <h1 style="font-size:16px">${esc(EMPRESA_NOTA_ENTREGA.nome)}</h1>
+        <p>${esc(EMPRESA_NOTA_ENTREGA.local)} — ${esc(EMPRESA_NOTA_ENTREGA.razaoSocial)}</p>
+        <p>NIF: ${esc(EMPRESA_NOTA_ENTREGA.nif)}</p>
+        <p>${esc(EMPRESA_NOTA_ENTREGA.morada)}</p>
+        <p>Tel: ${esc(EMPRESA_NOTA_ENTREGA.telefones)}</p>
+      </div>
     </div>
     <div class="doc-info">
       <h2>NOTA DE ENTREGA</h2>
@@ -295,7 +314,7 @@ function gerarNotaEntregaHtml(dados: NotaEntregaData, comBotaoImprimir: boolean)
     </div>
   </div>
 
-  <div class="footer"><p>${new Date().getFullYear()} &copy; Electro Vendos</p></div>
+  <div class="footer"><p>${new Date().getFullYear()} &copy; ${esc(EMPRESA_NOTA_ENTREGA.nome)}</p></div>
   ${comBotaoImprimir ? BOTAO_IMPRIMIR : ''}
 </body></html>`
 }

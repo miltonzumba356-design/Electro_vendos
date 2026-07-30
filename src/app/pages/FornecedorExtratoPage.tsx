@@ -200,6 +200,7 @@ export default function FornecedorExtratoPage() {
     exportTablePdf({
       title: t('installments.paymentHistoryTitle'),
       subtitle: fornecedor.nome,
+      infoLines: [`${t('reports.period')}: ${buildPeriodoLabel()}`],
       columns: [
         { header: t('invoices.colNumber'), key: 'numero' },
         { header: t('suppliers.colProduct'), key: 'produto' },

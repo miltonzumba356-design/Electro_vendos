@@ -235,6 +235,7 @@ const en = {
     cardProfit: 'Profit by product', cardGoals: 'Goals progress',
     cardCritical: 'Products with critical stock', startDate: 'Start date', endDate: 'End date',
     emptyIsToday: 'empty = today', emptyIsAllTime: 'empty = entire history',
+    periodToday: 'Today', periodAllTime: 'Entire history',
     consult: 'Consult', loading: 'Loading...', year: 'Year', month: 'Month (1–12)',
     limit: 'Limit', daysSince: 'Days since purchase', totalSales: 'Total sales',
     totalRevenue: 'Total received', totalPending: 'Total pending', netRevenue: 'Net revenue', totalVat: 'Total VAT',

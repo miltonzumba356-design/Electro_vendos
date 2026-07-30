@@ -48,7 +48,7 @@ import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircl
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp } from '@/lib/recibo'
-import { exportTablePdf } from '@/lib/pdf'
+import { exportTablePdf, formatPeriodoPdf } from '@/lib/pdf'
 import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
 import type { NotaEntregaOrigem } from '@/app/components/NotaEntregaDialog'
 import PrestacoesPage from '@/app/pages/PrestacoesPage'
@@ -883,6 +883,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
           disabled={filtered.length === 0}
           onClick={() => exportTablePdf({
             title: t('sales.tabDebts'),
+            infoLines: [`${t('reports.period')}: ${formatPeriodoPdf(dataInicio, dataFim, t('reports.periodAllTime'))}`],
             columns: [
               { header: t('sales.colClient'), key: 'cliente' },
               { header: t('sales.debtProduct'), key: 'produto' },
@@ -909,6 +910,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
           disabled={filtered.every((d) => d.pagamentos.length === 0)}
           onClick={() => exportTablePdf({
             title: t('installments.paymentHistoryTitle'),
+            infoLines: [`${t('reports.period')}: ${formatPeriodoPdf(dataInicio, dataFim, t('reports.periodAllTime'))}`],
             columns: [
               { header: t('sales.colClient'), key: 'cliente' },
               { header: t('sales.debtProduct'), key: 'produto' },

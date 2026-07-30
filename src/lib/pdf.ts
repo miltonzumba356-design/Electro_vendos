@@ -1,6 +1,21 @@
 import type { jsPDF as JsPDF } from 'jspdf'
+import { format } from 'date-fns'
 import logoUrl from '@/assets/vendos-logo.png'
 import { EMPRESA } from './empresa'
+
+// Formata o intervalo de datas escolhido pelo utilizador (inputs <input
+// type="date">, ex.: '2026-01-01') para ser impresso no cabeçalho do PDF —
+// assim o documento gerado sempre regista exatamente o período consultado.
+// `vazio` é o texto usado quando nenhuma das datas foi preenchida (varia por
+// relatório: "Hoje" quando o backend assume o dia actual, "Todo o histórico"
+// quando assume tudo).
+export function formatPeriodoPdf(dataInicio: string, dataFim: string, vazio: string): string {
+  if (!dataInicio && !dataFim) return vazio
+  const fmt = (v: string) => format(new Date(v), 'dd/MM/yyyy')
+  if (dataInicio && dataFim) return `${fmt(dataInicio)} a ${fmt(dataFim)}`
+  if (dataInicio) return `A partir de ${fmt(dataInicio)}`
+  return `Até ${fmt(dataFim)}`
+}
 
 // jspdf/jspdf-autotable/html2canvas/qrcode são pesados e só são precisos
 // quando o utilizador realmente exporta/partilha um PDF — importados aqui em
