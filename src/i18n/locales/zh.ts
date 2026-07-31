@@ -206,7 +206,7 @@ const zh = {
     newPurchase: '新采购', newPurchaseTitle: '新赊购', purchaseItems: '采购项目',
     selectSupplier: '选择供应商...', selectProduct: '选择产品...',
     fieldProduct: '产品', fieldQuantity: '数量', fieldUnitPrice: '单价 (Kz)',
-    paymentCurrency: '付款货币',
+    paymentCurrency: '付款货币', invoiceCurrency: '发票货币',
     allSuppliers: '所有供应商',
     totalDebts: '欠款总数', totalOwed: '欠款总额', totalSpent: '总消费',
     extratoTitle: '供应商对账单',

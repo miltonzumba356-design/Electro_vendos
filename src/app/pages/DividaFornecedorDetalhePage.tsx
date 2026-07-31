@@ -16,18 +16,11 @@ import {
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import { exportTablePdf, getTablePdfBlob, type PdfColumn } from '@/lib/pdf'
+import { formatMoeda } from '@/lib/moeda'
 import { partilharArquivoOuTexto } from '@/lib/share'
 import { ArrowLeft, FileDown, MessageCircle, Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-
-function formatKz(v: number) {
-  return new Intl.NumberFormat('pt-AO', {
-    style: 'currency',
-    currency: 'AOA',
-    maximumFractionDigits: 0,
-  }).format(v)
-}
 
 function MiniStat({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
   return (
@@ -85,10 +78,12 @@ export default function DividaFornecedorDetalhePage() {
   }
 
   function buildRows() {
+    const moedaFactura = divida?.moeda_compra
     return pagamentosComSaldo().map((p) => ({
       numero: p.numero ?? '—',
       data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
-      valor: formatKz(p.valor), totalPago: formatKz(p.totalPago), saldo: formatKz(p.saldo), moeda: p.moeda,
+      valor: formatMoeda(p.valor, moedaFactura), totalPago: formatMoeda(p.totalPago, moedaFactura),
+      saldo: formatMoeda(p.saldo, moedaFactura), moeda: p.moeda,
     }))
   }
 
@@ -97,7 +92,7 @@ export default function DividaFornecedorDetalhePage() {
     return [
       `${t('suppliers.colSupplier')}: ${divida.fornecedor_nome ?? '—'}${divida.numero != null ? `   ${t('invoices.colNumber')}: ${divida.numero}` : ''}`,
       `${t('suppliers.colProduct')}: ${divida.produto_nome ?? '—'}`,
-      `${t('common.total')}: ${formatKz(divida.valor_total)}   ${t('common.paid')}: ${formatKz(divida.valor_pago)}   ${t('common.balance')}: ${formatKz(divida.saldo)}`,
+      `${t('common.total')}: ${formatMoeda(divida.valor_total, divida.moeda_compra)}   ${t('common.paid')}: ${formatMoeda(divida.valor_pago, divida.moeda_compra)}   ${t('common.balance')}: ${formatMoeda(divida.saldo, divida.moeda_compra)}`,
     ]
   }
 
@@ -137,12 +132,12 @@ export default function DividaFornecedorDetalhePage() {
         `${t('suppliers.colProduct')}: ${divida.produto_nome ?? '—'}`,
         '',
         ...pagamentosComSaldo().map((p) =>
-          `• ${format(new Date(p.data_pagamento), 'dd/MM/yyyy')} — ${formatKz(p.valor)} (${p.moeda}) — ${t('common.balance')}: ${formatKz(p.saldo)}`
+          `• ${format(new Date(p.data_pagamento), 'dd/MM/yyyy')} — ${formatMoeda(p.valor, divida.moeda_compra)} (${p.moeda}) — ${t('common.balance')}: ${formatMoeda(p.saldo, divida.moeda_compra)}`
         ),
         '',
-        `${t('common.total')}: ${formatKz(divida.valor_total)}`,
-        `${t('common.paid')}: ${formatKz(divida.valor_pago)}`,
-        `${t('common.balance')}: ${formatKz(divida.saldo)}`,
+        `${t('common.total')}: ${formatMoeda(divida.valor_total, divida.moeda_compra)}`,
+        `${t('common.paid')}: ${formatMoeda(divida.valor_pago, divida.moeda_compra)}`,
+        `${t('common.balance')}: ${formatMoeda(divida.saldo, divida.moeda_compra)}`,
       ].join('\n')
       const resultado = await partilharArquivoOuTexto(file, mensagem, telefone)
       if (resultado === 'descarregado') {
@@ -184,9 +179,9 @@ export default function DividaFornecedorDetalhePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <MiniStat label={t('common.total')} value={formatKz(divida.valor_total)} />
-            <MiniStat label={t('common.paid')} value={formatKz(divida.valor_pago)} />
-            <MiniStat label={t('common.balance')} value={formatKz(divida.saldo)} danger={divida.saldo > 0} />
+            <MiniStat label={t('common.total')} value={formatMoeda(divida.valor_total, divida.moeda_compra)} />
+            <MiniStat label={t('common.paid')} value={formatMoeda(divida.valor_pago, divida.moeda_compra)} />
+            <MiniStat label={t('common.balance')} value={formatMoeda(divida.saldo, divida.moeda_compra)} danger={divida.saldo > 0} />
           </div>
 
           {divida.itens && divida.itens.length > 0 && (
@@ -207,8 +202,8 @@ export default function DividaFornecedorDetalhePage() {
                       <TableRow key={item.id}>
                         <TableCell>{item.produto_nome}</TableCell>
                         <TableCell className="text-center">{item.quantidade}</TableCell>
-                        <TableCell className="text-right">{formatKz(item.preco_unitario)}</TableCell>
-                        <TableCell className="text-right">{formatKz(item.subtotal)}</TableCell>
+                        <TableCell className="text-right">{formatMoeda(item.preco_unitario, divida.moeda_compra)}</TableCell>
+                        <TableCell className="text-right">{formatMoeda(item.subtotal, divida.moeda_compra)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -261,9 +256,9 @@ export default function DividaFornecedorDetalhePage() {
                       <TableCell className="text-muted-foreground text-sm">
                         {format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm')}
                       </TableCell>
-                      <TableCell className="text-right font-medium">{formatKz(p.valor)}</TableCell>
-                      <TableCell className="text-right text-green-600">{formatKz(p.totalPago)}</TableCell>
-                      <TableCell className="text-right font-medium text-destructive">{formatKz(p.saldo)}</TableCell>
+                      <TableCell className="text-right font-medium">{formatMoeda(p.valor, divida.moeda_compra)}</TableCell>
+                      <TableCell className="text-right text-green-600">{formatMoeda(p.totalPago, divida.moeda_compra)}</TableCell>
+                      <TableCell className="text-right font-medium text-destructive">{formatMoeda(p.saldo, divida.moeda_compra)}</TableCell>
                       <TableCell><Badge variant="outline">{p.moeda}</Badge></TableCell>
                     </TableRow>
                   ))}

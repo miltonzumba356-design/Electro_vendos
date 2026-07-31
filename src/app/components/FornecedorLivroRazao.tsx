@@ -15,6 +15,7 @@ import {
   TableRow,
 } from '@/app/components/ui/table'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/app/components/ui/tooltip'
+import { formatMoeda, detectarMoedaUnica } from '@/lib/moeda'
 import { ArrowUp, ArrowDown, ArrowUpDown, Search } from 'lucide-react'
 import { format } from 'date-fns'
 
@@ -25,14 +26,6 @@ import { format } from 'date-fns'
 // apresentacional: recebe fornecedor/dividas já carregados por quem o usa —
 // só reorganiza os dados existentes (dividas + pagamentos) para exibição
 // cronológica com saldo acumulado.
-
-function formatKz(v: number) {
-  return new Intl.NumberFormat('pt-AO', {
-    style: 'currency',
-    currency: 'AOA',
-    maximumFractionDigits: 0,
-  }).format(v)
-}
 
 function MiniStat({
   label, value, hint, danger, positive, destaque,
@@ -132,6 +125,8 @@ export default function FornecedorLivroRazao({
   const totalComprado = dividas.reduce((s, d) => s + d.valor_total, 0)
   const totalPago = dividas.reduce((s, d) => s + d.valor_pago, 0)
   const totalDevido = dividas.reduce((s, d) => s + d.saldo, 0)
+  const moedaUnica = detectarMoedaUnica(dividas)
+  const fmt = (v: number) => formatMoeda(v, moedaUnica)
 
   // Fonte: cada dívida (compra a crédito) + os pagamentos aninhados nela —
   // toda dívida já traz o seu id, por isso tanto a linha da Factura como a de
@@ -175,7 +170,7 @@ export default function FornecedorLivroRazao({
           r.documento.toLowerCase().includes(termo) ||
           r.tipo.toLowerCase().includes(termo) ||
           r.descricao.toLowerCase().includes(termo) ||
-          formatKz(r.debito ?? r.credito ?? 0).toLowerCase().includes(termo)
+          fmt(r.debito ?? r.credito ?? 0).toLowerCase().includes(termo)
         )
       : razaoBase
     const valorDe = (r: RazaoLinha) => r.debito ?? r.credito ?? 0
@@ -256,13 +251,13 @@ export default function FornecedorLivroRazao({
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             <MiniStat
               label={t('reports.ledgerCurrentBalance')}
-              value={formatKz(Math.abs(saldoAtualExibido))}
+              value={fmt(Math.abs(saldoAtualExibido))}
               danger={saldoAtualExibido < 0}
               positive={saldoAtualExibido > 0}
               destaque
             />
-            <MiniStat label={t('reports.ledgerTotalPurchased')} value={formatKz(totalComprado)} />
-            <MiniStat label={t('reports.ledgerTotalPaid')} value={formatKz(totalPago)} />
+            <MiniStat label={t('reports.ledgerTotalPurchased')} value={fmt(totalComprado)} />
+            <MiniStat label={t('reports.ledgerTotalPaid')} value={fmt(totalPago)} />
             <MiniStat label={t('reports.ledgerAvailableCredit')} value="—" hint={t('reports.ledgerNotTracked')} />
             <MiniStat label={t('reports.ledgerTotalInvoices')} value={String(totalFaturas)} />
             <MiniStat label={t('reports.ledgerTotalReceipts')} value={String(totalRecibos)} />
@@ -374,10 +369,10 @@ export default function FornecedorLivroRazao({
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm max-w-[220px] truncate">{linha.descricao}</TableCell>
-                        <TableCell className="text-right">{linha.debito ? formatKz(linha.debito) : '—'}</TableCell>
-                        <TableCell className="text-right text-green-600">{linha.credito ? formatKz(linha.credito) : '—'}</TableCell>
+                        <TableCell className="text-right">{linha.debito ? fmt(linha.debito) : '—'}</TableCell>
+                        <TableCell className="text-right text-green-600">{linha.credito ? fmt(linha.credito) : '—'}</TableCell>
                         <TableCell className={`text-right font-semibold ${linha.saldo > 0 ? 'text-green-600' : linha.saldo < 0 ? 'text-destructive' : ''}`}>
-                          {formatKz(linha.saldo)}
+                          {fmt(linha.saldo)}
                         </TableCell>
                       </TableRow>
                     </Fragment>
@@ -408,13 +403,13 @@ export default function FornecedorLivroRazao({
                     <div className="flex items-center justify-between text-sm">
                       <span>
                         {linha.debito
-                          ? <span className="text-destructive">-{formatKz(linha.debito)}</span>
+                          ? <span className="text-destructive">-{fmt(linha.debito)}</span>
                           : linha.credito
-                            ? <span className="text-green-600">+{formatKz(linha.credito)}</span>
+                            ? <span className="text-green-600">+{fmt(linha.credito)}</span>
                             : '—'}
                       </span>
                       <span className={`font-semibold ${linha.saldo > 0 ? 'text-green-600' : linha.saldo < 0 ? 'text-destructive' : ''}`}>
-                        {formatKz(linha.saldo)}
+                        {fmt(linha.saldo)}
                       </span>
                     </div>
                   </div>

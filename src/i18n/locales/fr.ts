@@ -215,7 +215,7 @@ const fr = {
     newPurchase: 'Nouvel achat', newPurchaseTitle: 'Nouvel achat à crédit', purchaseItems: "Articles de l'achat",
     selectSupplier: 'Sélectionner un fournisseur...', selectProduct: 'Sélectionner un produit...',
     fieldProduct: 'Produit', fieldQuantity: 'Quantité', fieldUnitPrice: 'Prix unitaire (Kz)',
-    paymentCurrency: 'Devise du paiement',
+    paymentCurrency: 'Devise du paiement', invoiceCurrency: 'Devise de la facture',
     allSuppliers: 'Tous les fournisseurs',
     totalDebts: 'Total des dettes', totalOwed: 'Total dû', totalSpent: 'Total dépensé',
     extratoTitle: 'Relevé fournisseur',

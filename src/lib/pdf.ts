@@ -2,6 +2,7 @@ import type { jsPDF as JsPDF } from 'jspdf'
 import { format } from 'date-fns'
 import logoUrl from '@/assets/vendos-logo.png'
 import { EMPRESA } from './empresa'
+import { formatMoeda } from './moeda'
 
 // Formata o intervalo de datas escolhido pelo utilizador (inputs <input
 // type="date">, ex.: '2026-01-01') para ser impresso no cabeçalho do PDF —
@@ -320,10 +321,15 @@ export interface ExportLedgerPdfOptions {
   movimentos: LedgerMovimento[]
   utilizador?: string | null
   filename: string
+  // Moeda de todos os valores do documento — a API não converte câmbio, por
+  // isso só faz sentido informar isto quando TODOS os movimentos estão na
+  // mesma moeda (ex.: fornecedor cujas compras foram todas em USD). Omitido
+  // (ou com moedas misturadas), o documento cai para Kz/AOA como aproximação.
+  moedaGeral?: string | null
 }
 
-function fmtKzLedger(v: number) {
-  return new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(v)
+function fmtKzLedger(v: number, moeda?: string | null) {
+  return formatMoeda(v, moeda)
 }
 
 function desenharCard(doc: JsPDF, x: number, y: number, w: number, h: number, label: string, value: string, cor = '#111111') {
@@ -397,8 +403,9 @@ function desenharTopoLedger(doc: JsPDF, opts: {
   saldoInicial: number
   movimentos: LedgerMovimento[]
   logoDataUrl: string | null
+  moedaGeral?: string | null
 }): TopoLedgerResult {
-  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl } = opts
+  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl, moedaGeral } = opts
 
   // ── Cabeçalho: empresa (esquerda) + título/metadados (direita) ──────
   let leftY = 13
@@ -508,10 +515,10 @@ function desenharTopoLedger(doc: JsPDF, opts: {
   const cardW = (LEDGER_CONTENT_W - gap * 2) / 3
   const cardH = 15.5
   const cards: [string, string, string][] = [
-    ['Saldo Inicial', fmtKzLedger(saldoInicial), '#111111'],
-    ['Total de Débitos', fmtKzLedger(totalDebitos), LEDGER_DEBITO],
-    ['Total de Créditos', fmtKzLedger(totalCreditos), LEDGER_CREDITO],
-    ['Saldo Final', fmtKzLedger(saldoFinal), saldoFinal > 0 ? LEDGER_DEBITO : '#111111'],
+    ['Saldo Inicial', fmtKzLedger(saldoInicial, moedaGeral), '#111111'],
+    ['Total de Débitos', fmtKzLedger(totalDebitos, moedaGeral), LEDGER_DEBITO],
+    ['Total de Créditos', fmtKzLedger(totalCreditos, moedaGeral), LEDGER_CREDITO],
+    ['Saldo Final', fmtKzLedger(saldoFinal, moedaGeral), saldoFinal > 0 ? LEDGER_DEBITO : '#111111'],
     ['Nº de Faturas', String(numFaturas), '#111111'],
     ['Nº de Pagamentos', String(numPagamentos), '#111111'],
   ]
@@ -536,8 +543,9 @@ function desenharFechoLedger(doc: JsPDF, params: {
   saldoFinal: number
   utilizador?: string | null
   cursorY: number
+  moedaGeral?: string | null
 }) {
-  const { entidadeLabel, entidadeNome, totalDebitos, totalCreditos, saldoFinal, utilizador } = params
+  const { entidadeLabel, entidadeNome, totalDebitos, totalCreditos, saldoFinal, utilizador, moedaGeral } = params
   let cursorY = params.cursorY
 
   const ESPACO_FECHO = 62
@@ -552,9 +560,9 @@ function desenharFechoLedger(doc: JsPDF, params: {
   const cardH = 15.5
   let closeY = cursorY + 9
   const closeCardW = (LEDGER_CONTENT_W - gap * 2) / 3
-  desenharCard(doc, LEDGER_MARGIN, closeY, closeCardW, cardH, 'Total de Débitos', fmtKzLedger(totalDebitos), LEDGER_DEBITO)
-  desenharCard(doc, LEDGER_MARGIN + closeCardW + gap, closeY, closeCardW, cardH, 'Total de Créditos', fmtKzLedger(totalCreditos), LEDGER_CREDITO)
-  desenharCard(doc, LEDGER_MARGIN + (closeCardW + gap) * 2, closeY, closeCardW, cardH, 'Saldo Final', fmtKzLedger(saldoFinal), saldoFinal > 0 ? LEDGER_DEBITO : '#111111')
+  desenharCard(doc, LEDGER_MARGIN, closeY, closeCardW, cardH, 'Total de Débitos', fmtKzLedger(totalDebitos, moedaGeral), LEDGER_DEBITO)
+  desenharCard(doc, LEDGER_MARGIN + closeCardW + gap, closeY, closeCardW, cardH, 'Total de Créditos', fmtKzLedger(totalCreditos, moedaGeral), LEDGER_CREDITO)
+  desenharCard(doc, LEDGER_MARGIN + (closeCardW + gap) * 2, closeY, closeCardW, cardH, 'Saldo Final', fmtKzLedger(saldoFinal, moedaGeral), saldoFinal > 0 ? LEDGER_DEBITO : '#111111')
   closeY += cardH + 16
 
   doc.setDrawColor('#333333')
@@ -598,13 +606,13 @@ function patchPaginacaoLedger(doc: JsPDF, paginasHeaderY: number, rightX: number
 }
 
 async function buildLedgerDoc(opts: Omit<ExportLedgerPdfOptions, 'filename'>): Promise<JsPDF> {
-  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, utilizador } = opts
+  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, utilizador, moedaGeral } = opts
   const [jsPDF, autoTable] = await Promise.all([carregarJsPdf(), carregarAutoTable()])
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const logoDataUrl = await carregarLogoDataUrl()
 
   const { y: tableStartY, rightX, paginasHeaderY, totalDebitos, totalCreditos, saldoFinal } =
-    desenharTopoLedger(doc, { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl })
+    desenharTopoLedger(doc, { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl, moedaGeral })
 
   // ── Tabela de movimentos, com saldo acumulado linha a linha ────────
   let saldoCorrente = saldoInicial
@@ -617,9 +625,9 @@ async function buildLedgerDoc(opts: Omit<ExportLedgerPdfOptions, 'filename'>): P
         documento: m.documento,
         tipo: m.tipo,
         descricao: m.descricao,
-        debito: m.debito ? fmtKzLedger(m.debito) : '—',
-        credito: m.credito ? fmtKzLedger(m.credito) : '—',
-        saldo: fmtKzLedger(saldoCorrente),
+        debito: m.debito ? fmtKzLedger(m.debito, moedaGeral) : '—',
+        credito: m.credito ? fmtKzLedger(m.credito, moedaGeral) : '—',
+        saldo: fmtKzLedger(saldoCorrente, moedaGeral),
         _isDebito: (m.debito ?? 0) > 0,
         _isCredito: (m.credito ?? 0) > 0,
       }
@@ -657,7 +665,7 @@ async function buildLedgerDoc(opts: Omit<ExportLedgerPdfOptions, 'filename'>): P
   })
 
   const finalY = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY
-  desenharFechoLedger(doc, { entidadeLabel, entidadeNome: entidade.nome, totalDebitos, totalCreditos, saldoFinal, utilizador, cursorY: finalY })
+  desenharFechoLedger(doc, { entidadeLabel, entidadeNome: entidade.nome, totalDebitos, totalCreditos, saldoFinal, utilizador, cursorY: finalY, moedaGeral })
   patchPaginacaoLedger(doc, paginasHeaderY, rightX)
 
   return doc
@@ -685,16 +693,17 @@ export interface ExportLedgerSectionsPdfOptions {
   sections: LedgerTableSection[]
   utilizador?: string | null
   filename: string
+  moedaGeral?: string | null
 }
 
 async function buildLedgerSectionsDoc(opts: Omit<ExportLedgerSectionsPdfOptions, 'filename'>): Promise<JsPDF> {
-  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, sections, utilizador } = opts
+  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, sections, utilizador, moedaGeral } = opts
   const [jsPDF, autoTable] = await Promise.all([carregarJsPdf(), carregarAutoTable()])
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   const logoDataUrl = await carregarLogoDataUrl()
 
   const { y: startY, rightX, paginasHeaderY, totalDebitos, totalCreditos, saldoFinal } =
-    desenharTopoLedger(doc, { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl })
+    desenharTopoLedger(doc, { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl, moedaGeral })
 
   let y = startY
   for (const section of sections) {
@@ -743,7 +752,7 @@ async function buildLedgerSectionsDoc(opts: Omit<ExportLedgerSectionsPdfOptions,
     y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 10
   }
 
-  desenharFechoLedger(doc, { entidadeLabel, entidadeNome: entidade.nome, totalDebitos, totalCreditos, saldoFinal, utilizador, cursorY: y - 10 })
+  desenharFechoLedger(doc, { entidadeLabel, entidadeNome: entidade.nome, totalDebitos, totalCreditos, saldoFinal, utilizador, cursorY: y - 10, moedaGeral })
   patchPaginacaoLedger(doc, paginasHeaderY, rightX)
 
   return doc

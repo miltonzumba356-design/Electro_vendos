@@ -213,7 +213,7 @@ const pt = {
     newPurchase: 'Nova compra', newPurchaseTitle: 'Nova compra a crédito', purchaseItems: 'Itens da compra',
     selectSupplier: 'Selecionar fornecedor...', selectProduct: 'Selecionar produto...',
     fieldProduct: 'Produto', fieldQuantity: 'Quantidade', fieldUnitPrice: 'Preço Unitário (Kz)',
-    paymentCurrency: 'Moeda do pagamento',
+    paymentCurrency: 'Moeda do pagamento', invoiceCurrency: 'Moeda da factura',
     allSuppliers: 'Todos os fornecedores',
     totalDebts: 'Total de dívidas', totalOwed: 'Total devido', totalSpent: 'Total gasto',
     extratoTitle: 'Extrato de Fornecedor',

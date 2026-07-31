@@ -11,6 +11,7 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import FornecedorLivroRazao from '@/app/components/FornecedorLivroRazao'
 import { exportLedgerPdf, getLedgerPdfBlob, formatPeriodoPdf, type LedgerMovimento, type LedgerEntidade } from '@/lib/pdf'
+import { formatMoeda, detectarMoedaUnica } from '@/lib/moeda'
 import { partilharArquivoOuTexto } from '@/lib/share'
 import { ArrowLeft, FileDown, MessageCircle, Printer } from 'lucide-react'
 import { format } from 'date-fns'
@@ -47,6 +48,7 @@ export default function FornecedorExtratoPage() {
   }, [id, dataInicio, dataFim]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const totalDevido = dividas.reduce((s, d) => s + d.saldo, 0)
+  const moedaGeral = detectarMoedaUnica(dividas)
 
   // Constrói os movimentos do Livro Razão (PDF) a partir das dívidas já
   // carregadas: cada dívida (Factura) é um débito e cada pagamento (Recibo)
@@ -104,6 +106,7 @@ export default function FornecedorExtratoPage() {
       movimentos: buildMovimentos(),
       utilizador: user?.nome,
       filename: `fornecedor-${fornecedor.nome}`,
+      moedaGeral,
     })
   }
 
@@ -123,6 +126,7 @@ export default function FornecedorExtratoPage() {
         saldoInicial: 0,
         movimentos: buildMovimentos(),
         utilizador: user?.nome,
+        moedaGeral,
       })
       const file = new File([blob], `fornecedor-${fornecedor.nome}.pdf`, { type: 'application/pdf' })
       const totalComprado = dividas.reduce((s, d) => s + d.valor_total, 0)
@@ -131,9 +135,9 @@ export default function FornecedorExtratoPage() {
         `*ELECTRO VENDOS* — ${t('suppliers.extratoTitle')}`,
         `${t('suppliers.colSupplier')}: ${fornecedor.nome}`,
         '',
-        `${t('suppliers.totalSpent')}: ${new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(totalComprado)}`,
-        `${t('common.paid')}: ${new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(totalPago)}`,
-        totalDevido > 0 ? `${t('suppliers.totalOwed')}: ${new Intl.NumberFormat('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 }).format(totalDevido)}` : '',
+        `${t('suppliers.totalSpent')}: ${formatMoeda(totalComprado, moedaGeral)}`,
+        `${t('common.paid')}: ${formatMoeda(totalPago, moedaGeral)}`,
+        totalDevido > 0 ? `${t('suppliers.totalOwed')}: ${formatMoeda(totalDevido, moedaGeral)}` : '',
       ].filter(Boolean).join('\n')
       const resultado = await partilharArquivoOuTexto(file, mensagem, fornecedor.telefone)
       if (resultado === 'descarregado') {

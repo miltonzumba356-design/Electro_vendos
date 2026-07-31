@@ -207,7 +207,7 @@ const ar = {
     newPurchase: 'شراء جديد', newPurchaseTitle: 'شراء آجل جديد', purchaseItems: 'عناصر الشراء',
     selectSupplier: 'اختر مورداً...', selectProduct: 'اختر منتجاً...',
     fieldProduct: 'المنتج', fieldQuantity: 'الكمية', fieldUnitPrice: 'سعر الوحدة (Kz)',
-    paymentCurrency: 'عملة الدفع',
+    paymentCurrency: 'عملة الدفع', invoiceCurrency: 'عملة الفاتورة',
     allSuppliers: 'جميع الموردين',
     totalDebts: 'إجمالي الديون', totalOwed: 'إجمالي المستحق', totalSpent: 'إجمالي الإنفاق',
     extratoTitle: 'كشف حساب المورد',

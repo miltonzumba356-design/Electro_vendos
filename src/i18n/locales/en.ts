@@ -210,7 +210,7 @@ const en = {
     newPurchase: 'New purchase', newPurchaseTitle: 'New credit purchase', purchaseItems: 'Purchase items',
     selectSupplier: 'Select supplier...', selectProduct: 'Select product...',
     fieldProduct: 'Product', fieldQuantity: 'Quantity', fieldUnitPrice: 'Unit Price (Kz)',
-    paymentCurrency: 'Payment currency',
+    paymentCurrency: 'Payment currency', invoiceCurrency: 'Invoice currency',
     allSuppliers: 'All suppliers',
     totalDebts: 'Total debts', totalOwed: 'Total owed', totalSpent: 'Total spent',
     extratoTitle: 'Supplier Statement',

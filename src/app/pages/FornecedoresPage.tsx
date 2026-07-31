@@ -42,13 +42,15 @@ import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
 import { exportTablePdf, formatPeriodoPdf } from '@/lib/pdf'
+import { formatMoeda } from '@/lib/moeda'
 import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown, History, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
-// Os valores de compras/dívidas a fornecedores ficam sempre em Kz — a API
-// não converte moeda, só regista em que moeda cada pagamento foi feito
-// (ver pagamentos em DividaFornecedorResponse).
+// Cada compra a fornecedor tem a sua própria moeda (moeda_compra) — a API não
+// converte câmbio, por isso valor_total/valor_pago/saldo de cada dívida usam
+// formatMoeda(valor, d.moeda_compra) em vez deste formatKz, que só serve para
+// totais agregados entre fornecedores (que a API já devolve sem moeda própria).
 function formatKz(v: number) {
   return new Intl.NumberFormat('pt-AO', {
     style: 'currency',
@@ -322,7 +324,7 @@ function NovaCompraDialog({
           <Separator />
           <div className="flex justify-between font-bold text-base">
             <span>{t('common.total')}</span>
-            <span>{formatKz(total)}</span>
+            <span>{formatMoeda(total, moeda)}</span>
           </div>
           <div className="flex justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={onClose} disabled={saving}>
@@ -355,7 +357,7 @@ function PagarDividaFornecedorDialog({
     if (divida) {
       setValor(String(divida.saldo))
       const ultimoPagamento = divida.pagamentos.at(-1)
-      setMoeda((ultimoPagamento?.moeda as MoedaPagamento) ?? 'KZ')
+      setMoeda((divida.moeda_compra as MoedaPagamento) ?? (ultimoPagamento?.moeda as MoedaPagamento) ?? 'KZ')
     }
   }, [divida])
 
@@ -387,7 +389,7 @@ function PagarDividaFornecedorDialog({
           <form onSubmit={handleSubmit} className="space-y-4 pt-2">
             <p className="text-sm text-muted-foreground">
               {divida.fornecedor_nome ?? '—'} · {t('common.balance')}{' '}
-              <span className="font-semibold text-foreground">{formatKz(divida.saldo)}</span>
+              <span className="font-semibold text-foreground">{formatMoeda(divida.saldo, divida.moeda_compra)}</span>
             </p>
             <div className="space-y-2">
               <Label htmlFor="valor-divida-forn">{t('suppliers.fieldValue')} *</Label>
@@ -715,16 +717,16 @@ function DividasFornecedorTab({
               { header: t('common.total'), key: 'total', align: 'right' },
               { header: t('common.paid'), key: 'pago', align: 'right' },
               { header: t('common.balance'), key: 'saldo', align: 'right' },
-              { header: t('suppliers.paymentCurrency'), key: 'moeda' },
+              { header: t('suppliers.invoiceCurrency'), key: 'moeda' },
               { header: t('common.status'), key: 'status' },
               { header: t('suppliers.colDate'), key: 'data' },
             ],
             rows: filtered.map((d) => ({
               numero: d.numero ?? '—',
               fornecedor: d.fornecedor_nome ?? '—', produto: d.produto_nome ?? '—',
-              quantidade: d.quantidade ?? '—', total: formatKz(d.valor_total),
-              pago: formatKz(d.valor_pago), saldo: formatKz(d.saldo),
-              moeda: d.pagamentos.at(-1)?.moeda ?? '—', status: d.status,
+              quantidade: d.quantidade ?? '—', total: formatMoeda(d.valor_total, d.moeda_compra),
+              pago: formatMoeda(d.valor_pago, d.moeda_compra), saldo: formatMoeda(d.saldo, d.moeda_compra),
+              moeda: d.moeda_compra ?? 'KZ', status: d.status,
               data: format(new Date(d.criado_em), 'dd/MM/yyyy'),
             })),
             filename: 'dividas-fornecedores',
@@ -750,7 +752,7 @@ function DividasFornecedorTab({
             rows: filtered.flatMap((d) => d.pagamentos.map((p) => ({
               fornecedor: d.fornecedor_nome ?? '—', produto: d.produto_nome ?? '—',
               data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
-              valor: formatKz(p.valor), moeda: p.moeda,
+              valor: formatMoeda(p.valor, p.moeda), moeda: p.moeda,
             }))),
             filename: 'historico-pagamentos-fornecedores',
           })}
@@ -776,7 +778,7 @@ function DividasFornecedorTab({
               <TableHead className="text-right">{t('common.total')}</TableHead>
               <TableHead className="text-right">{t('common.paid')}</TableHead>
               <TableHead className="text-right">{t('common.balance')}</TableHead>
-              <TableHead>{t('suppliers.paymentCurrency')}</TableHead>
+              <TableHead>{t('suppliers.invoiceCurrency')}</TableHead>
               <TableHead>{t('common.status')}</TableHead>
               <TableHead>{t('suppliers.colDate')}</TableHead>
               {isGestor && <TableHead className="text-right">{t('suppliers.colActions')}</TableHead>}
@@ -815,13 +817,11 @@ function DividasFornecedorTab({
                   </TableCell>
                   <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
                   <TableCell className="text-right">{d.quantidade ?? '—'}</TableCell>
-                  <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>
-                  <TableCell className="text-right text-green-600">{formatKz(d.valor_pago)}</TableCell>
-                  <TableCell className="text-right font-medium text-destructive">{formatKz(d.saldo)}</TableCell>
+                  <TableCell className="text-right">{formatMoeda(d.valor_total, d.moeda_compra)}</TableCell>
+                  <TableCell className="text-right text-green-600">{formatMoeda(d.valor_pago, d.moeda_compra)}</TableCell>
+                  <TableCell className="text-right font-medium text-destructive">{formatMoeda(d.saldo, d.moeda_compra)}</TableCell>
                   <TableCell>
-                    {d.pagamentos.length > 0
-                      ? <Badge variant="outline">{d.pagamentos.at(-1)!.moeda}</Badge>
-                      : <span className="text-muted-foreground">—</span>}
+                    <Badge variant="outline">{d.moeda_compra ?? 'KZ'}</Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant={d.status === 'PAGA' ? 'default' : 'destructive'}>{d.status}</Badge>
