@@ -318,9 +318,14 @@ function VendasTab({ t }: { t: TFunction }) {
                   <TableCell className="text-right font-semibold">{formatKz(v.total_final)}</TableCell>
                   <TableCell>
                     {v.credito ? (
-                      <Badge variant={v.credito_pago ? 'default' : 'destructive'}>
-                        {v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
-                      </Badge>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant={v.credito_pago ? 'default' : 'destructive'}>
+                          {v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
+                        </Badge>
+                        {v.numero_factura != null && (
+                          <span className="text-xs text-muted-foreground">#{v.numero_factura}</span>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-muted-foreground text-xs">{t('sales.cash')}</span>
                     )}
@@ -659,6 +664,12 @@ function VendasTab({ t }: { t: TFunction }) {
                     </Badge>
                   </div>
                 )}
+                {detalhesVenda.credito && detalhesVenda.numero_factura != null && (
+                  <div>
+                    <p className="text-muted-foreground">{t('invoices.colNumber')}</p>
+                    <p className="font-medium">{detalhesVenda.numero_factura}</p>
+                  </div>
+                )}
               </div>
 
               <Separator />
@@ -806,7 +817,11 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
 
   const filtered = dividas
     .filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
-    .filter((d) => !searchNumero || String(d.numero ?? '').includes(searchNumero.trim()))
+    .filter((d) => {
+      if (!searchNumero) return true
+      const termo = searchNumero.trim().toLowerCase()
+      return String(d.numero ?? '').includes(termo) || (d.numero_formatado ?? '').toLowerCase().includes(termo)
+    })
   const { page, pageItems, totalPages, setPage, resetPage } = usePagination(filtered)
 
   async function load() {
@@ -970,7 +985,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
                     className={somenteHistorico ? 'cursor-pointer hover:bg-muted/40' : undefined}
                     onClick={somenteHistorico ? () => navigate(`/dividas/${d.id}`) : undefined}
                   >
-                    <TableCell className="text-muted-foreground text-sm">{d.numero ?? '—'}</TableCell>
+                    <TableCell className="text-muted-foreground text-sm font-mono">{d.numero_formatado ?? d.numero ?? '—'}</TableCell>
                     <TableCell className="font-medium">{d.cliente_nome ?? '—'}</TableCell>
                     <TableCell className="text-muted-foreground">{d.produto_nome ?? '—'}</TableCell>
                     <TableCell className="text-right">{formatKz(d.valor_total)}</TableCell>

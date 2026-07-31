@@ -68,6 +68,29 @@ export interface ProdutoStockBaixo extends ProdutoResponse {
   diferenca: number
 }
 
+export interface ValorizacaoStockProduto {
+  produto_id: string
+  produto_nome: string
+  stock_atual: number
+  preco_custo_unitario: number
+  valor_em_stock_custo: number
+  preco_venda_unitario: number
+  valor_em_stock_venda: number
+}
+
+export interface ValorizacaoStockTotais {
+  quantidade_produtos: number
+  unidades_em_stock: number
+  valor_total_custo: number
+  valor_total_venda: number
+  lucro_potencial: number
+}
+
+export interface ValorizacaoStockResponse {
+  produtos: ValorizacaoStockProduto[]
+  totais: ValorizacaoStockTotais
+}
+
 // ── Clientes ────────────────────────────────────────────────────
 export interface ClienteCreate {
   nome: string
@@ -243,6 +266,8 @@ export interface DividaResponse {
   id: string
   // Nº sequencial da factura, usado para buscar por /dividas/numero/{numero}.
   numero?: number | null
+  // Só vem preenchido em GET /dividas (lista) — ex.: "FT0001".
+  numero_formatado?: string | null
   cliente_id: string
   cliente_nome: string | null
   venda_id: string | null
@@ -293,10 +318,27 @@ export interface FornecedorResponse {
   criado_em: string
 }
 
-export interface CompraFornecedorCreate {
+export interface CompraFornecedorItemCreate {
   produto_id: string
   quantidade: number
   preco_unitario: number
+}
+
+// Suporta vários produtos numa só compra a crédito — quando `itens` tem mais
+// de um elemento, a dívida devolvida traz produto_id/quantidade (nível
+// dívida) a null; o detalhe fica em `itens` (ver DividaFornecedorResponse).
+export interface CompraFornecedorCreate {
+  itens: CompraFornecedorItemCreate[]
+  moeda?: MoedaPagamento
+}
+
+export interface CompraFornecedorItemResponse {
+  id: string
+  produto_id: string
+  produto_nome: string
+  quantidade: number
+  preco_unitario: number
+  subtotal: number
 }
 
 export interface PagamentoDividaFornecedorResponse {
@@ -314,9 +356,16 @@ export interface DividaFornecedorResponse {
   numero?: number | null
   fornecedor_id: string
   fornecedor_nome: string | null
+  // Só vêm preenchidos quando a compra teve um único produto — com vários
+  // itens, ficam null e o detalhe está em `itens`.
   produto_id: string | null
   produto_nome: string | null
   quantidade: number | null
+  // Detalhe por produto — preenchido sempre que a compra teve mais de um item.
+  itens?: CompraFornecedorItemResponse[]
+  // Moeda em que a factura/compra foi acordada com o fornecedor (distinta da
+  // moeda de cada pagamento, registada em pagamentos[].moeda).
+  moeda_compra?: string | null
   valor_total: number
   valor_pago: number
   saldo: number

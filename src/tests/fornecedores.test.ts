@@ -120,7 +120,23 @@ describe('fornecedoresService.criar — POST /fornecedores', () => {
 describe('fornecedoresService.comprar — POST /fornecedores/{id}/compras', () => {
   it('chama POST /fornecedores/{id}/compras com CompraFornecedorCreate no body', async () => {
     const spy = mockFetch(DIVIDA_FORNECEDOR, 201)
-    const payload = { produto_id: 'prod-uuid-1', quantidade: 50, preco_unitario: 1000 }
+    const payload = { itens: [{ produto_id: 'prod-uuid-1', quantidade: 50, preco_unitario: 1000 }], moeda: 'KZ' as const }
+    await fornecedoresService.comprar('forn-uuid-1', payload)
+    expect(spy).toHaveBeenCalledWith(
+      `${BASE}/fornecedores/forn-uuid-1/compras`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) })
+    )
+  })
+
+  it('suporta vários produtos numa só compra', async () => {
+    const spy = mockFetch(DIVIDA_FORNECEDOR, 201)
+    const payload = {
+      itens: [
+        { produto_id: 'prod-uuid-1', quantidade: 50, preco_unitario: 1000 },
+        { produto_id: 'prod-uuid-2', quantidade: 5, preco_unitario: 50 },
+      ],
+      moeda: 'USD' as const,
+    }
     await fornecedoresService.comprar('forn-uuid-1', payload)
     expect(spy).toHaveBeenCalledWith(
       `${BASE}/fornecedores/forn-uuid-1/compras`,
@@ -131,7 +147,7 @@ describe('fornecedoresService.comprar — POST /fornecedores/{id}/compras', () =
   it('retorna DividaFornecedorResponse com saldo = valor_total quando ainda não paga', async () => {
     mockFetch(DIVIDA_FORNECEDOR, 201)
     const result = await fornecedoresService.comprar('forn-uuid-1', {
-      produto_id: 'prod-uuid-1', quantidade: 50, preco_unitario: 1000,
+      itens: [{ produto_id: 'prod-uuid-1', quantidade: 50, preco_unitario: 1000 }],
     })
     expect(result.status).toBe('DIVIDA')
     expect(result.saldo).toBe(result.valor_total - result.valor_pago)

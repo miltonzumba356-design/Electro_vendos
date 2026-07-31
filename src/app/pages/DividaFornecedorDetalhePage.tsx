@@ -179,6 +179,7 @@ export default function DividaFornecedorDetalhePage() {
             <span>{t('suppliers.colSupplier')}: {divida.fornecedor_nome ?? '—'}</span>
             {divida.numero != null && <span>{t('invoices.colNumber')}: {divida.numero}</span>}
             <Badge variant={divida.status === 'PAGA' ? 'default' : 'destructive'}>{divida.status}</Badge>
+            {divida.moeda_compra && <Badge variant="outline">{divida.moeda_compra}</Badge>}
             <span>{format(new Date(divida.criado_em), 'dd/MM/yyyy')}</span>
           </div>
 
@@ -187,6 +188,34 @@ export default function DividaFornecedorDetalhePage() {
             <MiniStat label={t('common.paid')} value={formatKz(divida.valor_pago)} />
             <MiniStat label={t('common.balance')} value={formatKz(divida.saldo)} danger={divida.saldo > 0} />
           </div>
+
+          {divida.itens && divida.itens.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-sm font-medium">{t('suppliers.purchaseItems')}</p>
+              <div className="rounded-md border overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('suppliers.colProduct')}</TableHead>
+                      <TableHead className="text-center">{t('suppliers.fieldQuantity')}</TableHead>
+                      <TableHead className="text-right">{t('suppliers.fieldUnitPrice')}</TableHead>
+                      <TableHead className="text-right">{t('common.total')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {divida.itens.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>{item.produto_nome}</TableCell>
+                        <TableCell className="text-center">{item.quantidade}</TableCell>
+                        <TableCell className="text-right">{formatKz(item.preco_unitario)}</TableCell>
+                        <TableCell className="text-right">{formatKz(item.subtotal)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" className="gap-2" disabled={divida.pagamentos.length === 0} onClick={handleBaixarPdf}>

@@ -42,7 +42,7 @@ import { Combobox } from '@/app/components/ui/combobox'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
 import { exportTablePdf, formatPeriodoPdf } from '@/lib/pdf'
-import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown, History } from 'lucide-react'
+import { Plus, Search, ShoppingCart, Wallet, DollarSign, Receipt, FileDown, History, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -166,6 +166,12 @@ function NovoFornecedorDialog({
 }
 
 /* ── Nova compra a fornecedor dialog ─────────────────────────── */
+interface CompraItemLinha {
+  produtoId: string
+  quantidade: string
+  precoUnitario: string
+}
+
 function NovaCompraDialog({
   fornecedores, produtos, presetFornecedorId, onSuccess, onClose, t,
 }: {
@@ -177,26 +183,45 @@ function NovaCompraDialog({
   t: TFunction
 }) {
   const [fornecedorId, setFornecedorId] = useState(presetFornecedorId ?? '')
-  const [produtoId, setProdutoId] = useState('')
-  const [quantidade, setQuantidade] = useState('1')
-  const [precoUnitario, setPrecoUnitario] = useState('')
+  const [itens, setItens] = useState<CompraItemLinha[]>([{ produtoId: '', quantidade: '1', precoUnitario: '' }])
+  const [moeda, setMoeda] = useState<MoedaPagamento>('KZ')
   const [saving, setSaving] = useState(false)
 
-  const total = (Number(quantidade) || 0) * (Number(precoUnitario) || 0)
+  function addItem() {
+    setItens((prev) => [...prev, { produtoId: '', quantidade: '1', precoUnitario: '' }])
+  }
+
+  function removeItem(i: number) {
+    setItens((prev) => prev.filter((_, idx) => idx !== i))
+  }
+
+  function updateItem(i: number, field: keyof CompraItemLinha, value: string) {
+    setItens((prev) => prev.map((item, idx) => (idx === i ? { ...item, [field]: value } : item)))
+  }
+
+  const total = itens.reduce((s, item) => s + (Number(item.quantidade) || 0) * (Number(item.precoUnitario) || 0), 0)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!fornecedorId) { toast.error(t('suppliers.toasts.selectSupplier')); return }
-    if (!produtoId) { toast.error(t('suppliers.toasts.selectProduct')); return }
-    const qtd = Number(quantidade)
-    const preco = Number(precoUnitario)
-    if (!qtd || qtd <= 0 || !preco || preco <= 0) {
+    if (itens.some((item) => !item.produtoId)) { toast.error(t('suppliers.toasts.selectProduct')); return }
+    const itensValidos = itens.every((item) => {
+      const qtd = Number(item.quantidade)
+      const preco = Number(item.precoUnitario)
+      return qtd > 0 && preco > 0
+    })
+    if (!itensValidos) {
       toast.error(t('suppliers.toasts.invalidPurchase'))
       return
     }
     setSaving(true)
     try {
-      const data: CompraFornecedorCreate = { produto_id: produtoId, quantidade: qtd, preco_unitario: preco }
+      const data: CompraFornecedorCreate = {
+        itens: itens.map((item) => ({
+          produto_id: item.produtoId, quantidade: Number(item.quantidade), preco_unitario: Number(item.precoUnitario),
+        })),
+        moeda,
+      }
       await fornecedoresService.comprar(fornecedorId, data)
       toast.success(t('suppliers.toasts.purchaseRegistered'))
       onSuccess()
@@ -209,60 +234,91 @@ function NovaCompraDialog({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-md">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{t('suppliers.newPurchaseTitle')}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
-          <div className="space-y-2">
-            <Label>{t('suppliers.title')} *</Label>
-            <Combobox
-              options={fornecedores.map((f) => ({ value: f.id, label: f.nome }))}
-              value={fornecedorId}
-              onValueChange={setFornecedorId}
-              placeholder={t('suppliers.selectSupplier')}
-              searchPlaceholder={t('common.search')}
-              emptyText={t('suppliers.empty')}
-              disabled={!!presetFornecedorId}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>{t('suppliers.fieldProduct')} *</Label>
-            <Combobox
-              options={produtos.map((p) => ({ value: p.id, label: p.nome }))}
-              value={produtoId}
-              onValueChange={setProdutoId}
-              placeholder={t('suppliers.selectProduct')}
-              searchPlaceholder={t('common.search')}
-              emptyText={t('products.empty')}
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="c-qtd">{t('suppliers.fieldQuantity')} *</Label>
-              <Input
-                id="c-qtd"
-                type="number"
-                min="1"
-                step="1"
-                value={quantidade}
-                onChange={(e) => setQuantidade(e.target.value)}
-                required
+              <Label>{t('suppliers.title')} *</Label>
+              <Combobox
+                options={fornecedores.map((f) => ({ value: f.id, label: f.nome }))}
+                value={fornecedorId}
+                onValueChange={setFornecedorId}
+                placeholder={t('suppliers.selectSupplier')}
+                searchPlaceholder={t('common.search')}
+                emptyText={t('suppliers.empty')}
+                disabled={!!presetFornecedorId}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="c-preco">{t('suppliers.fieldUnitPrice')} *</Label>
-              <Input
-                id="c-preco"
-                type="number"
-                min="0.01"
-                step="0.01"
-                value={precoUnitario}
-                onChange={(e) => setPrecoUnitario(e.target.value)}
-                required
-              />
+              <Label>{t('suppliers.paymentCurrency')}</Label>
+              <Select value={moeda} onValueChange={(v) => setMoeda(v as MoedaPagamento)}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {MOEDAS_PAGAMENTO.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
+          <Separator />
+
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">{t('suppliers.purchaseItems')}</p>
+              <Button type="button" variant="outline" size="sm" onClick={addItem} className="gap-1">
+                <Plus className="size-3" /> {t('invoices.addItem')}
+              </Button>
+            </div>
+
+            {itens.map((item, i) => (
+              <div key={i} className="grid grid-cols-12 gap-2 items-start">
+                <div className="col-span-12 sm:col-span-6">
+                  {i === 0 && <Label className="text-xs mb-1 block">{t('suppliers.fieldProduct')}</Label>}
+                  <Combobox
+                    options={produtos.map((p) => ({ value: p.id, label: p.nome }))}
+                    value={item.produtoId}
+                    onValueChange={(v) => updateItem(i, 'produtoId', v)}
+                    placeholder={t('suppliers.selectProduct')}
+                    searchPlaceholder={t('common.search')}
+                    emptyText={t('products.empty')}
+                  />
+                </div>
+                <div className="col-span-4 sm:col-span-2">
+                  {i === 0 && <Label className="text-xs mb-1 block">{t('suppliers.fieldQuantity')}</Label>}
+                  <Input
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={item.quantidade}
+                    onChange={(e) => updateItem(i, 'quantidade', e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="col-span-7 sm:col-span-3">
+                  {i === 0 && <Label className="text-xs mb-1 block">{t('suppliers.fieldUnitPrice')}</Label>}
+                  <Input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    value={item.precoUnitario}
+                    onChange={(e) => updateItem(i, 'precoUnitario', e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={`col-span-1 flex ${i === 0 ? 'mt-5' : ''}`}>
+                  {itens.length > 1 && (
+                    <Button type="button" variant="ghost" size="icon" onClick={() => removeItem(i)}>
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
           <Separator />
           <div className="flex justify-between font-bold text-base">
             <span>{t('common.total')}</span>

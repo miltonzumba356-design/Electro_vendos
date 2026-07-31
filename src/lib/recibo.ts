@@ -176,7 +176,7 @@ function gerarFaturaVendaHtml(venda: VendaResponse, clienteNif: string | null, c
     </div>
     <div class="doc-info">
       <h2>${titulo}</h2>
-      <p>Ref.: ${venda.id.slice(0, 8).toUpperCase()}</p>
+      <p>Ref.: ${venda.numero_factura != null ? `Nº ${venda.numero_factura}` : venda.id.slice(0, 8).toUpperCase()}</p>
       <p>Data: ${fmtData(venda.criado_em)}</p>
     </div>
   </div>

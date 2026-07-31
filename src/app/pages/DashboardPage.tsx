@@ -15,8 +15,9 @@ import { produtosService } from '@/services/produtos'
 import { clientesService } from '@/services/clientes'
 import { vendasService } from '@/services/vendas'
 import { dividasService } from '@/services/dividas'
-import type { ProdutoStockBaixo, VendaResponse, ClienteResponse, TotalDividasResponse } from '@/types'
-import { ShoppingCart, Users, AlertTriangle, TrendingUp, TrendingDown, Minus, Wallet } from 'lucide-react'
+import { stockService } from '@/services/stock'
+import type { ProdutoStockBaixo, VendaResponse, ClienteResponse, TotalDividasResponse, ValorizacaoStockTotais } from '@/types'
+import { ShoppingCart, Users, AlertTriangle, TrendingUp, TrendingDown, Minus, Wallet, Coins } from 'lucide-react'
 import {
   AreaChart, Area,
   BarChart, Bar,
@@ -123,21 +124,24 @@ export default function DashboardPage() {
   const [clientes,   setClientes]   = useState<ClienteResponse[]>([])
   const [stockBaixo, setStockBaixo] = useState<ProdutoStockBaixo[]>([])
   const [dividas,    setDividas]    = useState<TotalDividasResponse | null>(null)
+  const [valorizacao, setValorizacao] = useState<ValorizacaoStockTotais | null>(null)
   const [loading,    setLoading]    = useState(true)
 
   useEffect(() => {
     async function load() {
       try {
-        const [v, c, s, d] = await Promise.allSettled([
+        const [v, c, s, d, vz] = await Promise.allSettled([
           vendasService.listar(),
           clientesService.listar(),
           produtosService.stockBaixo(),
           dividasService.total(),
+          stockService.valorizacao(),
         ])
         if (v.status === 'fulfilled') setVendas(v.value)
         if (c.status === 'fulfilled') setClientes(c.value)
         if (s.status === 'fulfilled') setStockBaixo(s.value)
         if (d.status === 'fulfilled') setDividas(d.value)
+        if (vz.status === 'fulfilled') setValorizacao(vz.value.totais)
       } finally {
         setLoading(false)
       }
@@ -215,7 +219,7 @@ export default function DashboardPage() {
       </div>
 
       {/* ── Stat cards ── */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-3 grid-cols-2 lg:grid-cols-6">
         <StatCard
           title={t('dashboard.todaySales')}
           value={loading ? '—' : vendasHoje.length}
@@ -248,6 +252,12 @@ export default function DashboardPage() {
           subtitle={t('dashboard.pendingDebtsCount', { count: (dividas?.quantidade_dividas ?? 0) + (dividas?.quantidade_prestacoes ?? 0) })}
           icon={Wallet} loading={loading}
           accent={(dividas?.total_devido ?? 0) > 0 ? '#ef4444' : C_CYAN}
+        />
+        <StatCard
+          title={t('dashboard.stockValuation')}
+          value={loading ? '—' : formatKz(valorizacao?.valor_total_venda ?? 0)}
+          subtitle={loading ? undefined : t('dashboard.potentialProfit', { value: formatKz(valorizacao?.lucro_potencial ?? 0) })}
+          icon={Coins} loading={loading} accent={C_GREEN}
         />
       </div>
 
