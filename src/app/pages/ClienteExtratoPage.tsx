@@ -13,7 +13,12 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import ClienteLivroRazao from '@/app/components/ClienteLivroRazao'
 import { exportLedgerPdf, getLedgerPdfBlob, type LedgerMovimento, type LedgerEntidade } from '@/lib/pdf'
+import { GOLDENMARK_LOGO_DATA_URL } from '@/assets/goldenmarkLogo'
 import { partilharArquivoOuTexto } from '@/lib/share'
+
+// Proporção real do logo da Goldenmark (1125×365 px) — diferente do
+// vendos-logo.png padrão, por isso é preciso informar aqui para não distorcer.
+const GOLDENMARK_LOGO_ASPECT = 365 / 1125
 import { ArrowLeft, FileDown, MessageCircle, Printer } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
@@ -145,6 +150,9 @@ export default function ClienteExtratoPage() {
       movimentos: buildMovimentos(),
       utilizador: user?.nome,
       filename: `historico-${cliente.nome}`,
+      logoDataUrl: GOLDENMARK_LOGO_DATA_URL,
+      logoAspect: GOLDENMARK_LOGO_ASPECT,
+      logoFormat: 'JPEG',
     })
   }
 
@@ -164,6 +172,9 @@ export default function ClienteExtratoPage() {
         saldoInicial: 0,
         movimentos: buildMovimentos(),
         utilizador: user?.nome,
+        logoDataUrl: GOLDENMARK_LOGO_DATA_URL,
+        logoAspect: GOLDENMARK_LOGO_ASPECT,
+        logoFormat: 'JPEG',
       })
       const file = new File([blob], `historico-${cliente.nome}.pdf`, { type: 'application/pdf' })
       const mensagem = [

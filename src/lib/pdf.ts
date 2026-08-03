@@ -326,6 +326,12 @@ export interface ExportLedgerPdfOptions {
   // mesma moeda (ex.: fornecedor cujas compras foram todas em USD). Omitido
   // (ou com moedas misturadas), o documento cai para Kz/AOA como aproximação.
   moedaGeral?: string | null
+  // Logo alternativo para este documento (data URI já carregado) — omitido,
+  // usa o logo padrão da app (vendos-logo.png). Ex.: extrato do cliente usa
+  // o logo da Goldenmark aqui, sem mudar mais nenhum dado da empresa.
+  logoDataUrl?: string | null
+  logoAspect?: number
+  logoFormat?: 'PNG' | 'JPEG'
 }
 
 function fmtKzLedger(v: number, moeda?: string | null) {
@@ -403,17 +409,25 @@ function desenharTopoLedger(doc: JsPDF, opts: {
   saldoInicial: number
   movimentos: LedgerMovimento[]
   logoDataUrl: string | null
+  // Proporção (altura/largura) e formato do logo — só é preciso informar
+  // quando logoDataUrl é uma imagem diferente da padrão (vendos-logo.png,
+  // PNG com proporção já fixada em LOGO_ASPECT).
+  logoAspect?: number
+  logoFormat?: 'PNG' | 'JPEG'
   moedaGeral?: string | null
 }): TopoLedgerResult {
-  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl, moedaGeral } = opts
+  const {
+    titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl, moedaGeral,
+    logoAspect = LOGO_ASPECT, logoFormat = 'PNG',
+  } = opts
 
   // ── Cabeçalho: empresa (esquerda) + título/metadados (direita) ──────
   let leftY = 13
   let textX = LEDGER_MARGIN
   if (logoDataUrl) {
     const logoW = 24
-    const logoH = logoW * LOGO_ASPECT
-    doc.addImage(logoDataUrl, 'PNG', LEDGER_MARGIN, 8, logoW, logoH)
+    const logoH = logoW * logoAspect
+    doc.addImage(logoDataUrl, logoFormat, LEDGER_MARGIN, 8, logoW, logoH)
     textX = LEDGER_MARGIN + logoW + 5
   }
   doc.setFont('helvetica', 'bold')
@@ -606,13 +620,13 @@ function patchPaginacaoLedger(doc: JsPDF, paginasHeaderY: number, rightX: number
 }
 
 async function buildLedgerDoc(opts: Omit<ExportLedgerPdfOptions, 'filename'>): Promise<JsPDF> {
-  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, utilizador, moedaGeral } = opts
+  const { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, utilizador, moedaGeral, logoAspect, logoFormat } = opts
   const [jsPDF, autoTable] = await Promise.all([carregarJsPdf(), carregarAutoTable()])
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const logoDataUrl = await carregarLogoDataUrl()
+  const logoDataUrl = opts.logoDataUrl !== undefined ? opts.logoDataUrl : await carregarLogoDataUrl()
 
   const { y: tableStartY, rightX, paginasHeaderY, totalDebitos, totalCreditos, saldoFinal } =
-    desenharTopoLedger(doc, { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl, moedaGeral })
+    desenharTopoLedger(doc, { titulo, entidadeLabel, entidade, periodoLabel, saldoInicial, movimentos, logoDataUrl, moedaGeral, logoAspect, logoFormat })
 
   // ── Tabela de movimentos, com saldo acumulado linha a linha ────────
   let saldoCorrente = saldoInicial

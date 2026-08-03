@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from '@/app/components/ui/dialog'
 import { exportTablePdf, exportLedgerPdf, formatPeriodoPdf, type PdfColumn, type LedgerMovimento, type LedgerEntidade } from '@/lib/pdf'
+import { GOLDENMARK_LOGO_DATA_URL } from '@/assets/goldenmarkLogo'
 import { useAuth } from '@/contexts/AuthContext'
 import ClienteLivroRazao from '@/app/components/ClienteLivroRazao'
 import {
@@ -49,6 +50,10 @@ import { Skeleton } from '@/app/components/ui/skeleton'
 import { AlertTriangle, FileDown, Plus } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+
+// Proporção real do logo da Goldenmark (1125×365 px) — diferente do
+// vendos-logo.png padrão, por isso é preciso informar aqui para não distorcer.
+const GOLDENMARK_LOGO_ASPECT = 365 / 1125
 
 function DownloadPdfButton({
   onClick, disabled, label, t,
@@ -643,6 +648,9 @@ function HistoricoClienteTab({ t }: { t: TFunction }) {
               movimentos: buildMovimentos(),
               utilizador: user?.nome,
               filename: `historico-${clienteSelecionado.nome}`,
+              logoDataUrl: GOLDENMARK_LOGO_DATA_URL,
+              logoAspect: GOLDENMARK_LOGO_ASPECT,
+              logoFormat: 'JPEG',
             })}
           />
         )}
