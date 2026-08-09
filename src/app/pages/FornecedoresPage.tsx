@@ -170,9 +170,16 @@ function NovoFornecedorDialog({
 /* ── Nova compra a fornecedor dialog ─────────────────────────── */
 interface CompraItemLinha {
   produtoId: string
+  // Produto livre (sem cadastro/stock) — usado quando novoProduto=true, em vez de produtoId.
+  produtoNome: string
+  novoProduto: boolean
   quantidade: string
   precoUnitario: string
 }
+
+const novaLinhaCompra = (novoProduto: boolean): CompraItemLinha => ({
+  produtoId: '', produtoNome: '', novoProduto, quantidade: '1', precoUnitario: '',
+})
 
 function NovaCompraDialog({
   fornecedores, produtos, presetFornecedorId, onSuccess, onClose, t,
@@ -185,19 +192,19 @@ function NovaCompraDialog({
   t: TFunction
 }) {
   const [fornecedorId, setFornecedorId] = useState(presetFornecedorId ?? '')
-  const [itens, setItens] = useState<CompraItemLinha[]>([{ produtoId: '', quantidade: '1', precoUnitario: '' }])
+  const [itens, setItens] = useState<CompraItemLinha[]>([novaLinhaCompra(false)])
   const [moeda, setMoeda] = useState<MoedaPagamento>('KZ')
   const [saving, setSaving] = useState(false)
 
-  function addItem() {
-    setItens((prev) => [...prev, { produtoId: '', quantidade: '1', precoUnitario: '' }])
+  function addItem(novoProduto: boolean) {
+    setItens((prev) => [...prev, novaLinhaCompra(novoProduto)])
   }
 
   function removeItem(i: number) {
     setItens((prev) => prev.filter((_, idx) => idx !== i))
   }
 
-  function updateItem(i: number, field: keyof CompraItemLinha, value: string) {
+  function updateItem(i: number, field: 'produtoId' | 'produtoNome' | 'quantidade' | 'precoUnitario', value: string) {
     setItens((prev) => prev.map((item, idx) => (idx === i ? { ...item, [field]: value } : item)))
   }
 
@@ -206,7 +213,10 @@ function NovaCompraDialog({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!fornecedorId) { toast.error(t('suppliers.toasts.selectSupplier')); return }
-    if (itens.some((item) => !item.produtoId)) { toast.error(t('suppliers.toasts.selectProduct')); return }
+    if (itens.some((item) => (item.novoProduto ? !item.produtoNome.trim() : !item.produtoId))) {
+      toast.error(t('suppliers.toasts.selectProduct'))
+      return
+    }
     const itensValidos = itens.every((item) => {
       const qtd = Number(item.quantidade)
       const preco = Number(item.precoUnitario)
@@ -220,7 +230,8 @@ function NovaCompraDialog({
     try {
       const data: CompraFornecedorCreate = {
         itens: itens.map((item) => ({
-          produto_id: item.produtoId, quantidade: Number(item.quantidade), preco_unitario: Number(item.precoUnitario),
+          ...(item.novoProduto ? { produto_nome: item.produtoNome.trim() } : { produto_id: item.produtoId }),
+          quantidade: Number(item.quantidade), preco_unitario: Number(item.precoUnitario),
         })),
         moeda,
       }
@@ -268,25 +279,40 @@ function NovaCompraDialog({
           <Separator />
 
           <div className="space-y-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <p className="text-sm font-medium">{t('suppliers.purchaseItems')}</p>
-              <Button type="button" variant="outline" size="sm" onClick={addItem} className="gap-1">
-                <Plus className="size-3" /> {t('invoices.addItem')}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => addItem(false)} className="gap-1">
+                  <Plus className="size-3" /> {t('suppliers.addExistingProduct')}
+                </Button>
+                <Button type="button" variant="outline" size="sm" onClick={() => addItem(true)} className="gap-1">
+                  <Plus className="size-3" /> {t('suppliers.addNewProduct')}
+                </Button>
+              </div>
             </div>
 
             {itens.map((item, i) => (
               <div key={i} className="grid grid-cols-12 gap-2 items-start">
                 <div className="col-span-12 sm:col-span-6">
                   {i === 0 && <Label className="text-xs mb-1 block">{t('suppliers.fieldProduct')}</Label>}
-                  <Combobox
-                    options={produtos.map((p) => ({ value: p.id, label: p.nome }))}
-                    value={item.produtoId}
-                    onValueChange={(v) => updateItem(i, 'produtoId', v)}
-                    placeholder={t('suppliers.selectProduct')}
-                    searchPlaceholder={t('common.search')}
-                    emptyText={t('products.empty')}
-                  />
+                  {item.novoProduto ? (
+                    <Input
+                      value={item.produtoNome}
+                      onChange={(e) => updateItem(i, 'produtoNome', e.target.value)}
+                      placeholder={t('suppliers.newProductPlaceholder')}
+                      maxLength={200}
+                      required
+                    />
+                  ) : (
+                    <Combobox
+                      options={produtos.map((p) => ({ value: p.id, label: p.nome }))}
+                      value={item.produtoId}
+                      onValueChange={(v) => updateItem(i, 'produtoId', v)}
+                      placeholder={t('suppliers.selectProduct')}
+                      searchPlaceholder={t('common.search')}
+                      emptyText={t('products.empty')}
+                    />
+                  )}
                 </div>
                 <div className="col-span-4 sm:col-span-2">
                   {i === 0 && <Label className="text-xs mb-1 block">{t('suppliers.fieldQuantity')}</Label>}

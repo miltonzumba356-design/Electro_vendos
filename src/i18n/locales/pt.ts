@@ -212,6 +212,8 @@ const pt = {
     nifPlaceholder: 'Ex: 123456789', addressPlaceholder: 'Endereço completo',
     newPurchase: 'Nova compra', newPurchaseTitle: 'Nova compra a crédito', purchaseItems: 'Itens da compra',
     selectSupplier: 'Selecionar fornecedor...', selectProduct: 'Selecionar produto...',
+    addExistingProduct: 'Produto cadastrado', addNewProduct: 'Novo produto',
+    newProductPlaceholder: 'Nome do produto (sem cadastro, não mexe em stock)',
     fieldProduct: 'Produto', fieldQuantity: 'Quantidade', fieldUnitPrice: 'Preço Unitário (Kz)',
     paymentCurrency: 'Moeda do pagamento', invoiceCurrency: 'Moeda da factura',
     allSuppliers: 'Todos os fornecedores',
@@ -227,7 +229,7 @@ const pt = {
     toasts: {
       nameRequired: 'O nome do fornecedor é obrigatório', created: 'Fornecedor criado com sucesso',
       saveError: 'Erro ao guardar fornecedor', loadError: 'Erro ao carregar fornecedores',
-      selectSupplier: 'Selecione um fornecedor', selectProduct: 'Selecione um produto',
+      selectSupplier: 'Selecione um fornecedor', selectProduct: 'Selecione ou indique um produto para cada item',
       invalidPurchase: 'Preencha quantidade e preço válidos',
       purchaseRegistered: 'Compra registada com sucesso', purchaseError: 'Erro ao registar compra',
       invalidValue: 'Introduza um valor válido',

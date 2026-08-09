@@ -19,29 +19,11 @@ export const fornecedoresService = {
   criar: (data: FornecedorCreate) =>
     api.post<FornecedorResponse>('/fornecedores', data),
 
-  // NOTA: o backend em produção ainda só aceita 1 produto por chamada
-  // (produto_id/quantidade/preco_unitario na raiz do body) — o payload
-  // { itens: [...], moeda } documentado ainda não foi implantado no servidor
-  // (confirmado por um 422 "Field required" nesses 3 campos ao enviar
-  // itens/moeda). Até isso ser implantado, cada item do carrinho é enviado
-  // numa chamada separada nesse formato antigo, criando uma dívida por
-  // produto; `moeda` vai como campo extra (ignorado com segurança pelo
-  // Pydantic) para já funcionar assim que o suporte a moeda for implantado.
-  // Quando o backend passar a aceitar o payload novo, troque isto por uma
-  // única chamada com `data` diretamente.
-  comprar: async (fornecedorId: string, data: CompraFornecedorCreate) => {
-    const resultados: DividaFornecedorResponse[] = []
-    for (const item of data.itens) {
-      const resultado = await api.post<DividaFornecedorResponse>(`/fornecedores/${fornecedorId}/compras`, {
-        produto_id: item.produto_id,
-        quantidade: item.quantidade,
-        preco_unitario: item.preco_unitario,
-        moeda: data.moeda,
-      })
-      resultados.push(resultado)
-    }
-    return resultados
-  },
+  // Um ou mais itens (produto_id de um produto cadastrado, ou produto_nome
+  // livre sem stock associado) numa única compra a crédito — o backend soma
+  // tudo numa única dívida.
+  comprar: (fornecedorId: string, data: CompraFornecedorCreate) =>
+    api.post<DividaFornecedorResponse>(`/fornecedores/${fornecedorId}/compras`, data),
 
   // Histórico cronológico de facturas (compras a crédito) e recibos (pagamentos)
   // do fornecedor. Sem data_inicio/data_fim, traz todo o histórico.

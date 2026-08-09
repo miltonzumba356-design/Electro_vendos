@@ -214,6 +214,8 @@ const fr = {
     nifPlaceholder: 'Ex: 123456789', addressPlaceholder: 'Adresse complète',
     newPurchase: 'Nouvel achat', newPurchaseTitle: 'Nouvel achat à crédit', purchaseItems: "Articles de l'achat",
     selectSupplier: 'Sélectionner un fournisseur...', selectProduct: 'Sélectionner un produit...',
+    addExistingProduct: 'Produit enregistré', addNewProduct: 'Nouveau produit',
+    newProductPlaceholder: "Nom du produit (non enregistré, n'affecte pas le stock)",
     fieldProduct: 'Produit', fieldQuantity: 'Quantité', fieldUnitPrice: 'Prix unitaire (Kz)',
     paymentCurrency: 'Devise du paiement', invoiceCurrency: 'Devise de la facture',
     allSuppliers: 'Tous les fournisseurs',
@@ -229,7 +231,7 @@ const fr = {
     toasts: {
       nameRequired: 'Le nom du fournisseur est obligatoire', created: 'Fournisseur créé avec succès',
       saveError: "Erreur lors de l'enregistrement du fournisseur", loadError: 'Erreur de chargement des fournisseurs',
-      selectSupplier: 'Sélectionnez un fournisseur', selectProduct: 'Sélectionnez un produit',
+      selectSupplier: 'Sélectionnez un fournisseur', selectProduct: 'Sélectionnez ou indiquez un produit pour chaque article',
       invalidPurchase: 'Indiquez une quantité et un prix valides',
       purchaseRegistered: 'Achat enregistré avec succès', purchaseError: "Erreur lors de l'enregistrement de l'achat",
       invalidValue: 'Indiquez une valeur valide',

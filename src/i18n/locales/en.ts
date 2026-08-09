@@ -209,6 +209,8 @@ const en = {
     nifPlaceholder: 'E.g: 123456789', addressPlaceholder: 'Full address',
     newPurchase: 'New purchase', newPurchaseTitle: 'New credit purchase', purchaseItems: 'Purchase items',
     selectSupplier: 'Select supplier...', selectProduct: 'Select product...',
+    addExistingProduct: 'Registered product', addNewProduct: 'New product',
+    newProductPlaceholder: 'Product name (not registered, does not affect stock)',
     fieldProduct: 'Product', fieldQuantity: 'Quantity', fieldUnitPrice: 'Unit Price (Kz)',
     paymentCurrency: 'Payment currency', invoiceCurrency: 'Invoice currency',
     allSuppliers: 'All suppliers',
@@ -224,7 +226,7 @@ const en = {
     toasts: {
       nameRequired: 'Supplier name is required', created: 'Supplier created successfully',
       saveError: 'Error saving supplier', loadError: 'Error loading suppliers',
-      selectSupplier: 'Select a supplier', selectProduct: 'Select a product',
+      selectSupplier: 'Select a supplier', selectProduct: 'Select or enter a product for each item',
       invalidPurchase: 'Enter a valid quantity and price',
       purchaseRegistered: 'Purchase registered successfully', purchaseError: 'Error registering purchase',
       invalidValue: 'Enter a valid value',

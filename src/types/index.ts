@@ -319,7 +319,9 @@ export interface FornecedorResponse {
 }
 
 export interface CompraFornecedorItemCreate {
-  produto_id: string
+  // Produto já cadastrado. Se omitido, usa produto_nome (produto livre, sem stock).
+  produto_id?: string
+  produto_nome?: string
   quantidade: number
   preco_unitario: number
 }
@@ -334,7 +336,8 @@ export interface CompraFornecedorCreate {
 
 export interface CompraFornecedorItemResponse {
   id: string
-  produto_id: string
+  // Null quando o item é um produto livre (produto_nome sem produto_id, sem stock associado).
+  produto_id: string | null
   produto_nome: string
   quantidade: number
   preco_unitario: number

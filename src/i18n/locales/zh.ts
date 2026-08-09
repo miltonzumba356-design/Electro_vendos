@@ -205,6 +205,8 @@ const zh = {
     nifPlaceholder: '例如: 123456789', addressPlaceholder: '完整地址',
     newPurchase: '新采购', newPurchaseTitle: '新赊购', purchaseItems: '采购项目',
     selectSupplier: '选择供应商...', selectProduct: '选择产品...',
+    addExistingProduct: '已登记产品', addNewProduct: '新产品',
+    newProductPlaceholder: '产品名称（未登记，不影响库存）',
     fieldProduct: '产品', fieldQuantity: '数量', fieldUnitPrice: '单价 (Kz)',
     paymentCurrency: '付款货币', invoiceCurrency: '发票货币',
     allSuppliers: '所有供应商',
@@ -220,7 +222,7 @@ const zh = {
     toasts: {
       nameRequired: '供应商名称为必填项', created: '供应商创建成功',
       saveError: '保存供应商时出错', loadError: '加载供应商时出错',
-      selectSupplier: '请选择供应商', selectProduct: '请选择产品',
+      selectSupplier: '请选择供应商', selectProduct: '请为每个项目选择或输入产品',
       invalidPurchase: '请填写有效的数量和价格',
       purchaseRegistered: '采购登记成功', purchaseError: '登记采购时出错',
       invalidValue: '请输入有效金额',

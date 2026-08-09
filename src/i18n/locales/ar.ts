@@ -206,6 +206,8 @@ const ar = {
     nifPlaceholder: 'مثال: 123456789', addressPlaceholder: 'العنوان الكامل',
     newPurchase: 'شراء جديد', newPurchaseTitle: 'شراء آجل جديد', purchaseItems: 'عناصر الشراء',
     selectSupplier: 'اختر مورداً...', selectProduct: 'اختر منتجاً...',
+    addExistingProduct: 'منتج مسجل', addNewProduct: 'منتج جديد',
+    newProductPlaceholder: 'اسم المنتج (غير مسجل، لا يؤثر على المخزون)',
     fieldProduct: 'المنتج', fieldQuantity: 'الكمية', fieldUnitPrice: 'سعر الوحدة (Kz)',
     paymentCurrency: 'عملة الدفع', invoiceCurrency: 'عملة الفاتورة',
     allSuppliers: 'جميع الموردين',
@@ -221,7 +223,7 @@ const ar = {
     toasts: {
       nameRequired: 'اسم المورد مطلوب', created: 'تم إنشاء المورد بنجاح',
       saveError: 'خطأ في حفظ المورد', loadError: 'خطأ في تحميل الموردين',
-      selectSupplier: 'اختر مورداً', selectProduct: 'اختر منتجاً',
+      selectSupplier: 'اختر مورداً', selectProduct: 'اختر أو أدخل منتجاً لكل عنصر',
       invalidPurchase: 'أدخل كمية وسعراً صالحين',
       purchaseRegistered: 'تم تسجيل الشراء بنجاح', purchaseError: 'خطأ في تسجيل الشراء',
       invalidValue: 'أدخل قيمة صالحة',

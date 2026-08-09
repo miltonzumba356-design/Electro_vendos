@@ -876,6 +876,66 @@
         }
       }
     },
+    "/stock/valorizacao": {
+      "get": {
+        "tags": [
+          "Stock"
+        ],
+        "summary": "Valorização do stock (Gestor)",
+        "description": "Valor monetário do stock parado, por produto: quantidade em stock × preço de custo (o que já foi gasto) e × preço de venda (quanto valeria vender tudo), com o lucro potencial. Aceita pesquisa por nome do produto.",
+        "operationId": "valorizacao_stock_stock_valorizacao_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)",
+              "examples": [
+                "arroz"
+              ],
+              "title": "Nome"
+            },
+            "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Valorização por produto e totais gerais",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValorizacaoStock"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/relatorios/vendas/periodo": {
       "get": {
         "tags": [
@@ -2584,7 +2644,7 @@
           "Fornecedores"
         ],
         "summary": "Registar compra a crédito ao fornecedor (Gestor)",
-        "description": "Regista a compra de um produto a um fornecedor a crédito: aumenta o stock do produto imediatamente e cria a dívida ao fornecedor. Não mexe no fluxo de caixa — nem agora nem quando a dívida for paga.",
+        "description": "Regista a compra de um ou mais produtos (`itens`) a um fornecedor a crédito: aumenta o stock de cada produto imediatamente e cria uma única dívida ao fornecedor somando todos os itens. Aceita `moeda` (KZ/AOA/USD/EUR — apenas registo, sem conversão) para indicar em que moeda a compra foi feita. Não mexe no fluxo de caixa — nem agora nem quando a dívida for paga.",
         "operationId": "criar_compra_fornecedores__fornecedor_id__compras_post",
         "security": [
           {
@@ -4196,31 +4256,24 @@
       },
       "CompraFornecedorCreate": {
         "properties": {
-          "produto_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Produto Id",
-            "description": "Produto comprado"
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemCompraFornecedorInput"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Itens",
+            "description": "Itens da compra"
           },
-          "quantidade": {
-            "type": "integer",
-            "exclusiveMinimum": 0,
-            "title": "Quantidade",
-            "examples": [50]
-          },
-          "preco_unitario": {
-            "type": "number",
-            "exclusiveMinimum": 0,
-            "title": "Preco Unitario",
-            "description": "Preço de custo unitário (Kz)",
-            "examples": [1000]
+          "moeda": {
+            "$ref": "#/components/schemas/MoedaPagamento",
+            "description": "Moeda em que a compra foi feita (apenas registo, sem conversão — os valores já vêm em Kz)",
+            "default": "KZ"
           }
         },
         "type": "object",
         "required": [
-          "produto_id",
-          "quantidade",
-          "preco_unitario"
+          "itens"
         ],
         "title": "CompraFornecedorCreate"
       },
@@ -4403,6 +4456,22 @@
             ],
             "title": "Quantidade"
           },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemCompraFornecedorResponse"
+            },
+            "type": "array",
+            "title": "Itens",
+            "description": "Itens da compra (um ou mais produtos)"
+          },
+          "moeda_compra": {
+            "type": "string",
+            "title": "Moeda Compra",
+            "description": "Moeda em que a compra foi feita",
+            "examples": [
+              "KZ"
+            ]
+          },
           "valor_total": {
             "type": "number",
             "title": "Valor Total"
@@ -4450,6 +4519,7 @@
         "required": [
           "id",
           "fornecedor_id",
+          "moeda_compra",
           "valor_total",
           "valor_pago",
           "status",
@@ -4476,6 +4546,21 @@
             "title": "Numero",
             "description": "Número sequencial da factura",
             "examples": [1]
+          },
+          "numero_formatado": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Formatado",
+            "description": "Número da factura formatado, ex: FT0001",
+            "examples": [
+              "FT0001"
+            ]
           },
           "cliente_id": {
             "type": "string",
@@ -4767,6 +4852,7 @@
             {
               "data": "2026-07-17T13:41:30Z",
               "id": "bcce753e-4a2a-48dd-8837-9e24bcd86f59",
+              "moeda": "KZ",
               "numero": 1,
               "produto_nome": "CHOCOLAT AKSU 12 X 1000g",
               "tipo": "Factura",
@@ -5191,6 +5277,104 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
+      },
+      "ItemCompraFornecedorInput": {
+        "properties": {
+          "produto_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Id",
+            "description": "Produto já cadastrado. Se omitir, usa produto_nome (produto livre, sem stock)"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome",
+            "description": "Nome do produto, obrigatório só se produto_id não for informado (produto livre — não mexe em stock)",
+            "examples": [
+              "Peça avulsa sem cadastro"
+            ]
+          },
+          "quantidade": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Quantidade",
+            "examples": [50]
+          },
+          "preco_unitario": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Preco Unitario",
+            "description": "Preço de custo unitário (Kz)",
+            "examples": [1000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade",
+          "preco_unitario"
+        ],
+        "title": "ItemCompraFornecedorInput"
+      },
+      "ItemCompraFornecedorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "produto_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade"
+          },
+          "preco_unitario": {
+            "type": "number",
+            "title": "Preco Unitario"
+          },
+          "subtotal": {
+            "type": "number",
+            "title": "Subtotal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_nome",
+          "quantidade",
+          "preco_unitario",
+          "subtotal"
+        ],
+        "title": "ItemCompraFornecedorResponse"
       },
       "ItemVendaInput": {
         "properties": {
@@ -6761,6 +6945,63 @@
         "type": "object",
         "title": "ProdutoUpdate"
       },
+      "ProdutoValorizacao": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "1edca05e-c4e7-490f-a90a-164a28ade8ad"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "stock_atual": {
+            "type": "integer",
+            "title": "Stock Atual",
+            "examples": [120]
+          },
+          "preco_custo_unitario": {
+            "type": "number",
+            "title": "Preco Custo Unitario",
+            "examples": [2500]
+          },
+          "valor_em_stock_custo": {
+            "type": "number",
+            "title": "Valor Em Stock Custo",
+            "description": "stock_atual × preco_custo_unitario",
+            "examples": [300000]
+          },
+          "preco_venda_unitario": {
+            "type": "number",
+            "title": "Preco Venda Unitario",
+            "examples": [3500]
+          },
+          "valor_em_stock_venda": {
+            "type": "number",
+            "title": "Valor Em Stock Venda",
+            "description": "stock_atual × preco_venda_unitario",
+            "examples": [420000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "produto_nome",
+          "stock_atual",
+          "preco_custo_unitario",
+          "valor_em_stock_custo",
+          "preco_venda_unitario",
+          "valor_em_stock_venda"
+        ],
+        "title": "ProdutoValorizacao"
+      },
       "RegisterRequest": {
         "properties": {
           "nome": {
@@ -7628,6 +7869,45 @@
         ],
         "title": "TotaisMetas"
       },
+      "TotaisValorizacaoStock": {
+        "properties": {
+          "quantidade_produtos": {
+            "type": "integer",
+            "title": "Quantidade Produtos",
+            "examples": [1]
+          },
+          "unidades_em_stock": {
+            "type": "integer",
+            "title": "Unidades Em Stock",
+            "examples": [120]
+          },
+          "valor_total_custo": {
+            "type": "number",
+            "title": "Valor Total Custo",
+            "examples": [300000]
+          },
+          "valor_total_venda": {
+            "type": "number",
+            "title": "Valor Total Venda",
+            "examples": [420000]
+          },
+          "lucro_potencial": {
+            "type": "number",
+            "title": "Lucro Potencial",
+            "description": "Quanto ganharia se vendesse todo o stock atual",
+            "examples": [120000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade_produtos",
+          "unidades_em_stock",
+          "valor_total_custo",
+          "valor_total_venda",
+          "lucro_potencial"
+        ],
+        "title": "TotaisValorizacaoStock"
+      },
       "TotalDividasFornecedorResponse": {
         "properties": {
           "quantidade_dividas": {
@@ -7778,6 +8058,45 @@
           "maior_fatura"
         ],
         "title": "ValoresPerformance"
+      },
+      "ValorizacaoStock": {
+        "properties": {
+          "produtos": {
+            "items": {
+              "$ref": "#/components/schemas/ProdutoValorizacao"
+            },
+            "type": "array",
+            "title": "Produtos"
+          },
+          "totais": {
+            "$ref": "#/components/schemas/TotaisValorizacaoStock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totais"
+        ],
+        "title": "ValorizacaoStock",
+        "example": {
+          "produtos": [
+            {
+              "preco_custo_unitario": 2500,
+              "preco_venda_unitario": 3500,
+              "produto_id": "1edca05e-c4e7-490f-a90a-164a28ade8ad",
+              "produto_nome": "Arroz Agulha 5kg",
+              "stock_atual": 120,
+              "valor_em_stock_custo": 300000,
+              "valor_em_stock_venda": 420000
+            }
+          ],
+          "totais": {
+            "lucro_potencial": 120000,
+            "quantidade_produtos": 1,
+            "unidades_em_stock": 120,
+            "valor_total_custo": 300000,
+            "valor_total_venda": 420000
+          }
+        }
       },
       "VencimentoResponse": {
         "properties": {
@@ -8153,7 +8472,7 @@
               }
             ],
             "title": "Moeda",
-            "description": "Preenchido só nos Recibos",
+            "description": "Moeda da compra (Factura) ou do pagamento (Recibo)",
             "examples": [
               "USD"
             ]
