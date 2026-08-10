@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { authService } from '@/services/auth'
+import { useAuth } from '@/contexts/AuthContext'
 import type { UtilizadorResponse, RegisterRequest } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
 import { Badge } from '@/app/components/ui/badge'
+import { Switch } from '@/app/components/ui/switch'
 import {
   Table,
   TableBody,
@@ -36,9 +38,11 @@ const ROLES = ['OPERADOR', 'GESTOR'] as const
 
 export default function UtilizadoresPage() {
   const { t } = useTranslation()
+  const { user: currentUser } = useAuth()
   const [utilizadores, setUtilizadores] = useState<UtilizadorResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
+  const [updatingId, setUpdatingId] = useState<string | null>(null)
 
   const [novoOpen, setNovoOpen] = useState(false)
   const [form, setForm] = useState<RegisterRequest>({
@@ -83,6 +87,29 @@ export default function UtilizadoresPage() {
       toast.error(err instanceof Error ? err.message : t('users.toasts.createError'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleToggleEstado(u: UtilizadorResponse) {
+    const novoEstado = !u.ativo
+    setUpdatingId(u.id)
+    // Optimistic update
+    setUtilizadores((prev) =>
+      prev.map((x) => (x.id === u.id ? { ...x, ativo: novoEstado } : x))
+    )
+    try {
+      await authService.atualizarEstado(u.id, novoEstado)
+      toast.success(
+        novoEstado ? t('users.toasts.activated', { name: u.nome }) : t('users.toasts.deactivated', { name: u.nome })
+      )
+    } catch (err) {
+      // Reverte em caso de erro
+      setUtilizadores((prev) =>
+        prev.map((x) => (x.id === u.id ? { ...x, ativo: u.ativo } : x))
+      )
+      toast.error(err instanceof Error ? err.message : t('users.toasts.updateError'))
+    } finally {
+      setUpdatingId(null)
     }
   }
 
@@ -151,9 +178,17 @@ export default function UtilizadoresPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={u.ativo ? 'outline' : 'destructive'}>
-                      {u.ativo ? t('common.active') : t('common.inactive')}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={u.ativo}
+                        disabled={updatingId === u.id || u.id === currentUser?.id}
+                        onCheckedChange={() => handleToggleEstado(u)}
+                        aria-label={u.ativo ? t('users.deactivate') : t('users.activate')}
+                      />
+                      <Badge variant={u.ativo ? 'outline' : 'destructive'}>
+                        {u.ativo ? t('common.active') : t('common.inactive')}
+                      </Badge>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

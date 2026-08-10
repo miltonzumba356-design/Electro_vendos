@@ -40,7 +40,7 @@ function ProtectedRoute({ children, gestorOnly = false }: {
 }
 
 function AppRoutes() {
-  const { user } = useAuth()
+  const { user, isGestor } = useAuth()
 
   return (
     <Routes>
@@ -50,7 +50,11 @@ function AppRoutes() {
       />
       <Route
         path="/"
-        element={<ProtectedRoute><DashboardPage /></ProtectedRoute>}
+        element={
+          user && !isGestor
+            ? <Navigate to="/vendas" replace />
+            : <ProtectedRoute><DashboardPage /></ProtectedRoute>
+        }
       />
       <Route
         path="/produtos"

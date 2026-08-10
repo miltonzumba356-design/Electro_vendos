@@ -320,9 +320,12 @@ const en = {
     fieldPassword: 'Password', fieldProfile: 'Profile', fullNamePlaceholder: 'E.g.: Maria Smith',
     emailPlaceholder: 'E.g.: maria@bisness.com', passwordPlaceholder: 'Minimum 6 characters',
     create: 'Create user', creating: 'Creating...',
+    activate: 'Activate', deactivate: 'Deactivate',
     toasts: {
       fillRequired: 'Fill in all required fields', created: 'User "{{name}}" created successfully',
       createError: 'Error creating user', loadError: 'Error loading users',
+      activated: 'User "{{name}}" activated', deactivated: 'User "{{name}}" deactivated',
+      updateError: 'Error updating user status',
     },
   },
 } as const

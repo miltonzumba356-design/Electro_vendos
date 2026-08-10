@@ -317,9 +317,12 @@ const ar = {
     fieldPassword: 'كلمة المرور', fieldProfile: 'الدور', fullNamePlaceholder: 'مثال: محمد أحمد',
     emailPlaceholder: 'مثال: ahmed@bisness.com', passwordPlaceholder: '6 أحرف على الأقل',
     create: 'إنشاء مستخدم', creating: 'جاري الإنشاء...',
+    activate: 'تفعيل', deactivate: 'تعطيل',
     toasts: {
       fillRequired: 'أكمل جميع الحقول المطلوبة', created: 'تم إنشاء المستخدم "{{name}}" بنجاح',
       createError: 'خطأ في إنشاء المستخدم', loadError: 'خطأ في تحميل المستخدمين',
+      activated: 'تم تفعيل المستخدم "{{name}}"', deactivated: 'تم تعطيل المستخدم "{{name}}"',
+      updateError: 'خطأ في تحديث حالة المستخدم',
     },
   },
 } as const

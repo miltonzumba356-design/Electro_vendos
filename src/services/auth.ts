@@ -13,4 +13,10 @@ export const authService = {
 
   listarUtilizadores: () =>
     api.get<UtilizadorResponse[]>('/auth/utilizadores'),
+
+  // NOTA: endpoint ainda não existe na API (ver ducumenti_API.md — só há
+  // POST /auth/register, GET /auth/utilizadores e GET /auth/me). Falta o
+  // backend expor PATCH /auth/utilizadores/{id} a aceitar { ativo }.
+  atualizarEstado: (id: string, ativo: boolean) =>
+    api.patch<UtilizadorResponse>(`/auth/utilizadores/${id}`, { ativo }),
 }

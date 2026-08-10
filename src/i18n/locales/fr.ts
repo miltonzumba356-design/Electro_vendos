@@ -325,10 +325,13 @@ const fr = {
     fieldPassword: 'Mot de passe', fieldProfile: 'Profil', fullNamePlaceholder: 'Ex: Marie Dupont',
     emailPlaceholder: 'Ex: marie@bisness.com', passwordPlaceholder: 'Minimum 6 caractères',
     create: "Créer l'utilisateur", creating: 'Création...',
+    activate: 'Activer', deactivate: 'Désactiver',
     toasts: {
       fillRequired: 'Remplissez tous les champs obligatoires',
       created: 'Utilisateur "{{name}}" créé avec succès', createError: "Erreur de création de l'utilisateur",
       loadError: 'Erreur de chargement des utilisateurs',
+      activated: 'Utilisateur "{{name}}" activé', deactivated: 'Utilisateur "{{name}}" désactivé',
+      updateError: "Erreur lors de la mise à jour du statut de l'utilisateur",
     },
   },
 } as const

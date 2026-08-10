@@ -316,9 +316,12 @@ const zh = {
     fieldPassword: '密码', fieldProfile: '角色', fullNamePlaceholder: '例如: 李明',
     emailPlaceholder: '例如: liming@bisness.com', passwordPlaceholder: '最少6个字符',
     create: '创建用户', creating: '创建中...',
+    activate: '启用', deactivate: '停用',
     toasts: {
       fillRequired: '请填写所有必填字段', created: '用户 "{{name}}" 创建成功',
       createError: '创建用户时出错', loadError: '加载用户时出错',
+      activated: '用户 "{{name}}" 已启用', deactivated: '用户 "{{name}}" 已停用',
+      updateError: '更新用户状态时出错',
     },
   },
 } as const

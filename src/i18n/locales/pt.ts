@@ -323,10 +323,13 @@ const pt = {
     fieldFullName: 'Nome completo', fieldPassword: 'Password', fieldProfile: 'Perfil',
     fullNamePlaceholder: 'Ex: Maria Silva', emailPlaceholder: 'Ex: maria@bisness.com',
     passwordPlaceholder: 'Mínimo 6 caracteres', create: 'Criar utilizador', creating: 'A criar...',
+    activate: 'Ativar', deactivate: 'Desativar',
     toasts: {
       fillRequired: 'Preencha todos os campos obrigatórios',
       created: 'Utilizador "{{name}}" criado com sucesso', createError: 'Erro ao criar utilizador',
       loadError: 'Erro ao carregar utilizadores',
+      activated: 'Utilizador "{{name}}" ativado', deactivated: 'Utilizador "{{name}}" desativado',
+      updateError: 'Erro ao atualizar o estado do utilizador',
     },
   },
 } as const
