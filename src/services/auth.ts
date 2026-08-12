@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import type { LoginRequest, TokenResponse, RegisterRequest, UtilizadorResponse } from '@/types'
+import type { LoginRequest, TokenResponse, RegisterRequest, UtilizadorResponse, UtilizadorUpdate } from '@/types'
 
 export const authService = {
   login: (data: LoginRequest) =>
@@ -14,9 +14,6 @@ export const authService = {
   listarUtilizadores: () =>
     api.get<UtilizadorResponse[]>('/auth/utilizadores'),
 
-  // NOTA: endpoint ainda não existe na API (ver ducumenti_API.md — só há
-  // POST /auth/register, GET /auth/utilizadores e GET /auth/me). Falta o
-  // backend expor PATCH /auth/utilizadores/{id} a aceitar { ativo }.
-  atualizarEstado: (id: string, ativo: boolean) =>
-    api.patch<UtilizadorResponse>(`/auth/utilizadores/${id}`, { ativo }),
+  atualizar: (id: string, data: UtilizadorUpdate) =>
+    api.put<UtilizadorResponse>(`/auth/utilizadores/${id}`, data),
 }

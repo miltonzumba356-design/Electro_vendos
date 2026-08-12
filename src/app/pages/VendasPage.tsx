@@ -86,6 +86,7 @@ function VendasTab({ t }: { t: TFunction }) {
   const [itens, setItens] = useState<ItemForm[]>([{ produto_id: '', quantidade: 1 }])
   const [credito, setCredito] = useState(false)
   const [descontoPercentual, setDescontoPercentual] = useState('')
+  const [valorFinalDesejado, setValorFinalDesejado] = useState('')
   const [saving, setSaving] = useState(false)
 
   const [dividaCheck, setDividaCheck] = useState<DividaCheckResponse | null>(null)
@@ -131,6 +132,7 @@ function VendasTab({ t }: { t: TFunction }) {
     setItens([{ produto_id: '', quantidade: 1 }])
     setCredito(false)
     setDescontoPercentual('')
+    setValorFinalDesejado('')
     setDividaCheck(null)
     setConfirmarDivida(false)
     setDescontoDivida('')
@@ -185,6 +187,7 @@ function VendasTab({ t }: { t: TFunction }) {
             : null,
         credito,
         ...(descontoPercentual ? { desconto_percentual: Number(descontoPercentual) } : {}),
+        ...(valorFinalDesejado ? { valor_final_desejado: Number(valorFinalDesejado) } : {}),
         ...(dividaCheck?.tem_divida && confirmarDivida
           ? { desconto_divida: descontoDivida ? Number(descontoDivida) : 0 }
           : {}),
@@ -526,6 +529,19 @@ function VendasTab({ t }: { t: TFunction }) {
                     onChange={(e) => setDescontoPercentual(e.target.value)}
                     placeholder="0"
                   />
+                </div>
+                <div className="space-y-1 sm:col-span-2">
+                  <Label htmlFor="valor-final" className="text-xs">{t('sales.finalValueLabel')}</Label>
+                  <Input
+                    id="valor-final"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={valorFinalDesejado}
+                    onChange={(e) => setValorFinalDesejado(e.target.value)}
+                    placeholder="Ex: 5000"
+                  />
+                  <p className="text-xs text-muted-foreground">{t('sales.finalValueHint')}</p>
                 </div>
               </div>
 

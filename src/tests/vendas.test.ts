@@ -1,6 +1,6 @@
 /**
  * SDD — Serviço de Vendas
- * Spec: GET /vendas · POST /vendas · GET /vendas/{id}
+ * Spec: GET /vendas · POST /vendas (com valor_final_desejado) · GET /vendas/{id}
  */
 import { describe, it, expect } from 'vitest'
 import { BASE, mockFetch } from './helpers'
@@ -64,6 +64,22 @@ describe('vendasService.criar — POST /vendas', () => {
     expect(result.total_iva).toBe(700)
     expect(result.total_final).toBe(5700)
     expect(result.itens[0].iva_aplicado).toBe(14)
+  })
+
+  it('aceita valor_final_desejado — o sistema calcula o desconto automaticamente', async () => {
+    const vendaComDesconto = {
+      ...VENDA, total_com_iva: 5700, desconto_percentual: 12.2807, total_desconto: 700, total_final: 5000,
+    }
+    const spy = mockFetch(vendaComDesconto, 201)
+    const payload = {
+      cliente_id: 'cli-uuid-1',
+      itens: [{ produto_id: 'prod-uuid-1', quantidade: 2 }],
+      valor_final_desejado: 5000,
+    }
+    const result = await vendasService.criar(payload)
+    expect(spy).toHaveBeenCalledWith(`${BASE}/vendas`, expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) }))
+    expect(result.total_final).toBe(5000)
+    expect(result.desconto_percentual).toBeCloseTo(12.2807)
   })
 })
 

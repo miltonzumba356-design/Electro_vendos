@@ -26,6 +26,15 @@ export interface UtilizadorResponse {
   ativo: boolean
 }
 
+// Todos os campos são opcionais — só envia o que quer alterar (PUT /auth/utilizadores/{id}).
+export interface UtilizadorUpdate {
+  nome?: string
+  email?: string
+  password?: string
+  role?: string
+  ativo?: boolean
+}
+
 // ── Produtos ────────────────────────────────────────────────────
 export interface ProdutoCreate {
   nome: string
@@ -129,6 +138,9 @@ export interface VendaCreate {
   cliente?: Record<string, unknown> | null
   itens: ItemVendaInput[]
   desconto_percentual?: number | null
+  // Quanto o cliente quer pagar no final; o sistema calcula o desconto
+  // sozinho. Tem prioridade sobre desconto_percentual se ambos forem enviados.
+  valor_final_desejado?: number | null
   credito?: boolean
   desconto_divida?: number | null
 }

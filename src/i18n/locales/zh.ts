@@ -90,6 +90,7 @@ const zh = {
     preview: '预览', shareWhatsapp: '通过WhatsApp分享',
     cash: '现金', creditPaid: '信用已还', creditPending: '信用欠款',
     creditSaleLabel: '信用销售（产生债务）', discountLabel: '手动折扣 (%)',
+    finalValueLabel: '期望的最终金额 (Kz)', finalValueHint: '优先于手动折扣',
     debtWarningTitle: '客户有未结债务',
     debtWarningDesc: '该客户有未结余额 {{value}}。',
     debtConfirmLabel: '我确认在有未结债务的情况下继续本次销售',
@@ -312,9 +313,10 @@ const zh = {
     title: '用户', subtitle: '系统访问账户管理',
     searchPlaceholder: '按名称或邮件搜索...', new: '新增用户',
     colName: '名称', colEmail: '电子邮件', colProfile: '角色', colStatus: '状态',
-    empty: '未找到用户', newTitle: '新增用户', fieldFullName: '全名',
-    fieldPassword: '密码', fieldProfile: '角色', fullNamePlaceholder: '例如: 李明',
+    empty: '未找到用户', newTitle: '新增用户', editTitle: '编辑用户', fieldFullName: '全名',
+    fieldPassword: '密码', fieldNewPassword: '新密码', fieldProfile: '角色', fullNamePlaceholder: '例如: 李明',
     emailPlaceholder: '例如: liming@bisness.com', passwordPlaceholder: '最少6个字符',
+    newPasswordPlaceholder: '留空以保留当前密码',
     create: '创建用户', creating: '创建中...',
     activate: '启用', deactivate: '停用',
     toasts: {
@@ -322,6 +324,7 @@ const zh = {
       createError: '创建用户时出错', loadError: '加载用户时出错',
       activated: '用户 "{{name}}" 已启用', deactivated: '用户 "{{name}}" 已停用',
       updateError: '更新用户状态时出错',
+      updated: '用户 "{{name}}" 更新成功', editError: '更新用户时出错',
     },
   },
 } as const

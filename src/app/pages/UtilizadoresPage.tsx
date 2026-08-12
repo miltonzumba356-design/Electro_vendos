@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { authService } from '@/services/auth'
 import { useAuth } from '@/contexts/AuthContext'
-import type { UtilizadorResponse, RegisterRequest } from '@/types'
+import type { UtilizadorResponse, RegisterRequest, UtilizadorUpdate } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from '@/app/components/ui/select'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { UserPlus, Search } from 'lucide-react'
+import { UserPlus, Search, Pencil } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -52,6 +52,10 @@ export default function UtilizadoresPage() {
     role: 'OPERADOR',
   })
   const [saving, setSaving] = useState(false)
+
+  const [editando, setEditando] = useState<UtilizadorResponse | null>(null)
+  const [editForm, setEditForm] = useState({ nome: '', email: '', password: '', role: 'OPERADOR' as string })
+  const [editSaving, setEditSaving] = useState(false)
 
   async function load() {
     try {
@@ -98,7 +102,7 @@ export default function UtilizadoresPage() {
       prev.map((x) => (x.id === u.id ? { ...x, ativo: novoEstado } : x))
     )
     try {
-      await authService.atualizarEstado(u.id, novoEstado)
+      await authService.atualizar(u.id, { ativo: novoEstado })
       toast.success(
         novoEstado ? t('users.toasts.activated', { name: u.nome }) : t('users.toasts.deactivated', { name: u.nome })
       )
@@ -110,6 +114,33 @@ export default function UtilizadoresPage() {
       toast.error(err instanceof Error ? err.message : t('users.toasts.updateError'))
     } finally {
       setUpdatingId(null)
+    }
+  }
+
+  function openEditar(u: UtilizadorResponse) {
+    setEditForm({ nome: u.nome, email: u.email, password: '', role: u.role })
+    setEditando(u)
+  }
+
+  async function handleEditar(e: React.FormEvent) {
+    e.preventDefault()
+    if (!editando) return
+    const payload: UtilizadorUpdate = {
+      nome: editForm.nome,
+      email: editForm.email,
+      role: editForm.role,
+      ...(editForm.password ? { password: editForm.password } : {}),
+    }
+    setEditSaving(true)
+    try {
+      const atualizado = await authService.atualizar(editando.id, payload)
+      setUtilizadores((prev) => prev.map((x) => (x.id === atualizado.id ? atualizado : x)))
+      toast.success(t('users.toasts.updated', { name: atualizado.nome }))
+      setEditando(null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('users.toasts.editError'))
+    } finally {
+      setEditSaving(false)
     }
   }
 
@@ -150,20 +181,21 @@ export default function UtilizadoresPage() {
               <TableHead>{t('users.colEmail')}</TableHead>
               <TableHead>{t('users.colProfile')}</TableHead>
               <TableHead>{t('users.colStatus')}</TableHead>
+              <TableHead className="text-right">{t('common.actions')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               Array.from({ length: 3 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 4 }).map((_, j) => (
+                  {Array.from({ length: 5 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                   {t('users.empty')}
                 </TableCell>
               </TableRow>
@@ -189,6 +221,11 @@ export default function UtilizadoresPage() {
                         {u.ativo ? t('common.active') : t('common.inactive')}
                       </Badge>
                     </div>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => openEditar(u)}>
+                      <Pencil className="size-4" />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -254,6 +291,72 @@ export default function UtilizadoresPage() {
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving ? t('users.creating') : t('users.create')}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editando} onOpenChange={(open) => !open && setEditando(null)}>
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('users.editTitle')}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditar} className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label htmlFor="eu-nome">{t('users.fieldFullName')} *</Label>
+              <Input
+                id="eu-nome"
+                value={editForm.nome}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, nome: e.target.value }))}
+                placeholder={t('users.fullNamePlaceholder')}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="eu-email">{t('common.email')} *</Label>
+              <Input
+                id="eu-email"
+                type="email"
+                value={editForm.email}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, email: e.target.value }))}
+                placeholder={t('users.emailPlaceholder')}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="eu-password">{t('users.fieldNewPassword')}</Label>
+              <Input
+                id="eu-password"
+                type="password"
+                value={editForm.password}
+                onChange={(e) => setEditForm((prev) => ({ ...prev, password: e.target.value }))}
+                placeholder={t('users.newPasswordPlaceholder')}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('users.fieldProfile')}</Label>
+              <Select
+                value={editForm.role}
+                onValueChange={(v) => setEditForm((prev) => ({ ...prev, role: v }))}
+                disabled={editando?.id === currentUser?.id}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r} value={r}>{r}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button type="button" variant="outline" onClick={() => setEditando(null)} disabled={editSaving}>
+                {t('common.cancel')}
+              </Button>
+              <Button type="submit" disabled={editSaving}>
+                {editSaving ? t('common.saving') : t('common.save')}
               </Button>
             </div>
           </form>

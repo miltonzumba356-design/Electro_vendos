@@ -8570,3 +8570,8576 @@
     }
   }
 }
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Bisness SAIDE - Gestão de Vendas",
+    "version": "1.0.1"
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Login do utilizador",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Token JWT e dados do utilizador",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Registar novo utilizador (apenas Gestor)",
+        "operationId": "register_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Dados do utilizador criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UtilizadorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/utilizadores": {
+      "get": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Listar utilizadores (apenas Gestor)",
+        "operationId": "listar_utilizadores_auth_utilizadores_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UtilizadorResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Utilizadores Auth Utilizadores Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "Autenticação"
+        ],
+        "summary": "Dados do utilizador autenticado",
+        "operationId": "me_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UtilizadorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/produtos": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Listar produtos ativos",
+        "operationId": "listar_produtos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProdutoResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Produtos Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Criar produto (Gestor)",
+        "operationId": "criar_produtos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProdutoCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/produtos/{id}": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Detalhes de um produto",
+        "operationId": "buscar_produtos__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Atualizar produto (Gestor)",
+        "operationId": "atualizar_produtos__id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProdutoUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProdutoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Desativar produto (Gestor)",
+        "operationId": "remover_produtos__id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/produtos/stock/baixo": {
+      "get": {
+        "tags": [
+          "Produtos"
+        ],
+        "summary": "Produtos abaixo do stock mínimo (Gestor)",
+        "operationId": "stock_baixo_produtos_stock_baixo_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProdutoStockBaixo"
+                  },
+                  "type": "array",
+                  "title": "Response Stock Baixo Produtos Stock Baixo Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/clientes": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Listar clientes",
+        "operationId": "listar_clientes_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ClienteResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Clientes Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Criar cliente",
+        "operationId": "criar_clientes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/clientes/{id}": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Detalhes de um cliente",
+        "operationId": "buscar_clientes__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Atualizar cliente",
+        "operationId": "atualizar_clientes__id__put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendas": {
+      "post": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Registar nova venda",
+        "description": "Cria uma venda com cálculo de IVA, atualização de stock e fidelidade. Suporta `desconto_percentual` manual (substitui automático da fidelidade), `credito` para venda a crédito (gera dívida automaticamente) e `desconto_divida` para prosseguir com desconto quando cliente tem dívida pendente.",
+        "operationId": "criar_vendas_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VendaCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Venda criada. Se `credito=true`, uma `Divida` é gerada automaticamente e seu `numero_factura` já vem na resposta.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Listar vendas",
+        "operationId": "listar_vendas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Registos a saltar",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Registos a saltar"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Limite de registos",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Limite de registos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Gestor vê todas, Operador vê apenas as suas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VendaResponse"
+                  },
+                  "title": "Response Listar Vendas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vendas/{id}": {
+      "get": {
+        "tags": [
+          "Vendas"
+        ],
+        "summary": "Detalhes de uma venda",
+        "operationId": "buscar_vendas__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VendaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stock/movimento": {
+      "post": {
+        "tags": [
+          "Stock"
+        ],
+        "summary": "Registar movimento de stock (Gestor)",
+        "operationId": "criar_movimento_stock_movimento_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MovimentoCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Movimento registado e stock atualizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MovimentoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/stock/movimentos": {
+      "get": {
+        "tags": [
+          "Stock"
+        ],
+        "summary": "Histórico de movimentos (Gestor)",
+        "operationId": "listar_movimentos_stock_movimentos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "produto_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por produto",
+              "title": "Produto Id"
+            },
+            "description": "Filtrar por produto"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Registos a saltar",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Registos a saltar"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Limite de registos",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Limite de registos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MovimentoResponse"
+                  },
+                  "title": "Response Listar Movimentos Stock Movimentos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stock/valorizacao": {
+      "get": {
+        "tags": [
+          "Stock"
+        ],
+        "summary": "Valorização do stock (Gestor)",
+        "description": "Valor monetário do stock parado, por produto: quantidade em stock × preço de custo (o que já foi gasto) e × preço de venda (quanto valeria vender tudo), com o lucro potencial. Aceita pesquisa por nome do produto.",
+        "operationId": "valorizacao_stock_stock_valorizacao_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)",
+              "examples": [
+                "arroz"
+              ],
+              "title": "Nome"
+            },
+            "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Valorização por produto e totais gerais",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValorizacaoStock"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/vendas/periodo": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Vendas por período",
+        "description": "Sem data_inicio/data_fim, traz sempre os dados de hoje.",
+        "operationId": "vendas_periodo_relatorios_vendas_periodo_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para hoje",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para hoje"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para hoje",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para hoje"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Totais de vendas, receita recebida vs pendente, IVA, descontos, lucro e top produtos no período",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelatorioVendasPeriodo"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/clientes/fieis": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Clientes fiéis (maior gasto)",
+        "operationId": "clientes_fieis_relatorios_clientes_fieis_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Quantos clientes",
+              "examples": [10],
+              "default": 10,
+              "title": "Limite"
+            },
+            "description": "Quantos clientes"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clientes ordenados por total gasto com nível de fidelidade",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RelatorioClienteFiel"
+                  },
+                  "title": "Response Clientes Fieis Relatorios Clientes Fieis Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/clientes/inativos": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Clientes inativos",
+        "description": "Clientes sem compras há X dias",
+        "operationId": "clientes_inativos_relatorios_clientes_inativos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "dias",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Dias sem comprar",
+              "examples": [90],
+              "default": 90,
+              "title": "Dias"
+            },
+            "description": "Dias sem comprar"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RelatorioClienteInativo"
+                  },
+                  "title": "Response Clientes Inativos Relatorios Clientes Inativos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/clientes/{cliente_id}/extrato": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Extrato de dívidas e compras a crédito do cliente",
+        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve. Cada dívida traz também `pagamentos`: a lista de cada valor pago até zerar, com a moeda usada em cada um. Sem data_inicio/data_fim, traz todo o histórico do cliente. Se informar `numero`, traz só aquela factura (e ignora prestações, já que o número é específico da dívida).",
+        "operationId": "extrato_cliente_relatorios_clientes__cliente_id__extrato_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cliente_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cliente Id"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
+          },
+          {
+            "name": "numero",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra pelo número exato da factura (dívida)",
+              "examples": [1],
+              "title": "Numero"
+            },
+            "description": "Filtra pelo número exato da factura (dívida)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtratoCliente"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/produtos/mais-vendidos": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Top produtos mais vendidos",
+        "operationId": "produtos_mais_vendidos_relatorios_produtos_mais_vendidos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Quantos produtos",
+              "examples": [10],
+              "default": 10,
+              "title": "Limite"
+            },
+            "description": "Quantos produtos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produtos ordenados por quantidade vendida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RelatorioProdutoVendido"
+                  },
+                  "title": "Response Produtos Mais Vendidos Relatorios Produtos Mais Vendidos Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/vendas/por-cliente": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Vendas agregadas por cliente",
+        "operationId": "vendas_por_cliente_relatorios_vendas_por_cliente_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Quantos clientes",
+              "examples": [10],
+              "default": 10,
+              "title": "Limite"
+            },
+            "description": "Quantos clientes"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Total de compras, gasto e ticket médio por cliente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RelatorioVendaCliente"
+                  },
+                  "title": "Response Vendas Por Cliente Relatorios Vendas Por Cliente Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/produtos/lucro": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Lucro por produto",
+        "description": "Sem data_inicio/data_fim, considera todas as vendas já registadas.",
+        "operationId": "lucro_por_produto_relatorios_produtos_lucro_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
+          },
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)",
+              "examples": [
+                "arroz"
+              ],
+              "title": "Nome"
+            },
+            "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)"
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Quantos produtos",
+              "examples": [10],
+              "default": 10,
+              "title": "Limite"
+            },
+            "description": "Quantos produtos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Produtos ordenados por lucro (receita - custo), com margem percentual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RelatorioLucroProduto"
+                  },
+                  "title": "Response Lucro Por Produto Relatorios Produtos Lucro Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/metas/progresso": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Progresso das metas de receita e lucro por produto",
+        "description": "Cada meta tem seu próprio data_inicio/data_fim (definidos no POST /metas). Sem data_inicio/data_fim aqui, traz as metas activas hoje (hoje entre o início e o fim da meta). Se informar data_inicio/data_fim, traz as metas cujo período se sobrepõe à janela informada. O progresso de cada produto é sempre calculado usando o período da própria meta, não a janela de pesquisa.",
+        "operationId": "metas_progresso_relatorios_metas_progresso_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra metas activas a partir desta data. Omite para metas activas hoje",
+              "examples": [
+                "2026-07-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Filtra metas activas a partir desta data. Omite para metas activas hoje"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra metas activas até esta data. Omite para metas activas hoje",
+              "examples": [
+                "2026-07-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Filtra metas activas até esta data. Omite para metas activas hoje"
+          },
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)",
+              "examples": [
+                "arroz"
+              ],
+              "title": "Nome"
+            },
+            "description": "Pesquisa por nome do produto (parcial, sem distinguir maiúsculas)"
+          },
+          {
+            "name": "limite",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Quantos produtos trazer. Omite para trazer todos",
+              "examples": [10],
+              "title": "Limite"
+            },
+            "description": "Quantos produtos trazer. Omite para trazer todos"
+          },
+          {
+            "name": "incluir_totais",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Se false, não traz o resumo com os totais gerais",
+              "default": true,
+              "title": "Incluir Totais"
+            },
+            "description": "Se false, não traz o resumo com os totais gerais"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progresso por produto (receita/lucro arrecadado vs meta, quanto falta, unidades estimadas para bater a meta) e totais gerais",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RelatorioMetasProgresso"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/relatorios/stock/baixo": {
+      "get": {
+        "tags": [
+          "Relatórios"
+        ],
+        "summary": "Produtos com stock crítico",
+        "operationId": "stock_baixo_relatorios_stock_baixo_get",
+        "responses": {
+          "200": {
+            "description": "Produtos abaixo do stock mínimo com quantidade em falta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProdutoStockBaixo"
+                  },
+                  "type": "array",
+                  "title": "Response Stock Baixo Relatorios Stock Baixo Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/dividas/clientes/{cliente_id}": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Verificar dívidas do cliente",
+        "description": "Retorna todas as dívidas pendentes de um cliente. Usado antes de criar uma venda para verificar se o cliente tem débito.",
+        "operationId": "verificar_dividas_cliente_dividas_clientes__cliente_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cliente_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cliente Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaCheckResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dividas": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Listar dívidas",
+        "description": "Lista paginada de dívidas. Filtro opcional por status (DIVIDA/PAGA), por período (data_inicio/data_fim, com base na data de criação da dívida), por nome do cliente (pesquisa parcial) e por número exato da factura — combináveis.",
+        "operationId": "listar_dividas_dividas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(DIVIDA|PAGA)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
+          },
+          {
+            "name": "nome",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Pesquisa por nome do cliente (parcial, sem distinguir maiúsculas)",
+              "examples": [
+                "Carlos"
+              ],
+              "title": "Nome"
+            },
+            "description": "Pesquisa por nome do cliente (parcial, sem distinguir maiúsculas)"
+          },
+          {
+            "name": "numero",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtra pelo número exato da factura",
+              "examples": [1],
+              "title": "Numero"
+            },
+            "description": "Filtra pelo número exato da factura"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DividaResponse"
+                  },
+                  "title": "Response Listar Dividas Dividas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dividas/total": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Total de dívidas pendentes",
+        "description": "Retorna a quantidade e o valor total pendente, somando vendas a crédito (dívidas) e prestações ainda não pagas, entre todos os clientes.",
+        "operationId": "total_dividas_dividas_total_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotalDividasResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/dividas/numero/{numero}": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Buscar factura (dívida) por número",
+        "description": "Busca a dívida (factura) pelo número sequencial, trazendo os seus recibos (pagamentos) e o saldo total em aberto.",
+        "operationId": "buscar_divida_por_numero_dividas_numero__numero__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Factura não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dividas/{divida_id}": {
+      "get": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Buscar dívida por ID",
+        "operationId": "buscar_divida_dividas__divida_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "divida_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Divida Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dívida não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dividas/{divida_id}/pagar": {
+      "post": {
+        "tags": [
+          "Dívidas"
+        ],
+        "summary": "Pagar dívida",
+        "description": "Regista um pagamento para a dívida, com a moeda usada (KZ/AOA/USD/EUR — apenas registo, sem conversão de câmbio). Aceita pagamento parcial ou total; cada pagamento fica guardado no histórico (`pagamentos`) da dívida. Se o valor total for atingido, a dívida é marcada como PAGA e a venda associada (se existir) tem `credito_pago=true`.",
+        "operationId": "pagar_divida_dividas__divida_id__pagar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "divida_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Divida Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagarDividaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pagamento registado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dívida já está paga ou valor excede saldo"
+          },
+          "404": {
+            "description": "Dívida não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores": {
+      "post": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Registar fornecedor (Gestor)",
+        "operationId": "criar_fornecedor_fornecedores_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FornecedorCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FornecedorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Listar fornecedores",
+        "operationId": "listar_fornecedores_fornecedores_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FornecedorResponse"
+                  },
+                  "title": "Response Listar Fornecedores Fornecedores Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/dividas/total": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Total em dívida a fornecedores",
+        "operationId": "total_dividas_fornecedores_dividas_total_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotalDividasFornecedorResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/fornecedores/dividas": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Listar dívidas a fornecedores",
+        "description": "Lista paginada de dívidas a fornecedores. Filtro opcional por fornecedor, status (DIVIDA/PAGA) e por período (data_inicio/data_fim, com base na data de criação da dívida).",
+        "operationId": "listar_dividas_fornecedores_dividas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Fornecedor Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(DIVIDA|PAGA)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DividaFornecedorResponse"
+                  },
+                  "title": "Response Listar Dividas Fornecedores Dividas Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/dividas/numero/{numero}": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Buscar factura (dívida) a fornecedor por número",
+        "description": "Busca a dívida (factura) pelo número sequencial, trazendo os seus recibos (pagamentos) e o saldo total em aberto.",
+        "operationId": "buscar_divida_por_numero_fornecedores_dividas_numero__numero__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaFornecedorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Factura não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/dividas/{divida_id}": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Buscar dívida a fornecedor por ID",
+        "operationId": "buscar_divida_fornecedores_dividas__divida_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "divida_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Divida Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaFornecedorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Dívida não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/dividas/pagar": {
+      "post": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Pagar dívida a fornecedor (Gestor)",
+        "description": "Regista um pagamento à dívida do fornecedor (divida_id vai no corpo do pedido), com a moeda usada (KZ/AOA/USD/EUR — apenas registo, sem conversão de câmbio). Aceita pagamento parcial ou total; cada pagamento fica guardado no histórico (`pagamentos`) da dívida. Não gera nenhum lançamento no fluxo de caixa.",
+        "operationId": "pagar_divida_fornecedores_dividas_pagar_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagarDividaFornecedorRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Pagamento registado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaFornecedorResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Dívida já está paga ou valor excede saldo"
+          },
+          "404": {
+            "description": "Dívida não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/fornecedores/{fornecedor_id}/extrato": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Extrato de dívidas e compras a crédito do fornecedor",
+        "description": "Histórico cronológico de documentos do fornecedor: cada compra a crédito vira uma 'Factura' e cada pagamento feito vira um 'Recibo', com o saldo total ainda em aberto. Filtro opcional por período (data_inicio/data_fim, com base na data de criação da dívida). Sem as datas, traz todo o histórico.",
+        "operationId": "extrato_fornecedor_fornecedores__fornecedor_id__extrato_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fornecedor Id"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início. Omite para todo o histórico",
+              "examples": [
+                "2026-01-01T00:00:00Z"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início. Omite para todo o histórico"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim. Omite para todo o histórico",
+              "examples": [
+                "2026-12-31T23:59:59Z"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim. Omite para todo o histórico"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtratoFornecedor"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/{fornecedor_id}": {
+      "get": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Buscar fornecedor por ID",
+        "operationId": "buscar_fornecedor_fornecedores__fornecedor_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fornecedor Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FornecedorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fornecedores/{fornecedor_id}/compras": {
+      "post": {
+        "tags": [
+          "Fornecedores"
+        ],
+        "summary": "Registar compra a crédito ao fornecedor (Gestor)",
+        "description": "Regista a compra de um ou mais produtos (`itens`) a um fornecedor a crédito: aumenta o stock de cada produto imediatamente e cria uma única dívida ao fornecedor somando todos os itens. Aceita `moeda` (KZ/AOA/USD/EUR — apenas registo, sem conversão) para indicar em que moeda a compra foi feita. Não mexe no fluxo de caixa — nem agora nem quando a dívida for paga.",
+        "operationId": "criar_compra_fornecedores__fornecedor_id__compras_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fornecedor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fornecedor Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompraFornecedorCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DividaFornecedorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fornecedor ou produto não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/faturas": {
+      "post": {
+        "tags": [
+          "Facturação"
+        ],
+        "summary": "Criar nova fatura",
+        "description": "Cria uma fatura com itens literais (sem FK para produto). O número é gerado automaticamente no formato YYYY-MM-SEQ. O desconto é aplicado sobre o total com IVA. Os dados do cliente (nome, NIF) são copiados no momento da emissão.",
+        "operationId": "criar_fatura_faturas_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FaturaCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Fatura criada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaturaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          },
+          "422": {
+            "description": "Dados inválidos"
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Facturação"
+        ],
+        "summary": "Listar faturas",
+        "description": "Retorna lista paginada de faturas. Suporta filtros por período e cliente.",
+        "operationId": "listar_faturas_faturas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por data inicial (YYYY-MM-DD)",
+              "title": "Data Inicio"
+            },
+            "description": "Filtrar por data inicial (YYYY-MM-DD)"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por data final (YYYY-MM-DD)",
+              "title": "Data Fim"
+            },
+            "description": "Filtrar por data final (YYYY-MM-DD)"
+          },
+          {
+            "name": "cliente_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por cliente",
+              "title": "Cliente Id"
+            },
+            "description": "Filtrar por cliente"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaturaListaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/faturas/{fatura_id}": {
+      "get": {
+        "tags": [
+          "Facturação"
+        ],
+        "summary": "Buscar fatura por ID",
+        "description": "Retorna uma fatura com todos os seus itens.",
+        "operationId": "buscar_fatura_faturas__fatura_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fatura_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fatura Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FaturaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Fatura não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/faturas/{fatura_id}/cancelar": {
+      "post": {
+        "tags": [
+          "Facturação"
+        ],
+        "summary": "Cancelar fatura",
+        "description": "Cancela uma fatura ativa. Define a data de cancelamento. Faturas já canceladas não podem ser canceladas novamente.",
+        "operationId": "cancelar_fatura_faturas__fatura_id__cancelar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "fatura_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Fatura Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fatura cancelada com sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelamentoResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Fatura já está cancelada"
+          },
+          "404": {
+            "description": "Fatura não encontrada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/faturas/performance/estatisticas": {
+      "get": {
+        "tags": [
+          "Facturação"
+        ],
+        "summary": "Estatísticas de facturação",
+        "description": "Retorna resumo de facturação com total emitido/cancelado, valores agregados, top 5 clientes e tendência diária. Cache: 60s via Redis.",
+        "operationId": "performance_faturas_performance_estatisticas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Início do período (YYYY-MM-DD)",
+              "title": "Data Inicio"
+            },
+            "description": "Início do período (YYYY-MM-DD)"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Fim do período (YYYY-MM-DD)",
+              "title": "Data Fim"
+            },
+            "description": "Fim do período (YYYY-MM-DD)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerformanceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prestacoes": {
+      "post": {
+        "tags": [
+          "Prestações"
+        ],
+        "summary": "Criar plano de prestações",
+        "description": "Cria um plano de pagamento parcelado para um cliente com um produto financiado. Gera automaticamente as parcelas com vencimento mensal a partir de data_inicio. Aceita taxa_multa percentual para cálculo de multa por atraso.",
+        "operationId": "criar_prestacoes_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrestacaoCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Plano de prestações criado com parcelas geradas, saldo total e situação PENDENTE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrestacaoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Prestações"
+        ],
+        "summary": "Listar todos os planos de prestações",
+        "description": "Retorna todos os planos de prestações registados, ordenados do mais recente para o mais antigo.",
+        "operationId": "listar_prestacoes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Registos a saltar",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Registos a saltar"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Limite de registos",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Limite de registos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de planos de prestações com situação, saldo e parcelas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrestacaoResponse"
+                  },
+                  "title": "Response Listar Prestacoes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prestacoes/vencimentos-mes": {
+      "get": {
+        "tags": [
+          "Prestações"
+        ],
+        "summary": "Vencimentos do mês",
+        "description": "Lista todas as parcelas em aberto (não pagas) com vencimento num determinado mês/ano, incluindo cliente, produto e dias de atraso. Útil para gerar lista de cobranças.",
+        "operationId": "vencimentos_mes_prestacoes_vencimentos_mes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ano",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 2100,
+              "minimum": 2020,
+              "description": "Ano",
+              "title": "Ano"
+            },
+            "description": "Ano"
+          },
+          {
+            "name": "mes",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "maximum": 12,
+              "minimum": 1,
+              "description": "Mês (1-12)",
+              "title": "Mes"
+            },
+            "description": "Mês (1-12)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de parcelas a vencer ou vencidas no período",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VencimentoResponse"
+                  },
+                  "title": "Response Vencimentos Mes Prestacoes Vencimentos Mes Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prestacoes/{id}": {
+      "get": {
+        "tags": [
+          "Prestações"
+        ],
+        "summary": "Detalhes de um plano de prestações",
+        "description": "Obtém os detalhes completos de um plano, incluindo todas as parcelas, pagamentos e saldo atual.",
+        "operationId": "buscar_prestacoes__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Plano de prestações com parcelas, valores pagos e saldo devedor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrestacaoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prestacoes/{id}/pagamentos": {
+      "post": {
+        "tags": [
+          "Prestações"
+        ],
+        "summary": "Registar pagamento de uma prestação",
+        "description": "Regista um pagamento parcial ou total para um plano. Atualiza o saldo e altera a situação para PARCIAL, PAGO ou ATRASADO. Se a parcela paga estiver vencida, calcula automaticamente a multa com base na taxa_multa do plano.",
+        "operationId": "pagar_prestacoes__id__pagamentos_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PagamentoCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Plano atualizado com o novo saldo e situação após o pagamento",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PrestacaoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/prestacoes/clientes/{cliente_id}/dividas": {
+      "get": {
+        "tags": [
+          "Prestações"
+        ],
+        "summary": "Dívidas de um cliente",
+        "description": "Retorna o resumo de todas as prestações em aberto de um cliente (PENDENTE, PARCIAL ou ATRASADO), com saldo total e lista detalhada.",
+        "operationId": "dividas_cliente_prestacoes_clientes__cliente_id__dividas_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cliente_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Cliente Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resumo de dívidas do cliente com saldo aberto e lista de prestações pendentes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteDividaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fluxo-caixa/lancamentos": {
+      "post": {
+        "tags": [
+          "Fluxo de Caixa"
+        ],
+        "summary": "Registar lançamento manual",
+        "description": "Regista uma entrada ou saída manual (salário, renda, energia, etc.).",
+        "operationId": "criar_lancamento_fluxo_caixa_lancamentos_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LancamentoCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Lançamento criado com tipo, valor, categoria e data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LancamentoResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Fluxo de Caixa"
+        ],
+        "summary": "Extrato de fluxo de caixa",
+        "description": "Lista lançamentos com filtros opcionais por período e categoria.",
+        "operationId": "listar_lancamentos_fluxo_caixa_lancamentos_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "data_inicio",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data início",
+              "examples": [
+                "2026-06-01"
+              ],
+              "title": "Data Inicio"
+            },
+            "description": "Data início"
+          },
+          {
+            "name": "data_fim",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Data fim",
+              "examples": [
+                "2026-06-30"
+              ],
+              "title": "Data Fim"
+            },
+            "description": "Data fim"
+          },
+          {
+            "name": "categoria",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por categoria",
+              "examples": [
+                "VENDA",
+                "SALARIO"
+              ],
+              "title": "Categoria"
+            },
+            "description": "Filtrar por categoria"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Registos a saltar",
+              "default": 0,
+              "title": "Skip"
+            },
+            "description": "Registos a saltar"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Limite de registos",
+              "default": 200,
+              "title": "Limit"
+            },
+            "description": "Limite de registos"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de lançamentos com resumo de entradas, saídas e saldo",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LancamentoListaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/fluxo-caixa/saldo": {
+      "get": {
+        "tags": [
+          "Fluxo de Caixa"
+        ],
+        "summary": "Saldo atual do caixa",
+        "description": "Retorna o saldo atual: total de entradas, total de saídas e saldo (entradas - saídas)",
+        "operationId": "saldo_fluxo_caixa_saldo_get",
+        "responses": {
+          "200": {
+            "description": "Saldo atual, total de entradas e total de saídas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaldoResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ia/sessoes": {
+      "get": {
+        "tags": [
+          "Assistente IA"
+        ],
+        "summary": "Listar sessões",
+        "description": "Lista todas as sessões de chat do gestor autenticado",
+        "operationId": "listar_sessoes_ia_sessoes_get",
+        "responses": {
+          "200": {
+            "description": "Lista de sessões ordenadas por data descendente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SessaoIaResponse"
+                  },
+                  "type": "array",
+                  "title": "Response Listar Sessoes Ia Sessoes Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Assistente IA"
+        ],
+        "summary": "Criar sessão de chat",
+        "description": "Cria uma nova sessão de conversa com o assistente IA",
+        "operationId": "criar_sessao_ia_sessoes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SessaoIaCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Sessão criada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessaoIaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/ia/sessoes/{sessao_id}/mensagens": {
+      "get": {
+        "tags": [
+          "Assistente IA"
+        ],
+        "summary": "Histórico da sessão",
+        "description": "Obtém todas as mensagens de uma sessão de chat",
+        "operationId": "listar_mensagens_ia_sessoes__sessao_id__mensagens_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sessao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sessao Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lista de mensagens ordenadas por data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MensagemIaResponse"
+                  },
+                  "title": "Response Listar Mensagens Ia Sessoes  Sessao Id  Mensagens Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ia/sessoes/{sessao_id}/perguntar": {
+      "post": {
+        "tags": [
+          "Assistente IA"
+        ],
+        "summary": "Fazer pergunta ao assistente",
+        "description": "Envia uma pergunta para o assistente IA. O assistente pode consultar dados de vendas, stock, fluxo de caixa, clientes e prestações para responder.",
+        "operationId": "perguntar_ia_sessoes__sessao_id__perguntar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sessao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sessao Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerguntaRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resposta do assistente IA",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PerguntaResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ia/sessoes/{sessao_id}": {
+      "delete": {
+        "tags": [
+          "Assistente IA"
+        ],
+        "summary": "Apagar sessão",
+        "description": "Apaga uma sessão e todas as suas mensagens",
+        "operationId": "apagar_sessao_ia_sessoes__sessao_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sessao_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sessao Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Sessão apagada"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/metas": {
+      "post": {
+        "tags": [
+          "Metas"
+        ],
+        "summary": "Cadastrar/atualizar meta de receita e lucro do produto (Gestor)",
+        "description": "Define a meta de receita e lucro de um produto para um período (mês). Se já existir meta para o mesmo produto e período, actualiza os valores.",
+        "operationId": "criar_meta_metas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MetaCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MetaResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Produto não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/debug/users": {
+      "get": {
+        "summary": "Debug Users",
+        "operationId": "debug_users_debug_users_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CancelamentoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          },
+          "cancelada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada Em"
+          },
+          "situacao": {
+            "type": "string",
+            "title": "Situacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "numero",
+          "situacao"
+        ],
+        "title": "CancelamentoResponse"
+      },
+      "ClienteCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Nome",
+            "description": "Nome do cliente",
+            "examples": [
+              "João dos Santos"
+            ]
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone",
+            "description": "Telefone",
+            "examples": [
+              "923456789"
+            ]
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "description": "Email",
+            "examples": [
+              "joao@email.com"
+            ]
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif",
+            "description": "NIF",
+            "examples": [
+              "123456789"
+            ]
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco",
+            "description": "Endereço"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "ClienteCreate"
+      },
+      "ClienteDividaResponse": {
+        "properties": {
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id",
+            "examples": [
+              "af11fa27-2bbe-4834-acb3-4a249c0f5ce4"
+            ]
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome",
+            "examples": [
+              "Ana Cristina"
+            ]
+          },
+          "total_dividas": {
+            "type": "integer",
+            "title": "Total Dividas",
+            "description": "Total de prestações em aberto",
+            "examples": [2]
+          },
+          "valor_total_devido": {
+            "type": "number",
+            "title": "Valor Total Devido",
+            "description": "Soma total das dívidas",
+            "examples": [300000]
+          },
+          "valor_total_pago": {
+            "type": "number",
+            "title": "Valor Total Pago",
+            "description": "Total já pago",
+            "examples": [100000]
+          },
+          "saldo_aberto": {
+            "type": "number",
+            "title": "Saldo Aberto",
+            "description": "Saldo pendente total",
+            "examples": [200000]
+          },
+          "prestacoes": {
+            "items": {
+              "$ref": "#/components/schemas/PrestacaoResponse"
+            },
+            "type": "array",
+            "title": "Prestacoes",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_id",
+          "cliente_nome",
+          "total_dividas",
+          "valor_total_devido",
+          "valor_total_pago",
+          "saldo_aberto"
+        ],
+        "title": "ClienteDividaResponse",
+        "example": {
+          "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+          "cliente_nome": "Ana Cristina",
+          "prestacoes": [
+            {
+              "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+              "cliente_nome": "Ana Cristina",
+              "criado_em": "2026-06-27T14:30:00Z",
+              "data_inicio": "2026-07-01T00:00:00Z",
+              "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+              "numero_prestacoes": 6,
+              "pagamentos": [
+                {
+                  "data_pagamento": "2026-07-01T14:30:00Z",
+                  "data_vencimento": "2026-07-01T00:00:00Z",
+                  "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+                  "multa": 0,
+                  "pago": true,
+                  "valor": 25000
+                }
+              ],
+              "produto_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+              "produto_nome": "Arroz Agulha 5kg",
+              "saldo": 100000,
+              "situacao": "PARCIAL",
+              "taxa_multa": 5,
+              "valor_pago": 50000,
+              "valor_total": 150000
+            }
+          ],
+          "saldo_aberto": 200000,
+          "total_dividas": 2,
+          "valor_total_devido": 300000,
+          "valor_total_pago": 100000
+        }
+      },
+      "ClienteResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "telefone",
+          "email",
+          "nif",
+          "endereco",
+          "criado_em"
+        ],
+        "title": "ClienteResponse"
+      },
+      "ClienteUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          }
+        },
+        "type": "object",
+        "title": "ClienteUpdate"
+      },
+      "CompraFornecedorCreate": {
+        "properties": {
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemCompraFornecedorInput"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Itens",
+            "description": "Itens da compra"
+          },
+          "moeda": {
+            "$ref": "#/components/schemas/MoedaPagamento",
+            "description": "Moeda em que a compra foi feita (apenas registo, sem conversão — os valores já vêm em Kz)",
+            "default": "KZ"
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens"
+        ],
+        "title": "CompraFornecedorCreate"
+      },
+      "DividaCheckResponse": {
+        "properties": {
+          "tem_divida": {
+            "type": "boolean",
+            "title": "Tem Divida"
+          },
+          "dividas": {
+            "items": {
+              "$ref": "#/components/schemas/DividaResponse"
+            },
+            "type": "array",
+            "title": "Dividas",
+            "default": []
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido",
+            "default": 0
+          },
+          "mensagem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mensagem"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tem_divida"
+        ],
+        "title": "DividaCheckResponse"
+      },
+      "DividaExtratoItem": {
+        "properties": {
+          "divida_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Divida Id"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial da factura",
+            "examples": [1]
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "data_compra": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Compra"
+          },
+          "valor_total": {
+            "type": "number",
+            "title": "Valor Total"
+          },
+          "valor_pago": {
+            "type": "number",
+            "title": "Valor Pago"
+          },
+          "saldo": {
+            "type": "number",
+            "title": "Saldo"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "pagamentos": {
+            "items": {
+              "$ref": "#/components/schemas/PagamentoDividaExtratoItem"
+            },
+            "type": "array",
+            "title": "Pagamentos",
+            "description": "Histórico de pagamentos feitos até zerar a dívida, cada um com sua moeda"
+          }
+        },
+        "type": "object",
+        "required": [
+          "divida_id",
+          "data_compra",
+          "valor_total",
+          "valor_pago",
+          "saldo",
+          "status"
+        ],
+        "title": "DividaExtratoItem"
+      },
+      "DividaFornecedorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial da factura",
+            "examples": [1]
+          },
+          "fornecedor_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Fornecedor Id"
+          },
+          "fornecedor_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fornecedor Nome"
+          },
+          "produto_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "quantidade": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quantidade"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemCompraFornecedorResponse"
+            },
+            "type": "array",
+            "title": "Itens",
+            "description": "Itens da compra (um ou mais produtos)"
+          },
+          "moeda_compra": {
+            "type": "string",
+            "title": "Moeda Compra",
+            "description": "Moeda em que a compra foi feita",
+            "examples": [
+              "KZ"
+            ]
+          },
+          "valor_total": {
+            "type": "number",
+            "title": "Valor Total"
+          },
+          "valor_pago": {
+            "type": "number",
+            "title": "Valor Pago"
+          },
+          "saldo": {
+            "type": "number",
+            "title": "Saldo",
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "pagamentos": {
+            "items": {
+              "$ref": "#/components/schemas/PagamentoDividaFornecedorResponse"
+            },
+            "type": "array",
+            "title": "Pagamentos",
+            "description": "Histórico de pagamentos, cada um com sua moeda"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "pago_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pago Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "fornecedor_id",
+          "moeda_compra",
+          "valor_total",
+          "valor_pago",
+          "status",
+          "criado_em"
+        ],
+        "title": "DividaFornecedorResponse"
+      },
+      "DividaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial da factura",
+            "examples": [1]
+          },
+          "numero_formatado": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Formatado",
+            "description": "Número da factura formatado, ex: FT0001",
+            "examples": [
+              "FT0001"
+            ]
+          },
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id"
+          },
+          "cliente_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Nome"
+          },
+          "venda_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Venda Id"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "valor_total": {
+            "type": "number",
+            "title": "Valor Total"
+          },
+          "valor_pago": {
+            "type": "number",
+            "title": "Valor Pago"
+          },
+          "saldo": {
+            "type": "number",
+            "title": "Saldo",
+            "default": 0
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "pagamentos": {
+            "items": {
+              "$ref": "#/components/schemas/PagamentoDividaResponse"
+            },
+            "type": "array",
+            "title": "Pagamentos",
+            "description": "Histórico de pagamentos, cada um com sua moeda"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "pago_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pago Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "cliente_id",
+          "valor_total",
+          "valor_pago",
+          "status",
+          "criado_em"
+        ],
+        "title": "DividaResponse"
+      },
+      "ExtratoCliente": {
+        "properties": {
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id"
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido"
+          },
+          "dividas": {
+            "items": {
+              "$ref": "#/components/schemas/DividaExtratoItem"
+            },
+            "type": "array",
+            "title": "Dividas"
+          },
+          "prestacoes": {
+            "items": {
+              "$ref": "#/components/schemas/PrestacaoExtratoItem"
+            },
+            "type": "array",
+            "title": "Prestacoes"
+          },
+          "documentos": {
+            "items": {
+              "$ref": "#/components/schemas/app__schemas__relatorio__DocumentoExtratoItem"
+            },
+            "type": "array",
+            "title": "Documentos",
+            "description": "Histórico cronológico: cada dívida vira uma 'Factura' e cada pagamento vira um 'Recibo'"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_id",
+          "cliente_nome",
+          "total_devido"
+        ],
+        "title": "ExtratoCliente",
+        "example": {
+          "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+          "cliente_nome": "Carlos Filipe",
+          "dividas": [
+            {
+              "data_compra": "2026-07-01T10:00:00Z",
+              "divida_id": "c2f0129e-5bcf-4aa5-9ff5-a067067c9139",
+              "numero": 1,
+              "pagamentos": [
+                {
+                  "data_pagamento": "2026-07-05T09:00:00Z",
+                  "moeda": "KZ",
+                  "numero": 1,
+                  "valor": 5000
+                },
+                {
+                  "data_pagamento": "2026-07-10T14:00:00Z",
+                  "moeda": "USD",
+                  "numero": 2,
+                  "valor": 5000
+                }
+              ],
+              "produto_nome": "Arroz 5kg",
+              "saldo": 15000,
+              "status": "DIVIDA",
+              "valor_pago": 10000,
+              "valor_total": 25000
+            }
+          ],
+          "documentos": [
+            {
+              "data": "2026-07-01T10:00:00Z",
+              "id": "c2f0129e-5bcf-4aa5-9ff5-a067067c9139",
+              "numero": 1,
+              "produto_nome": "Arroz 5kg",
+              "tipo": "Factura",
+              "valor": 25000
+            },
+            {
+              "data": "2026-07-05T09:00:00Z",
+              "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+              "moeda": "KZ",
+              "numero": 1,
+              "produto_nome": "Arroz 5kg",
+              "tipo": "Recibo",
+              "valor": -5000
+            },
+            {
+              "data": "2026-07-10T14:00:00Z",
+              "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+              "moeda": "USD",
+              "numero": 2,
+              "produto_nome": "Arroz 5kg",
+              "tipo": "Recibo",
+              "valor": -5000
+            }
+          ],
+          "nif": "123456789",
+          "prestacoes": [
+            {
+              "data_compra": "2026-06-01T00:00:00Z",
+              "prestacao_id": "0a5ef24e-7c3d-4a9c-bd73-0ba322add65e",
+              "produto_nome": "Fogão 4 bocas",
+              "saldo": 60000,
+              "situacao": "PARCIAL",
+              "valor_pago": 30000,
+              "valor_total": 90000
+            }
+          ],
+          "telefone": "923456789",
+          "total_devido": 75000
+        }
+      },
+      "ExtratoFornecedor": {
+        "properties": {
+          "fornecedor_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Fornecedor Id"
+          },
+          "fornecedor_nome": {
+            "type": "string",
+            "title": "Fornecedor Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido"
+          },
+          "documentos": {
+            "items": {
+              "$ref": "#/components/schemas/app__schemas__fornecedor__DocumentoExtratoItem"
+            },
+            "type": "array",
+            "title": "Documentos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fornecedor_id",
+          "fornecedor_nome",
+          "total_devido"
+        ],
+        "title": "ExtratoFornecedor",
+        "example": {
+          "documentos": [
+            {
+              "data": "2026-07-17T13:41:30Z",
+              "id": "bcce753e-4a2a-48dd-8837-9e24bcd86f59",
+              "moeda": "KZ",
+              "numero": 1,
+              "produto_nome": "CHOCOLAT AKSU 12 X 1000g",
+              "tipo": "Factura",
+              "valor": 300
+            },
+            {
+              "data": "2026-07-17T14:00:00Z",
+              "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+              "moeda": "USD",
+              "numero": 1,
+              "produto_nome": "CHOCOLAT AKSU 12 X 1000g",
+              "tipo": "Recibo",
+              "valor": -40
+            }
+          ],
+          "fornecedor_id": "6ae62e88-eb54-4d65-9e8e-865f75ac53c5",
+          "fornecedor_nome": "Diakubama Paulo",
+          "nif": "123456789",
+          "telefone": "923456789",
+          "total_devido": 210
+        }
+      },
+      "FaturaCreate": {
+        "properties": {
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id",
+            "description": "ID do cliente"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/FaturaItemCreate"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Itens",
+            "description": "Itens da fatura"
+          },
+          "desconto_percentual": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desconto Percentual",
+            "description": "Desconto percentual sobre total com IVA",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_id",
+          "itens"
+        ],
+        "title": "FaturaCreate"
+      },
+      "FaturaItemCreate": {
+        "properties": {
+          "produto_nome": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Produto Nome",
+            "description": "Nome do produto (literal, sem FK)"
+          },
+          "quantidade": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Quantidade",
+            "description": "Quantidade"
+          },
+          "preco_unitario": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Preco Unitario",
+            "description": "Preço unitário em Kz"
+          },
+          "iva": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Iva",
+            "description": "Percentual de IVA (0-100)",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_nome",
+          "quantidade",
+          "preco_unitario"
+        ],
+        "title": "FaturaItemCreate"
+      },
+      "FaturaItemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome"
+          },
+          "quantidade": {
+            "type": "number",
+            "title": "Quantidade"
+          },
+          "preco_unitario": {
+            "type": "number",
+            "title": "Preco Unitario"
+          },
+          "iva": {
+            "type": "number",
+            "title": "Iva"
+          },
+          "subtotal": {
+            "type": "number",
+            "title": "Subtotal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_nome",
+          "quantidade",
+          "preco_unitario",
+          "iva",
+          "subtotal"
+        ],
+        "title": "FaturaItemResponse"
+      },
+      "FaturaListaResponse": {
+        "properties": {
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "faturas": {
+            "items": {
+              "$ref": "#/components/schemas/FaturaResumida"
+            },
+            "type": "array",
+            "title": "Faturas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total",
+          "faturas"
+        ],
+        "title": "FaturaListaResponse"
+      },
+      "FaturaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          },
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id"
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "cliente_nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Nif"
+          },
+          "total_sem_iva": {
+            "type": "number",
+            "title": "Total Sem Iva"
+          },
+          "total_iva": {
+            "type": "number",
+            "title": "Total Iva"
+          },
+          "total_desconto": {
+            "type": "number",
+            "title": "Total Desconto"
+          },
+          "total_final": {
+            "type": "number",
+            "title": "Total Final"
+          },
+          "emitida_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Emitida Em"
+          },
+          "cancelada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada Em"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/FaturaItemResponse"
+            },
+            "type": "array",
+            "title": "Itens",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "numero",
+          "cliente_id",
+          "cliente_nome",
+          "total_sem_iva",
+          "total_iva",
+          "total_desconto",
+          "total_final",
+          "emitida_em"
+        ],
+        "title": "FaturaResponse"
+      },
+      "FaturaResumida": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "total_final": {
+            "type": "number",
+            "title": "Total Final"
+          },
+          "emitida_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Emitida Em"
+          },
+          "cancelada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada Em"
+          },
+          "total_itens": {
+            "type": "integer",
+            "title": "Total Itens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "numero",
+          "cliente_nome",
+          "total_final",
+          "emitida_em",
+          "total_itens"
+        ],
+        "title": "FaturaResumida"
+      },
+      "FornecedorCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Nome",
+            "examples": [
+              "Distribuidora Central"
+            ]
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone",
+            "examples": [
+              "923456789"
+            ]
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "FornecedorCreate"
+      },
+      "FornecedorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone"
+          },
+          "nif": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nif"
+          },
+          "endereco": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endereco"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "criado_em"
+        ],
+        "title": "FornecedorResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ItemCompraFornecedorInput": {
+        "properties": {
+          "produto_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Id",
+            "description": "Produto já cadastrado. Se omitir, usa produto_nome (produto livre, sem stock)"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome",
+            "description": "Nome do produto, obrigatório só se produto_id não for informado (produto livre — não mexe em stock)",
+            "examples": [
+              "Peça avulsa sem cadastro"
+            ]
+          },
+          "quantidade": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "title": "Quantidade",
+            "examples": [50]
+          },
+          "preco_unitario": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Preco Unitario",
+            "description": "Preço de custo unitário (Kz)",
+            "examples": [1000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade",
+          "preco_unitario"
+        ],
+        "title": "ItemCompraFornecedorInput"
+      },
+      "ItemCompraFornecedorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "produto_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade"
+          },
+          "preco_unitario": {
+            "type": "number",
+            "title": "Preco Unitario"
+          },
+          "subtotal": {
+            "type": "number",
+            "title": "Subtotal"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_nome",
+          "quantidade",
+          "preco_unitario",
+          "subtotal"
+        ],
+        "title": "ItemCompraFornecedorResponse"
+      },
+      "ItemVendaInput": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "description": "ID do produto"
+          },
+          "quantidade": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Quantidade",
+            "description": "Quantidade",
+            "examples": [2]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "quantidade"
+        ],
+        "title": "ItemVendaInput"
+      },
+      "LancamentoCreate": {
+        "properties": {
+          "data_movimento": {
+            "type": "string",
+            "format": "date",
+            "title": "Data Movimento",
+            "description": "Data do movimento",
+            "examples": [
+              "2026-06-01"
+            ]
+          },
+          "descricao": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Descricao",
+            "description": "Descrição do lançamento",
+            "examples": [
+              "Venda produto"
+            ]
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "ENTRADA ou SAIDA",
+            "examples": [
+              "ENTRADA"
+            ]
+          },
+          "valor": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Valor",
+            "description": "Valor do movimento",
+            "examples": [100000]
+          },
+          "categoria": {
+            "type": "string",
+            "title": "Categoria",
+            "description": "Categoria do lançamento",
+            "examples": [
+              "VENDA",
+              "SALARIO",
+              "RENDA",
+              "ENERGIA",
+              "COMPRA_STOCK"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "data_movimento",
+          "descricao",
+          "tipo",
+          "valor",
+          "categoria"
+        ],
+        "title": "LancamentoCreate",
+        "example": {
+          "categoria": "VENDA",
+          "data_movimento": "2026-06-01",
+          "descricao": "Venda produto",
+          "tipo": "ENTRADA",
+          "valor": 100000
+        }
+      },
+      "LancamentoListaResponse": {
+        "properties": {
+          "total_lancamentos": {
+            "type": "integer",
+            "title": "Total Lancamentos"
+          },
+          "total_entradas": {
+            "type": "number",
+            "title": "Total Entradas"
+          },
+          "total_saidas": {
+            "type": "number",
+            "title": "Total Saidas"
+          },
+          "saldo_periodo": {
+            "type": "number",
+            "title": "Saldo Periodo"
+          },
+          "lancamentos": {
+            "items": {
+              "$ref": "#/components/schemas/LancamentoResponse"
+            },
+            "type": "array",
+            "title": "Lancamentos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_lancamentos",
+          "total_entradas",
+          "total_saidas",
+          "saldo_periodo",
+          "lancamentos"
+        ],
+        "title": "LancamentoListaResponse",
+        "example": {
+          "lancamentos": [
+            {
+              "categoria": "VENDA",
+              "criado_em": "2026-06-01T10:00:00Z",
+              "data_movimento": "2026-06-01",
+              "descricao": "Venda produto",
+              "id": "uuid",
+              "tipo": "ENTRADA",
+              "valor": 500000
+            }
+          ],
+          "saldo_periodo": 250000,
+          "total_entradas": 500000,
+          "total_lancamentos": 2,
+          "total_saidas": 250000
+        }
+      },
+      "LancamentoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "data_movimento": {
+            "type": "string",
+            "format": "date",
+            "title": "Data Movimento"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "categoria": {
+            "type": "string",
+            "title": "Categoria"
+          },
+          "venda_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Venda Id"
+          },
+          "prestacao_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prestacao Id"
+          },
+          "pagamento_prestacao_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pagamento Prestacao Id"
+          },
+          "divida_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Divida Id"
+          },
+          "movimento_stock_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Movimento Stock Id"
+          },
+          "periodo_referencia": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Periodo Referencia"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "data_movimento",
+          "descricao",
+          "tipo",
+          "valor",
+          "categoria",
+          "criado_em"
+        ],
+        "title": "LancamentoResponse"
+      },
+      "LoginRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "examples": [
+              "admin@bisness.com"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "examples": [
+              "admin123"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "MensagemIaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "sessao_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Sessao Id"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "sessao_id",
+          "role",
+          "content",
+          "criado_em"
+        ],
+        "title": "MensagemIaResponse",
+        "example": {
+          "content": "Qual foi o produto mais vendido este mês?",
+          "criado_em": "2026-06-27T12:05:00Z",
+          "id": "550e8400-e29b-41d4-a716-446655440001",
+          "role": "user",
+          "sessao_id": "550e8400-e29b-41d4-a716-446655440000"
+        }
+      },
+      "MetaCreate": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "1edca05e-c4e7-490f-a90a-164a28ade8ad"
+            ]
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio",
+            "description": "Início do período da meta",
+            "examples": [
+              "2026-07-01T00:00:00Z"
+            ]
+          },
+          "data_fim": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Fim",
+            "description": "Fim do período da meta",
+            "examples": [
+              "2026-07-31T23:59:59Z"
+            ]
+          },
+          "meta_receita": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Meta Receita",
+            "examples": [500000]
+          },
+          "meta_lucro": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Meta Lucro",
+            "examples": [150000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "data_inicio",
+          "data_fim",
+          "meta_receita",
+          "meta_lucro"
+        ],
+        "title": "MetaCreate"
+      },
+      "MetaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio"
+          },
+          "data_fim": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Fim"
+          },
+          "meta_receita": {
+            "type": "number",
+            "title": "Meta Receita"
+          },
+          "meta_lucro": {
+            "type": "number",
+            "title": "Meta Lucro"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "atualizado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Atualizado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_id",
+          "data_inicio",
+          "data_fim",
+          "meta_receita",
+          "meta_lucro",
+          "criado_em",
+          "atualizado_em"
+        ],
+        "title": "MetaResponse"
+      },
+      "MoedaPagamento": {
+        "type": "string",
+        "enum": [
+          "KZ",
+          "AOA",
+          "USD",
+          "EUR"
+        ],
+        "title": "MoedaPagamento"
+      },
+      "MovimentoCreate": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "description": "ID do produto"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "ENTRADA ou SAIDA",
+            "examples": [
+              "ENTRADA",
+              "SAIDA"
+            ]
+          },
+          "quantidade": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Quantidade",
+            "description": "Quantidade",
+            "examples": [20]
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo",
+            "description": "Motivo do movimento",
+            "examples": [
+              "Reposição de stock"
+            ]
+          },
+          "preco_unitario": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco Unitario",
+            "description": "Preço de custo (entrada)",
+            "examples": [1500]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "tipo",
+          "quantidade"
+        ],
+        "title": "MovimentoCreate"
+      },
+      "MovimentoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade"
+          },
+          "motivo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Motivo"
+          },
+          "preco_unitario": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco Unitario"
+          },
+          "utilizador_nome": {
+            "type": "string",
+            "title": "Utilizador Nome"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_id",
+          "produto_nome",
+          "tipo",
+          "quantidade",
+          "motivo",
+          "preco_unitario",
+          "utilizador_nome",
+          "criado_em"
+        ],
+        "title": "MovimentoResponse"
+      },
+      "PagamentoCreate": {
+        "properties": {
+          "valor": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Valor",
+            "description": "Valor do pagamento",
+            "examples": [25000]
+          },
+          "data_pagamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Pagamento",
+            "description": "Data do pagamento",
+            "examples": [
+              "2026-07-27T14:30:00Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "valor",
+          "data_pagamento"
+        ],
+        "title": "PagamentoCreate",
+        "example": {
+          "data_pagamento": "2026-07-27T14:30:00Z",
+          "valor": 25000
+        }
+      },
+      "PagamentoDividaExtratoItem": {
+        "properties": {
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial do recibo",
+            "examples": [1]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "examples": [5000]
+          },
+          "moeda": {
+            "type": "string",
+            "title": "Moeda",
+            "examples": [
+              "KZ"
+            ]
+          },
+          "data_pagamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Pagamento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valor",
+          "moeda",
+          "data_pagamento"
+        ],
+        "title": "PagamentoDividaExtratoItem"
+      },
+      "PagamentoDividaFornecedorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial do recibo",
+            "examples": [1]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "examples": [40]
+          },
+          "moeda": {
+            "type": "string",
+            "title": "Moeda",
+            "examples": [
+              "USD"
+            ]
+          },
+          "data_pagamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Pagamento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "valor",
+          "moeda",
+          "data_pagamento"
+        ],
+        "title": "PagamentoDividaFornecedorResponse"
+      },
+      "PagamentoDividaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "description": "Número sequencial do recibo",
+            "examples": [1]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "examples": [5000]
+          },
+          "moeda": {
+            "type": "string",
+            "title": "Moeda",
+            "examples": [
+              "KZ"
+            ]
+          },
+          "data_pagamento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Pagamento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "valor",
+          "moeda",
+          "data_pagamento"
+        ],
+        "title": "PagamentoDividaResponse"
+      },
+      "PagamentoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "examples": [
+              "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            ]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "examples": [25000]
+          },
+          "data_vencimento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Vencimento",
+            "examples": [
+              "2026-07-01T00:00:00Z"
+            ]
+          },
+          "data_pagamento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Pagamento",
+            "examples": [
+              "2026-07-01T14:30:00Z"
+            ]
+          },
+          "pago": {
+            "type": "boolean",
+            "title": "Pago",
+            "examples": [true]
+          },
+          "multa": {
+            "type": "number",
+            "title": "Multa",
+            "description": "Multa por atraso aplicada",
+            "default": 0,
+            "examples": [1250]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "valor",
+          "data_vencimento",
+          "data_pagamento",
+          "pago"
+        ],
+        "title": "PagamentoResponse"
+      },
+      "PagarDividaFornecedorRequest": {
+        "properties": {
+          "divida_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Divida Id",
+            "description": "ID da dívida a pagar"
+          },
+          "valor": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Valor",
+            "description": "Valor a pagar ao fornecedor (já em Kz)"
+          },
+          "moeda": {
+            "$ref": "#/components/schemas/MoedaPagamento",
+            "description": "Moeda em que o pagamento foi feito (apenas registo, sem conversão)",
+            "default": "KZ"
+          }
+        },
+        "type": "object",
+        "required": [
+          "divida_id",
+          "valor"
+        ],
+        "title": "PagarDividaFornecedorRequest"
+      },
+      "PagarDividaRequest": {
+        "properties": {
+          "valor": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Valor",
+            "description": "Valor a pagar"
+          },
+          "moeda": {
+            "$ref": "#/components/schemas/MoedaPagamento",
+            "description": "Moeda em que o pagamento foi feito (apenas registo, sem conversão)",
+            "default": "KZ"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valor"
+        ],
+        "title": "PagarDividaRequest"
+      },
+      "PerformanceResponse": {
+        "properties": {
+          "resumo": {
+            "$ref": "#/components/schemas/ResumoPerformance"
+          },
+          "valores": {
+            "$ref": "#/components/schemas/ValoresPerformance"
+          },
+          "top_clientes": {
+            "items": {
+              "$ref": "#/components/schemas/TopCliente"
+            },
+            "type": "array",
+            "title": "Top Clientes",
+            "default": []
+          },
+          "tendencia": {
+            "items": {
+              "$ref": "#/components/schemas/TendenciaDia"
+            },
+            "type": "array",
+            "title": "Tendencia",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "resumo",
+          "valores"
+        ],
+        "title": "PerformanceResponse"
+      },
+      "PerguntaRequest": {
+        "properties": {
+          "mensagem": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Mensagem",
+            "description": "Pergunta do gestor",
+            "examples": [
+              "Qual foi o produto mais vendido este mês?"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "mensagem"
+        ],
+        "title": "PerguntaRequest",
+        "example": {
+          "mensagem": "Qual foi o produto mais vendido este mês?"
+        }
+      },
+      "PerguntaResponse": {
+        "properties": {
+          "resposta": {
+            "type": "string",
+            "title": "Resposta"
+          },
+          "mensagem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Mensagem Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "resposta",
+          "mensagem_id"
+        ],
+        "title": "PerguntaResponse",
+        "example": {
+          "mensagem_id": "550e8400-e29b-41d4-a716-446655440002",
+          "resposta": "O produto mais vendido este mês foi a Coca-Cola 2L com 120 unidades."
+        }
+      },
+      "PrestacaoCreate": {
+        "properties": {
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id",
+            "description": "ID do cliente",
+            "examples": [
+              "af11fa27-2bbe-4834-acb3-4a249c0f5ce4"
+            ]
+          },
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "description": "ID do produto financiado",
+            "examples": [
+              "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            ]
+          },
+          "valor_total": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "title": "Valor Total",
+            "description": "Valor total financiado",
+            "examples": [150000]
+          },
+          "numero_prestacoes": {
+            "type": "integer",
+            "maximum": 48,
+            "minimum": 1,
+            "title": "Numero Prestacoes",
+            "description": "Número de prestações",
+            "examples": [6]
+          },
+          "data_inicio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Inicio",
+            "description": "Data do primeiro vencimento (omitir para usar data atual)",
+            "examples": [
+              "2026-07-01T00:00:00Z"
+            ]
+          },
+          "taxa_multa": {
+            "type": "number",
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Taxa Multa",
+            "description": "Percentagem de multa por atraso por parcela",
+            "default": 0,
+            "examples": [5]
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_id",
+          "produto_id",
+          "valor_total",
+          "numero_prestacoes"
+        ],
+        "title": "PrestacaoCreate",
+        "example": {
+          "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+          "data_inicio": "2026-07-01T00:00:00Z",
+          "numero_prestacoes": 6,
+          "produto_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+          "taxa_multa": 5,
+          "valor_total": 150000
+        }
+      },
+      "PrestacaoExtratoItem": {
+        "properties": {
+          "prestacao_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Prestacao Id"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "data_compra": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Compra"
+          },
+          "valor_total": {
+            "type": "number",
+            "title": "Valor Total"
+          },
+          "valor_pago": {
+            "type": "number",
+            "title": "Valor Pago"
+          },
+          "saldo": {
+            "type": "number",
+            "title": "Saldo"
+          },
+          "situacao": {
+            "type": "string",
+            "title": "Situacao"
+          }
+        },
+        "type": "object",
+        "required": [
+          "prestacao_id",
+          "data_compra",
+          "valor_total",
+          "valor_pago",
+          "saldo",
+          "situacao"
+        ],
+        "title": "PrestacaoExtratoItem"
+      },
+      "PrestacaoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "examples": [
+              "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            ]
+          },
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "default": "",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id",
+            "examples": [
+              "af11fa27-2bbe-4834-acb3-4a249c0f5ce4"
+            ]
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome",
+            "default": "",
+            "examples": [
+              "Ana Cristina"
+            ]
+          },
+          "valor_total": {
+            "type": "number",
+            "title": "Valor Total",
+            "examples": [150000]
+          },
+          "valor_pago": {
+            "type": "number",
+            "title": "Valor Pago",
+            "examples": [50000]
+          },
+          "saldo": {
+            "type": "number",
+            "title": "Saldo",
+            "description": "Valor em aberto",
+            "examples": [100000]
+          },
+          "numero_prestacoes": {
+            "type": "integer",
+            "title": "Numero Prestacoes",
+            "examples": [6]
+          },
+          "taxa_multa": {
+            "type": "number",
+            "title": "Taxa Multa",
+            "description": "Percentagem de multa por atraso",
+            "default": 0,
+            "examples": [5]
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio",
+            "description": "Data do primeiro vencimento",
+            "examples": [
+              "2026-07-01T00:00:00Z"
+            ]
+          },
+          "situacao": {
+            "type": "string",
+            "title": "Situacao",
+            "examples": [
+              "PARCIAL"
+            ]
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em",
+            "examples": [
+              "2026-06-27T14:30:00Z"
+            ]
+          },
+          "pagamentos": {
+            "items": {
+              "$ref": "#/components/schemas/PagamentoResponse"
+            },
+            "type": "array",
+            "title": "Pagamentos",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_id",
+          "cliente_id",
+          "valor_total",
+          "valor_pago",
+          "saldo",
+          "numero_prestacoes",
+          "data_inicio",
+          "situacao",
+          "criado_em"
+        ],
+        "title": "PrestacaoResponse",
+        "example": {
+          "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+          "cliente_nome": "Ana Cristina",
+          "criado_em": "2026-06-27T14:30:00Z",
+          "data_inicio": "2026-07-01T00:00:00Z",
+          "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          "numero_prestacoes": 6,
+          "pagamentos": [
+            {
+              "data_pagamento": "2026-07-01T14:30:00Z",
+              "data_vencimento": "2026-07-01T00:00:00Z",
+              "id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+              "multa": 0,
+              "pago": true,
+              "valor": 25000
+            },
+            {
+              "data_vencimento": "2026-08-01T00:00:00Z",
+              "id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+              "multa": 0,
+              "pago": false,
+              "valor": 25000
+            }
+          ],
+          "produto_id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+          "produto_nome": "Arroz Agulha 5kg",
+          "saldo": 100000,
+          "situacao": "PARCIAL",
+          "taxa_multa": 5,
+          "valor_pago": 50000,
+          "valor_total": 150000
+        }
+      },
+      "ProdutoCreate": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "maxLength": 100,
+            "title": "Nome",
+            "description": "Nome do produto",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao",
+            "description": "Descrição detalhada"
+          },
+          "codigo_barras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Barras",
+            "description": "Código de barras",
+            "examples": [
+              "7891234567890"
+            ]
+          },
+          "preco_custo": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Preco Custo",
+            "description": "Preço de compra (Kz)",
+            "default": 0,
+            "examples": [1500]
+          },
+          "preco_venda": {
+            "type": "number",
+            "minimum": 0,
+            "title": "Preco Venda",
+            "description": "Preço de venda (Kz)",
+            "default": 0,
+            "examples": [2500]
+          },
+          "iva": {
+            "type": "number",
+            "title": "Iva",
+            "description": "Taxa de IVA (%)",
+            "default": 14,
+            "examples": [14]
+          },
+          "stock_atual": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Stock Atual",
+            "description": "Quantidade em stock",
+            "default": 0,
+            "examples": [50]
+          },
+          "stock_minimo": {
+            "type": "integer",
+            "minimum": 0,
+            "title": "Stock Minimo",
+            "description": "Stock mínimo para alerta",
+            "default": 0,
+            "examples": [10]
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome"
+        ],
+        "title": "ProdutoCreate"
+      },
+      "ProdutoResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "codigo_barras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Barras"
+          },
+          "preco_custo": {
+            "type": "number",
+            "title": "Preco Custo"
+          },
+          "preco_venda": {
+            "type": "number",
+            "title": "Preco Venda"
+          },
+          "iva": {
+            "type": "number",
+            "title": "Iva"
+          },
+          "margem_lucro": {
+            "type": "number",
+            "title": "Margem Lucro",
+            "description": "Margem de lucro (%)"
+          },
+          "preco_com_iva": {
+            "type": "number",
+            "title": "Preco Com Iva",
+            "description": "Preço final com IVA"
+          },
+          "stock_atual": {
+            "type": "integer",
+            "title": "Stock Atual"
+          },
+          "stock_minimo": {
+            "type": "integer",
+            "title": "Stock Minimo"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "descricao",
+          "codigo_barras",
+          "preco_custo",
+          "preco_venda",
+          "iva",
+          "margem_lucro",
+          "preco_com_iva",
+          "stock_atual",
+          "stock_minimo",
+          "ativo",
+          "criado_em"
+        ],
+        "title": "ProdutoResponse"
+      },
+      "ProdutoStockBaixo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "codigo_barras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Barras"
+          },
+          "preco_custo": {
+            "type": "number",
+            "title": "Preco Custo"
+          },
+          "preco_venda": {
+            "type": "number",
+            "title": "Preco Venda"
+          },
+          "iva": {
+            "type": "number",
+            "title": "Iva"
+          },
+          "margem_lucro": {
+            "type": "number",
+            "title": "Margem Lucro",
+            "description": "Margem de lucro (%)"
+          },
+          "preco_com_iva": {
+            "type": "number",
+            "title": "Preco Com Iva",
+            "description": "Preço final com IVA"
+          },
+          "stock_atual": {
+            "type": "integer",
+            "title": "Stock Atual"
+          },
+          "stock_minimo": {
+            "type": "integer",
+            "title": "Stock Minimo"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "diferenca": {
+            "type": "integer",
+            "title": "Diferenca",
+            "description": "Quantidade em falta"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "descricao",
+          "codigo_barras",
+          "preco_custo",
+          "preco_venda",
+          "iva",
+          "margem_lucro",
+          "preco_com_iva",
+          "stock_atual",
+          "stock_minimo",
+          "ativo",
+          "criado_em",
+          "diferenca"
+        ],
+        "title": "ProdutoStockBaixo"
+      },
+      "ProdutoUpdate": {
+        "properties": {
+          "nome": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nome"
+          },
+          "descricao": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descricao"
+          },
+          "codigo_barras": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Barras"
+          },
+          "preco_custo": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco Custo"
+          },
+          "preco_venda": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preco Venda"
+          },
+          "iva": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Iva"
+          },
+          "stock_minimo": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Minimo"
+          }
+        },
+        "type": "object",
+        "title": "ProdutoUpdate"
+      },
+      "ProdutoValorizacao": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "1edca05e-c4e7-490f-a90a-164a28ade8ad"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "stock_atual": {
+            "type": "integer",
+            "title": "Stock Atual",
+            "examples": [120]
+          },
+          "preco_custo_unitario": {
+            "type": "number",
+            "title": "Preco Custo Unitario",
+            "examples": [2500]
+          },
+          "valor_em_stock_custo": {
+            "type": "number",
+            "title": "Valor Em Stock Custo",
+            "description": "stock_atual × preco_custo_unitario",
+            "examples": [300000]
+          },
+          "preco_venda_unitario": {
+            "type": "number",
+            "title": "Preco Venda Unitario",
+            "examples": [3500]
+          },
+          "valor_em_stock_venda": {
+            "type": "number",
+            "title": "Valor Em Stock Venda",
+            "description": "stock_atual × preco_venda_unitario",
+            "examples": [420000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "produto_nome",
+          "stock_atual",
+          "preco_custo_unitario",
+          "valor_em_stock_custo",
+          "preco_venda_unitario",
+          "valor_em_stock_venda"
+        ],
+        "title": "ProdutoValorizacao"
+      },
+      "RegisterRequest": {
+        "properties": {
+          "nome": {
+            "type": "string",
+            "title": "Nome",
+            "description": "Nome completo",
+            "examples": [
+              "Maria Silva"
+            ]
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "description": "Email de acesso",
+            "examples": [
+              "maria@bisness.com"
+            ]
+          },
+          "password": {
+            "type": "string",
+            "title": "Password",
+            "description": "Password de acesso",
+            "examples": [
+              "123456"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Role do utilizador",
+            "default": "OPERADOR",
+            "examples": [
+              "OPERADOR",
+              "GESTOR"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "nome",
+          "email",
+          "password"
+        ],
+        "title": "RegisterRequest"
+      },
+      "RelatorioClienteFiel": {
+        "properties": {
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id",
+            "examples": [
+              "af11fa27-2bbe-4834-acb3-4a249c0f5ce4"
+            ]
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome",
+            "examples": [
+              "Ana Cristina"
+            ]
+          },
+          "total_vendas": {
+            "type": "integer",
+            "title": "Total Vendas",
+            "examples": [22]
+          },
+          "total_gasto": {
+            "type": "number",
+            "title": "Total Gasto",
+            "examples": [228000]
+          },
+          "nivel": {
+            "type": "string",
+            "title": "Nivel",
+            "description": "BRONZE/PRATA/OURO",
+            "examples": [
+              "OURO"
+            ]
+          },
+          "ultima_compra": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ultima Compra",
+            "examples": [
+              "2026-06-27T14:30:00Z"
+            ]
+          },
+          "media_por_venda": {
+            "type": "number",
+            "title": "Media Por Venda",
+            "examples": [10363.64]
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_id",
+          "cliente_nome",
+          "total_vendas",
+          "total_gasto",
+          "nivel",
+          "ultima_compra",
+          "media_por_venda"
+        ],
+        "title": "RelatorioClienteFiel",
+        "example": {
+          "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+          "cliente_nome": "Ana Cristina",
+          "media_por_venda": 10363.64,
+          "nivel": "OURO",
+          "total_gasto": 228000,
+          "total_vendas": 22,
+          "ultima_compra": "2026-06-27T14:30:00Z"
+        }
+      },
+      "RelatorioClienteInativo": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id",
+            "examples": [
+              "af11fa27-2bbe-4834-acb3-4a249c0f5ce4"
+            ]
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome",
+            "examples": [
+              "Carlos Filipe"
+            ]
+          },
+          "telefone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Telefone",
+            "examples": [
+              "999888777"
+            ]
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email",
+            "examples": [
+              "carlos@email.com"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "telefone",
+          "email"
+        ],
+        "title": "RelatorioClienteInativo",
+        "example": {
+          "email": "carlos@email.com",
+          "id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+          "nome": "Carlos Filipe",
+          "telefone": "999888777"
+        }
+      },
+      "RelatorioLucroProduto": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "1edca05e-c4e7-490f-a90a-164a28ade8ad"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "quantidade_vendida": {
+            "type": "integer",
+            "title": "Quantidade Vendida",
+            "examples": [120]
+          },
+          "total_receita": {
+            "type": "number",
+            "title": "Total Receita",
+            "examples": [384000]
+          },
+          "total_custo": {
+            "type": "number",
+            "title": "Total Custo",
+            "examples": [288000]
+          },
+          "lucro": {
+            "type": "number",
+            "title": "Lucro",
+            "examples": [96000]
+          },
+          "margem_percentual": {
+            "type": "number",
+            "title": "Margem Percentual",
+            "description": "Lucro sobre o custo, em %",
+            "examples": [33.33]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "produto_nome",
+          "quantidade_vendida",
+          "total_receita",
+          "total_custo",
+          "lucro",
+          "margem_percentual"
+        ],
+        "title": "RelatorioLucroProduto",
+        "example": {
+          "lucro": 96000,
+          "margem_percentual": 33.33,
+          "produto_id": "1edca05e-c4e7-490f-a90a-164a28ade8ad",
+          "produto_nome": "Arroz Agulha 5kg",
+          "quantidade_vendida": 120,
+          "total_custo": 288000,
+          "total_receita": 384000
+        }
+      },
+      "RelatorioMetaProduto": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "1edca05e-c4e7-490f-a90a-164a28ade8ad"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio",
+            "examples": [
+              "2026-07-01T00:00:00Z"
+            ]
+          },
+          "data_fim": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Fim",
+            "examples": [
+              "2026-07-31T23:59:59Z"
+            ]
+          },
+          "meta_receita": {
+            "type": "number",
+            "title": "Meta Receita",
+            "examples": [500000]
+          },
+          "meta_lucro": {
+            "type": "number",
+            "title": "Meta Lucro",
+            "examples": [150000]
+          },
+          "unidades_vendidas": {
+            "type": "integer",
+            "title": "Unidades Vendidas",
+            "examples": [65]
+          },
+          "preco_custo_unitario": {
+            "type": "number",
+            "title": "Preco Custo Unitario",
+            "description": "Custo de compra de uma unidade (mais recente)",
+            "examples": [2500]
+          },
+          "custo_total": {
+            "type": "number",
+            "title": "Custo Total",
+            "examples": [162500]
+          },
+          "receita_arrecadada": {
+            "type": "number",
+            "title": "Receita Arrecadada",
+            "examples": [325000]
+          },
+          "lucro_realizado": {
+            "type": "number",
+            "title": "Lucro Realizado",
+            "examples": [97500]
+          },
+          "receita_restante": {
+            "type": "number",
+            "title": "Receita Restante",
+            "examples": [175000]
+          },
+          "lucro_restante": {
+            "type": "number",
+            "title": "Lucro Restante",
+            "examples": [52500]
+          },
+          "percentual_meta_receita": {
+            "type": "number",
+            "title": "Percentual Meta Receita",
+            "examples": [65]
+          },
+          "percentual_meta_lucro": {
+            "type": "number",
+            "title": "Percentual Meta Lucro",
+            "examples": [65]
+          },
+          "lucro_medio_por_unidade": {
+            "type": "number",
+            "title": "Lucro Medio Por Unidade",
+            "examples": [1500]
+          },
+          "unidades_faltantes_estimadas": {
+            "type": "integer",
+            "title": "Unidades Faltantes Estimadas",
+            "description": "Estimativa de unidades a vender para bater a meta de lucro",
+            "examples": [35]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "produto_nome",
+          "data_inicio",
+          "data_fim",
+          "meta_receita",
+          "meta_lucro",
+          "unidades_vendidas",
+          "preco_custo_unitario",
+          "custo_total",
+          "receita_arrecadada",
+          "lucro_realizado",
+          "receita_restante",
+          "lucro_restante",
+          "percentual_meta_receita",
+          "percentual_meta_lucro",
+          "lucro_medio_por_unidade",
+          "unidades_faltantes_estimadas"
+        ],
+        "title": "RelatorioMetaProduto"
+      },
+      "RelatorioMetasProgresso": {
+        "properties": {
+          "produtos": {
+            "items": {
+              "$ref": "#/components/schemas/RelatorioMetaProduto"
+            },
+            "type": "array",
+            "title": "Produtos"
+          },
+          "totais": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TotaisMetas"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "title": "RelatorioMetasProgresso",
+        "example": {
+          "produtos": [
+            {
+              "custo_total": 162500,
+              "data_fim": "2026-07-31T23:59:59Z",
+              "data_inicio": "2026-07-01T00:00:00Z",
+              "lucro_medio_por_unidade": 1500,
+              "lucro_realizado": 97500,
+              "lucro_restante": 52500,
+              "meta_lucro": 150000,
+              "meta_receita": 500000,
+              "percentual_meta_lucro": 65,
+              "percentual_meta_receita": 65,
+              "preco_custo_unitario": 2500,
+              "produto_id": "1edca05e-c4e7-490f-a90a-164a28ade8ad",
+              "produto_nome": "Arroz Agulha 5kg",
+              "receita_arrecadada": 325000,
+              "receita_restante": 175000,
+              "unidades_faltantes_estimadas": 35,
+              "unidades_vendidas": 65
+            }
+          ],
+          "totais": {
+            "custo_total": 2730000,
+            "lucro_realizado_total": 1170000,
+            "meta_lucro_total": 1800000,
+            "meta_receita_total": 6000000,
+            "percentual_meta_lucro": 65,
+            "percentual_meta_receita": 65,
+            "quantidade_produtos": 12,
+            "receita_arrecadada_total": 3900000,
+            "unidades_vendidas_total": 780
+          }
+        }
+      },
+      "RelatorioProdutoVendido": {
+        "properties": {
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id",
+            "examples": [
+              "1edca05e-c4e7-490f-a90a-164a28ade8ad"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "quantidade_vendida": {
+            "type": "integer",
+            "title": "Quantidade Vendida",
+            "examples": [120]
+          },
+          "total_receita": {
+            "type": "number",
+            "title": "Total Receita",
+            "examples": [384000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "produto_id",
+          "produto_nome",
+          "quantidade_vendida",
+          "total_receita"
+        ],
+        "title": "RelatorioProdutoVendido",
+        "example": {
+          "produto_id": "1edca05e-c4e7-490f-a90a-164a28ade8ad",
+          "produto_nome": "Arroz Agulha 5kg",
+          "quantidade_vendida": 120,
+          "total_receita": 384000
+        }
+      },
+      "RelatorioVendaCliente": {
+        "properties": {
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id",
+            "examples": [
+              "af11fa27-2bbe-4834-acb3-4a249c0f5ce4"
+            ]
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome",
+            "examples": [
+              "Ana Cristina"
+            ]
+          },
+          "total_compras": {
+            "type": "integer",
+            "title": "Total Compras",
+            "examples": [22]
+          },
+          "total_gasto": {
+            "type": "number",
+            "title": "Total Gasto",
+            "examples": [228000]
+          },
+          "media_por_venda": {
+            "type": "number",
+            "title": "Media Por Venda",
+            "examples": [10363.64]
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_id",
+          "cliente_nome",
+          "total_compras",
+          "total_gasto",
+          "media_por_venda"
+        ],
+        "title": "RelatorioVendaCliente",
+        "example": {
+          "cliente_id": "af11fa27-2bbe-4834-acb3-4a249c0f5ce4",
+          "cliente_nome": "Ana Cristina",
+          "media_por_venda": 10363.64,
+          "total_compras": 22,
+          "total_gasto": 228000
+        }
+      },
+      "RelatorioVendasPeriodo": {
+        "properties": {
+          "data_inicio": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Inicio"
+          },
+          "data_fim": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Fim"
+          },
+          "total_vendas": {
+            "type": "integer",
+            "title": "Total Vendas",
+            "examples": [42]
+          },
+          "total_receita": {
+            "type": "number",
+            "title": "Total Receita",
+            "description": "Recebido de facto: vendas à vista + crédito já pago",
+            "examples": [158000.5]
+          },
+          "total_pendente": {
+            "type": "number",
+            "title": "Total Pendente",
+            "description": "Vendas a crédito ainda não pagas (dívida em aberto)",
+            "examples": [12000]
+          },
+          "total_sem_iva": {
+            "type": "number",
+            "title": "Total Sem Iva",
+            "examples": [120000]
+          },
+          "total_iva": {
+            "type": "number",
+            "title": "Total Iva",
+            "examples": [28800]
+          },
+          "total_descontos": {
+            "type": "number",
+            "title": "Total Descontos",
+            "examples": [5200]
+          },
+          "lucro_bruto": {
+            "type": "number",
+            "title": "Lucro Bruto",
+            "examples": [45000]
+          },
+          "ticket_medio": {
+            "type": "number",
+            "title": "Ticket Medio",
+            "description": "Valor médio por venda (recebido + pendente)",
+            "examples": [3761.92]
+          },
+          "produtos_mais_vendidos": {
+            "items": {
+              "$ref": "#/components/schemas/RelatorioProdutoVendido"
+            },
+            "type": "array",
+            "title": "Produtos Mais Vendidos",
+            "description": "Top 5 produtos mais vendidos no período"
+          }
+        },
+        "type": "object",
+        "required": [
+          "data_inicio",
+          "data_fim",
+          "total_vendas",
+          "total_receita",
+          "total_pendente",
+          "total_sem_iva",
+          "total_iva",
+          "total_descontos",
+          "lucro_bruto",
+          "ticket_medio"
+        ],
+        "title": "RelatorioVendasPeriodo",
+        "example": {
+          "data_fim": "2026-06-30T23:59:59Z",
+          "data_inicio": "2026-06-01T00:00:00Z",
+          "lucro_bruto": 45000,
+          "produtos_mais_vendidos": [
+            {
+              "produto_id": "1edca05e-c4e7-490f-a90a-164a28ade8ad",
+              "produto_nome": "Arroz Agulha 5kg",
+              "quantidade_vendida": 120,
+              "total_receita": 384000
+            }
+          ],
+          "ticket_medio": 3761.92,
+          "total_descontos": 5200,
+          "total_iva": 28800,
+          "total_pendente": 12000,
+          "total_receita": 158000.5,
+          "total_sem_iva": 120000,
+          "total_vendas": 42
+        }
+      },
+      "ResumoPerformance": {
+        "properties": {
+          "total_emitidas": {
+            "type": "integer",
+            "title": "Total Emitidas"
+          },
+          "total_canceladas": {
+            "type": "integer",
+            "title": "Total Canceladas"
+          },
+          "total_ativas": {
+            "type": "integer",
+            "title": "Total Ativas"
+          },
+          "taxa_cancelamento": {
+            "type": "number",
+            "title": "Taxa Cancelamento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_emitidas",
+          "total_canceladas",
+          "total_ativas",
+          "taxa_cancelamento"
+        ],
+        "title": "ResumoPerformance"
+      },
+      "SaldoResponse": {
+        "properties": {
+          "saldo_atual": {
+            "type": "number",
+            "title": "Saldo Atual"
+          },
+          "total_entradas": {
+            "type": "number",
+            "title": "Total Entradas"
+          },
+          "total_saidas": {
+            "type": "number",
+            "title": "Total Saidas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "saldo_atual",
+          "total_entradas",
+          "total_saidas"
+        ],
+        "title": "SaldoResponse",
+        "example": {
+          "saldo_atual": 150000,
+          "total_entradas": 700000,
+          "total_saidas": 550000
+        }
+      },
+      "SessaoIaCreate": {
+        "properties": {
+          "titulo": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Titulo",
+            "description": "Título da sessão",
+            "examples": [
+              "Análise de vendas junho"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "titulo"
+        ],
+        "title": "SessaoIaCreate",
+        "example": {
+          "titulo": "Análise de vendas junho"
+        }
+      },
+      "SessaoIaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "titulo": {
+            "type": "string",
+            "title": "Titulo"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "titulo",
+          "criado_em"
+        ],
+        "title": "SessaoIaResponse",
+        "example": {
+          "criado_em": "2026-06-27T12:00:00Z",
+          "id": "550e8400-e29b-41d4-a716-446655440000",
+          "titulo": "Análise de vendas junho"
+        }
+      },
+      "TendenciaDia": {
+        "properties": {
+          "dia": {
+            "type": "string",
+            "title": "Dia"
+          },
+          "faturas": {
+            "type": "integer",
+            "title": "Faturas"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dia",
+          "faturas",
+          "valor"
+        ],
+        "title": "TendenciaDia"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token",
+            "description": "Token JWT para autenticação"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome",
+            "description": "Nome do utilizador"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Role do utilizador"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "nome",
+          "role"
+        ],
+        "title": "TokenResponse"
+      },
+      "TopCliente": {
+        "properties": {
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "total_faturado": {
+            "type": "number",
+            "title": "Total Faturado"
+          },
+          "faturas": {
+            "type": "integer",
+            "title": "Faturas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_nome",
+          "total_faturado",
+          "faturas"
+        ],
+        "title": "TopCliente"
+      },
+      "TotaisMetas": {
+        "properties": {
+          "quantidade_produtos": {
+            "type": "integer",
+            "title": "Quantidade Produtos",
+            "examples": [12]
+          },
+          "meta_receita_total": {
+            "type": "number",
+            "title": "Meta Receita Total",
+            "examples": [6000000]
+          },
+          "meta_lucro_total": {
+            "type": "number",
+            "title": "Meta Lucro Total",
+            "examples": [1800000]
+          },
+          "custo_total": {
+            "type": "number",
+            "title": "Custo Total",
+            "examples": [2730000]
+          },
+          "receita_arrecadada_total": {
+            "type": "number",
+            "title": "Receita Arrecadada Total",
+            "examples": [3900000]
+          },
+          "lucro_realizado_total": {
+            "type": "number",
+            "title": "Lucro Realizado Total",
+            "examples": [1170000]
+          },
+          "unidades_vendidas_total": {
+            "type": "integer",
+            "title": "Unidades Vendidas Total",
+            "examples": [780]
+          },
+          "percentual_meta_receita": {
+            "type": "number",
+            "title": "Percentual Meta Receita",
+            "examples": [65]
+          },
+          "percentual_meta_lucro": {
+            "type": "number",
+            "title": "Percentual Meta Lucro",
+            "examples": [65]
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade_produtos",
+          "meta_receita_total",
+          "meta_lucro_total",
+          "custo_total",
+          "receita_arrecadada_total",
+          "lucro_realizado_total",
+          "unidades_vendidas_total",
+          "percentual_meta_receita",
+          "percentual_meta_lucro"
+        ],
+        "title": "TotaisMetas"
+      },
+      "TotaisValorizacaoStock": {
+        "properties": {
+          "quantidade_produtos": {
+            "type": "integer",
+            "title": "Quantidade Produtos",
+            "examples": [1]
+          },
+          "unidades_em_stock": {
+            "type": "integer",
+            "title": "Unidades Em Stock",
+            "examples": [120]
+          },
+          "valor_total_custo": {
+            "type": "number",
+            "title": "Valor Total Custo",
+            "examples": [300000]
+          },
+          "valor_total_venda": {
+            "type": "number",
+            "title": "Valor Total Venda",
+            "examples": [420000]
+          },
+          "lucro_potencial": {
+            "type": "number",
+            "title": "Lucro Potencial",
+            "description": "Quanto ganharia se vendesse todo o stock atual",
+            "examples": [120000]
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade_produtos",
+          "unidades_em_stock",
+          "valor_total_custo",
+          "valor_total_venda",
+          "lucro_potencial"
+        ],
+        "title": "TotaisValorizacaoStock"
+      },
+      "TotalDividasFornecedorResponse": {
+        "properties": {
+          "quantidade_dividas": {
+            "type": "integer",
+            "title": "Quantidade Dividas"
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade_dividas",
+          "total_devido"
+        ],
+        "title": "TotalDividasFornecedorResponse"
+      },
+      "TotalDividasResponse": {
+        "properties": {
+          "quantidade_dividas": {
+            "type": "integer",
+            "title": "Quantidade Dividas"
+          },
+          "total_devido_dividas": {
+            "type": "number",
+            "title": "Total Devido Dividas"
+          },
+          "quantidade_prestacoes": {
+            "type": "integer",
+            "title": "Quantidade Prestacoes"
+          },
+          "total_devido_prestacoes": {
+            "type": "number",
+            "title": "Total Devido Prestacoes"
+          },
+          "total_devido": {
+            "type": "number",
+            "title": "Total Devido"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantidade_dividas",
+          "total_devido_dividas",
+          "quantidade_prestacoes",
+          "total_devido_prestacoes",
+          "total_devido"
+        ],
+        "title": "TotalDividasResponse"
+      },
+      "UtilizadorResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "nome": {
+            "type": "string",
+            "title": "Nome"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "ativo": {
+            "type": "boolean",
+            "title": "Ativo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nome",
+          "email",
+          "role",
+          "ativo"
+        ],
+        "title": "UtilizadorResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "ValoresPerformance": {
+        "properties": {
+          "total_faturado": {
+            "type": "number",
+            "title": "Total Faturado"
+          },
+          "total_iva": {
+            "type": "number",
+            "title": "Total Iva"
+          },
+          "total_descontos": {
+            "type": "number",
+            "title": "Total Descontos"
+          },
+          "media_por_fatura": {
+            "type": "number",
+            "title": "Media Por Fatura"
+          },
+          "maior_fatura": {
+            "type": "number",
+            "title": "Maior Fatura"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_faturado",
+          "total_iva",
+          "total_descontos",
+          "media_por_fatura",
+          "maior_fatura"
+        ],
+        "title": "ValoresPerformance"
+      },
+      "ValorizacaoStock": {
+        "properties": {
+          "produtos": {
+            "items": {
+              "$ref": "#/components/schemas/ProdutoValorizacao"
+            },
+            "type": "array",
+            "title": "Produtos"
+          },
+          "totais": {
+            "$ref": "#/components/schemas/TotaisValorizacaoStock"
+          }
+        },
+        "type": "object",
+        "required": [
+          "totais"
+        ],
+        "title": "ValorizacaoStock",
+        "example": {
+          "produtos": [
+            {
+              "preco_custo_unitario": 2500,
+              "preco_venda_unitario": 3500,
+              "produto_id": "1edca05e-c4e7-490f-a90a-164a28ade8ad",
+              "produto_nome": "Arroz Agulha 5kg",
+              "stock_atual": 120,
+              "valor_em_stock_custo": 300000,
+              "valor_em_stock_venda": 420000
+            }
+          ],
+          "totais": {
+            "lucro_potencial": 120000,
+            "quantidade_produtos": 1,
+            "unidades_em_stock": 120,
+            "valor_total_custo": 300000,
+            "valor_total_venda": 420000
+          }
+        }
+      },
+      "VencimentoResponse": {
+        "properties": {
+          "prestacao_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Prestacao Id",
+            "examples": [
+              "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+            ]
+          },
+          "pagamento_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Pagamento Id",
+            "examples": [
+              "c3d4e5f6-a7b8-9012-cdef-123456789012"
+            ]
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome",
+            "examples": [
+              "Ana Cristina"
+            ]
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome",
+            "examples": [
+              "Arroz Agulha 5kg"
+            ]
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "examples": [25000]
+          },
+          "data_vencimento": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data Vencimento",
+            "examples": [
+              "2026-08-01T00:00:00Z"
+            ]
+          },
+          "dias_atraso": {
+            "type": "integer",
+            "title": "Dias Atraso",
+            "description": "Dias de atraso (0 se dentro do prazo)",
+            "examples": [0]
+          }
+        },
+        "type": "object",
+        "required": [
+          "prestacao_id",
+          "pagamento_id",
+          "cliente_nome",
+          "produto_nome",
+          "valor",
+          "data_vencimento",
+          "dias_atraso"
+        ],
+        "title": "VencimentoResponse",
+        "example": {
+          "cliente_nome": "Ana Cristina",
+          "data_vencimento": "2026-08-01T00:00:00Z",
+          "dias_atraso": 0,
+          "pagamento_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+          "prestacao_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+          "produto_nome": "Arroz Agulha 5kg",
+          "valor": 25000
+        }
+      },
+      "VendaCreate": {
+        "properties": {
+          "cliente_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente Id",
+            "description": "ID do cliente existente"
+          },
+          "cliente": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cliente",
+            "description": "Dados do novo cliente (se não existir)",
+            "examples": [
+              {
+                "nome": "João",
+                "telefone": "923456789"
+              }
+            ]
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/ItemVendaInput"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Itens",
+            "description": "Itens da venda"
+          },
+          "desconto_percentual": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desconto Percentual",
+            "description": "Desconto manual (%) a aplicar sobre o total com IVA. Substitui o desconto automático da fidelidade."
+          },
+          "credito": {
+            "type": "boolean",
+            "title": "Credito",
+            "description": "Se true, a venda é a crédito e gera uma dívida",
+            "default": false
+          },
+          "desconto_divida": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100,
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Desconto Divida",
+            "description": "Desconto adicional (%) aplicado quando cliente tem dívida pendente. Enviar para confirmar que deseja prosseguir com a venda."
+          }
+        },
+        "type": "object",
+        "required": [
+          "itens"
+        ],
+        "title": "VendaCreate"
+      },
+      "VendaItemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "produto_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Produto Id"
+          },
+          "produto_nome": {
+            "type": "string",
+            "title": "Produto Nome"
+          },
+          "quantidade": {
+            "type": "integer",
+            "title": "Quantidade"
+          },
+          "preco_unitario": {
+            "type": "number",
+            "title": "Preco Unitario",
+            "description": "Preço de venda unitário no momento da venda"
+          },
+          "preco_custo_unitario": {
+            "type": "number",
+            "title": "Preco Custo Unitario",
+            "description": "Preço de custo unitário no momento da venda"
+          },
+          "iva_aplicado": {
+            "type": "number",
+            "title": "Iva Aplicado",
+            "description": "IVA (%) aplicado"
+          },
+          "subtotal": {
+            "type": "number",
+            "title": "Subtotal",
+            "description": "Subtotal (preço × quantidade)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "produto_id",
+          "produto_nome",
+          "quantidade",
+          "preco_unitario",
+          "preco_custo_unitario",
+          "iva_aplicado",
+          "subtotal"
+        ],
+        "title": "VendaItemResponse"
+      },
+      "VendaResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id"
+          },
+          "cliente_nome": {
+            "type": "string",
+            "title": "Cliente Nome"
+          },
+          "utilizador_nome": {
+            "type": "string",
+            "title": "Utilizador Nome"
+          },
+          "total_sem_iva": {
+            "type": "number",
+            "title": "Total Sem Iva",
+            "description": "Total antes do IVA"
+          },
+          "total_iva": {
+            "type": "number",
+            "title": "Total Iva",
+            "description": "Valor total do IVA"
+          },
+          "total_com_iva": {
+            "type": "number",
+            "title": "Total Com Iva",
+            "description": "Total com IVA antes do desconto"
+          },
+          "desconto_percentual": {
+            "type": "number",
+            "title": "Desconto Percentual",
+            "description": "Desconto aplicado (%)"
+          },
+          "total_desconto": {
+            "type": "number",
+            "title": "Total Desconto",
+            "description": "Valor do desconto"
+          },
+          "total_final": {
+            "type": "number",
+            "title": "Total Final",
+            "description": "Total a pagar"
+          },
+          "credito": {
+            "type": "boolean",
+            "title": "Credito",
+            "description": "Se true, venda foi a crédito"
+          },
+          "credito_pago": {
+            "type": "boolean",
+            "title": "Credito Pago",
+            "description": "Se true, dívida do crédito foi paga"
+          },
+          "numero_factura": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Factura",
+            "description": "Número sequencial da factura (dívida) gerada, se a venda foi a crédito",
+            "examples": [1]
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          },
+          "itens": {
+            "items": {
+              "$ref": "#/components/schemas/VendaItemResponse"
+            },
+            "type": "array",
+            "title": "Itens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "cliente_id",
+          "cliente_nome",
+          "utilizador_nome",
+          "total_sem_iva",
+          "total_iva",
+          "total_com_iva",
+          "desconto_percentual",
+          "total_desconto",
+          "total_final",
+          "credito",
+          "credito_pago",
+          "criado_em",
+          "itens"
+        ],
+        "title": "VendaResponse"
+      },
+      "app__schemas__fornecedor__DocumentoExtratoItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "'Factura' (compra a crédito) ou 'Recibo' (pagamento feito)",
+            "examples": [
+              "Factura"
+            ]
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "examples": [1]
+          },
+          "data": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "Positivo para Factura, negativo para Recibo",
+            "examples": [300]
+          },
+          "moeda": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moeda",
+            "description": "Moeda da compra (Factura) ou do pagamento (Recibo)",
+            "examples": [
+              "USD"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "data",
+          "valor"
+        ],
+        "title": "DocumentoExtratoItem"
+      },
+      "app__schemas__relatorio__DocumentoExtratoItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "'Factura' (compra a crédito) ou 'Recibo' (pagamento feito)",
+            "examples": [
+              "Factura"
+            ]
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero",
+            "examples": [1]
+          },
+          "data": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Data"
+          },
+          "produto_nome": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Produto Nome"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor",
+            "description": "Positivo para Factura, negativo para Recibo",
+            "examples": [25000]
+          },
+          "moeda": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moeda",
+            "description": "Preenchido só nos Recibos",
+            "examples": [
+              "USD"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "data",
+          "valor"
+        ],
+        "title": "DocumentoExtratoItem"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}
+Ask AIAsk AI

@@ -1,6 +1,7 @@
 /**
  * SDD — Serviço de Autenticação
- * Spec: /auth/login POST · /auth/register POST · /auth/me GET · /auth/utilizadores GET
+ * Spec: /auth/login POST · /auth/register POST · /auth/me GET · /auth/utilizadores GET ·
+ * /auth/utilizadores/{id} PUT
  */
 import { describe, it, expect, vi } from 'vitest'
 import { BASE, mockFetch } from './helpers'
@@ -91,5 +92,36 @@ describe('authService.listarUtilizadores — GET /auth/utilizadores', () => {
     const result = await authService.listarUtilizadores()
     expect(result).toHaveLength(2)
     expect(result[1].role).toBe('GESTOR')
+  })
+})
+
+describe('authService.atualizar — PUT /auth/utilizadores/{id}', () => {
+  it('chama PUT /auth/utilizadores/{id} apenas com os campos enviados', async () => {
+    const spy = mockFetch({ ...UTILIZADOR, ativo: false })
+    await authService.atualizar('uuid-1', { ativo: false })
+    expect(spy).toHaveBeenCalledWith(
+      `${BASE}/auth/utilizadores/uuid-1`,
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify({ ativo: false }) })
+    )
+  })
+
+  it('permite atualizar nome, email, password e role', async () => {
+    const atualizado = { ...UTILIZADOR, nome: 'Maria Silva Costa', email: 'maria.costa@bisness.com', role: 'GESTOR' }
+    const spy = mockFetch(atualizado)
+    const payload = { nome: 'Maria Silva Costa', email: 'maria.costa@bisness.com', password: 'novaSenha123', role: 'GESTOR' }
+    const result = await authService.atualizar('uuid-1', payload)
+    expect(spy).toHaveBeenCalledWith(
+      `${BASE}/auth/utilizadores/uuid-1`,
+      expect.objectContaining({ method: 'PUT', body: JSON.stringify(payload) })
+    )
+    expect(result.nome).toBe('Maria Silva Costa')
+    expect(result.role).toBe('GESTOR')
+  })
+
+  it('lança erro quando o email já está em uso (400)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ detail: 'Email já está em uso' }), { status: 400 })
+    )
+    await expect(authService.atualizar('uuid-1', { email: 'existe@bisness.com' })).rejects.toThrow('Email já está em uso')
   })
 })
