@@ -727,7 +727,7 @@ function VendasTab({ t }: { t: TFunction }) {
         </DialogContent>
       </Dialog>
 
-      <NotaEntregaDialog origem={notaEntregaOrigem} onClose={() => setNotaEntregaOrigem(null)} t={t} />
+      <NotaEntregaDialog origem={notaEntregaOrigem} clientes={clientes} onClose={() => setNotaEntregaOrigem(null)} t={t} />
     </div>
   )
 }

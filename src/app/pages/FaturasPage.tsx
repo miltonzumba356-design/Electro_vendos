@@ -594,7 +594,7 @@ function FaturasTab({ clientes, t }: { clientes: ClienteResponse[]; t: TFunction
         t={t}
       />
 
-      <NotaEntregaDialog origem={notaEntregaOrigem} onClose={() => setNotaEntregaOrigem(null)} t={t} />
+      <NotaEntregaDialog origem={notaEntregaOrigem} clientes={clientes} onClose={() => setNotaEntregaOrigem(null)} t={t} />
     </div>
   )
 }

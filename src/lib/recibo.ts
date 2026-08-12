@@ -232,8 +232,12 @@ export interface NotaEntregaItem {
 export interface NotaEntregaData {
   origemTipo: 'venda' | 'fatura'
   origemRef: string
-  clienteNome: string
+  // Vazio/undefined quando o utilizador optou por não incluir dados de
+  // cliente na nota (ver clienteModo em NotaEntregaDialog).
+  clienteNome?: string | null
   clienteNif?: string | null
+  clienteTelefone?: string | null
+  clienteEndereco?: string | null
   data: string
   motorista?: string
   matricula?: string
@@ -256,6 +260,12 @@ function gerarNotaEntregaA4Html(dados: NotaEntregaData, comBotaoImprimir: boolea
 
   const nifHtml = dados.clienteNif
     ? `<p class="cliente-nif">NIF: ${esc(dados.clienteNif)}</p>`
+    : ''
+  const telefoneHtml = dados.clienteTelefone
+    ? `<p class="cliente-nif">Nº: ${esc(dados.clienteTelefone)}</p>`
+    : ''
+  const enderecoHtml = dados.clienteEndereco
+    ? `<p class="cliente-nif">Local: ${esc(dados.clienteEndereco)}</p>`
     : ''
 
   const matriculaHtml = dados.matricula
@@ -289,8 +299,10 @@ function gerarNotaEntregaA4Html(dados: NotaEntregaData, comBotaoImprimir: boolea
   <div class="cliente-box">
     <div>
       <p class="label">Cliente</p>
-      <p class="valor">${esc(dados.clienteNome)}</p>
+      <p class="valor">${dados.clienteNome ? esc(dados.clienteNome) : '—'}</p>
       ${nifHtml}
+      ${telefoneHtml}
+      ${enderecoHtml}
     </div>
     <div>
       <p class="label">Motorista/Camionista</p>
@@ -311,7 +323,7 @@ function gerarNotaEntregaA4Html(dados: NotaEntregaData, comBotaoImprimir: boolea
       <p class="linha">Assinatura do Camionista</p>
     </div>
     <div class="assinatura">
-      <p class="nome">${esc(dados.clienteNome)}</p>
+      <p class="nome">${dados.clienteNome ? esc(dados.clienteNome) : ''}</p>
       <p class="linha">Assinatura do Cliente</p>
     </div>
     <div class="assinatura">
@@ -373,8 +385,10 @@ function gerarNotaEntregaTermicaHtml(dados: NotaEntregaData, comBotaoImprimir: b
   <div class="row"><span>Ref.:</span><span>${esc(dados.origemRef)} (${dados.origemTipo === 'venda' ? 'Venda' : 'Fatura'})</span></div>
   <div class="row"><span>Data:</span><span>${fmtData(dados.data)}</span></div>
   <hr>
-  <div class="row"><span>Cliente:</span><span>${esc(dados.clienteNome)}</span></div>
+  <div class="row"><span>Cliente:</span><span>${dados.clienteNome ? esc(dados.clienteNome) : '—'}</span></div>
   ${dados.clienteNif ? `<div class="row"><span>NIF:</span><span>${esc(dados.clienteNif)}</span></div>` : ''}
+  ${dados.clienteTelefone ? `<div class="row"><span>Nº:</span><span>${esc(dados.clienteTelefone)}</span></div>` : ''}
+  ${dados.clienteEndereco ? `<div class="row"><span>Local:</span><span>${esc(dados.clienteEndereco)}</span></div>` : ''}
   ${dados.motorista ? `<div class="row"><span>Motorista:</span><span>${esc(dados.motorista)}</span></div>` : ''}
   ${dados.matricula ? `<div class="row"><span>Matrícula:</span><span>${esc(dados.matricula)}</span></div>` : ''}
   <hr>
