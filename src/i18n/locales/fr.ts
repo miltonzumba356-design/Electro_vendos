@@ -106,12 +106,16 @@ const fr = {
     debtPaymentDonePaid: 'Montant payé maintenant', debtPaymentDoneTotalPaid: 'Total déjà réglé',
     debtPaymentDoneBalance: 'Solde restant (dette)',
     searchByNumber: 'N° de facture', searchByNumberPlaceholder: 'Ex: 12',
+    cancelSale: 'Annuler la vente', cancelled: 'Annulée',
+    cancelSaleConfirmTitle: 'Annuler cette vente ?',
+    cancelSaleConfirmDesc: "Le stock des produits est restitué, la fidélité du client est recalculée et, si c'était une vente au comptant, l'écriture de caisse est supprimée. Si c'était une vente à crédit sans paiement, la dette générée est supprimée. Cette action est irréversible.",
     toasts: {
       minOneProduct: 'Ajoutez au moins un produit à la vente',
       registered: 'Vente enregistrée avec succès',
       loadError: 'Erreur de chargement des données', registerError: "Erreur d'enregistrement de la vente",
       debtConfirmRequired: 'Confirmez que vous voulez poursuivre la vente malgré la dette en cours',
       debtPaymentRegistered: 'Paiement enregistré avec succès', debtPaymentError: "Erreur d'enregistrement du paiement",
+      cancelled: 'Vente annulée avec succès', cancelError: "Erreur lors de l'annulation de la vente",
     },
   },
   stock: {
@@ -163,6 +167,8 @@ const fr = {
     vencEmpty: 'Aucune échéance ce mois',
     paymentHistoryTitle: 'Historique des paiements', paymentHistoryEmpty: 'Aucun paiement enregistré',
     downloadPaymentHistory: 'Historique des paiements', colPaidToDate: 'Total payé à ce jour',
+    cancelPayment: 'Annuler le paiement', cancelPaymentConfirmTitle: 'Annuler ce paiement ?',
+    cancelPaymentConfirmDesc: "Le reçu est supprimé, le montant payé de la dette est déduit et, si la dette avait été soldée à cause de ce paiement, elle redevient en cours. Cette action est irréversible.",
     toasts: {
       selectSale: 'Sélectionnez une vente', invalidInstallments: 'Versements: 1 à 48',
       planCreated: 'Plan créé avec succès', planCreateError: 'Erreur lors de la création du plan',
@@ -171,6 +177,7 @@ const fr = {
       loadError: 'Erreur de chargement des données', selectClient: 'Sélectionnez un client',
       selectProduct: 'Sélectionnez un produit',
       debtError: 'Erreur lors de la consultation des dettes',
+      paymentCancelled: 'Paiement annulé avec succès', paymentCancelError: "Erreur lors de l'annulation du paiement",
     },
   },
   invoices: {

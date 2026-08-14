@@ -10,4 +10,10 @@ export const vendasService = {
 
   criar: (data: VendaCreate) =>
     api.post<VendaResponse>('/vendas', data),
+
+  cancelar: (id: string) =>
+    api.post<VendaResponse>(`/vendas/${id}/cancelar`),
+
+  cancelarPorNumero: (numero: number) =>
+    api.post<VendaResponse>(`/vendas/numero/${numero}/cancelar`),
 }

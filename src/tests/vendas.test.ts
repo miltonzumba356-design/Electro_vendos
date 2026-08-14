@@ -1,8 +1,9 @@
 /**
  * SDD — Serviço de Vendas
- * Spec: GET /vendas · POST /vendas (com valor_final_desejado) · GET /vendas/{id}
+ * Spec: GET /vendas · POST /vendas (com valor_final_desejado) · GET /vendas/{id} ·
+ * POST /vendas/{id}/cancelar · POST /vendas/numero/{numero}/cancelar
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { BASE, mockFetch } from './helpers'
 import { vendasService } from '@/services/vendas'
 
@@ -95,5 +96,32 @@ describe('vendasService.buscar — GET /vendas/{id}', () => {
     const result = await vendasService.buscar('venda-uuid-1')
     expect(result.id).toBe('venda-uuid-1')
     expect(result.itens[0].produto_nome).toBe('Arroz Agulha 5kg')
+  })
+})
+
+describe('vendasService.cancelar — POST /vendas/{id}/cancelar', () => {
+  it('chama POST sem corpo e devolve a venda anulada', async () => {
+    const anulada = { ...VENDA, cancelada_em: '2026-08-14T12:00:00Z' }
+    const spy = mockFetch(anulada)
+    const result = await vendasService.cancelar('venda-uuid-1')
+    expect(spy.mock.calls[0][0]).toBe(`${BASE}/vendas/venda-uuid-1/cancelar`)
+    expect((spy.mock.calls[0][1] as RequestInit).method).toBe('POST')
+    expect((spy.mock.calls[0][1] as RequestInit).body).toBeUndefined()
+    expect(result.cancelada_em).toBe('2026-08-14T12:00:00Z')
+  })
+
+  it('propaga o erro 400 quando a dívida gerada já tem pagamento', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({ detail: 'Não é possível anular: a dívida gerada por esta venda já tem pagamento registado. Resolva os pagamentos antes de anular.' }), { status: 400 })
+    )
+    await expect(vendasService.cancelar('venda-uuid-1')).rejects.toThrow('Resolva os pagamentos antes de anular')
+  })
+})
+
+describe('vendasService.cancelarPorNumero — POST /vendas/numero/{numero}/cancelar', () => {
+  it('chama POST /vendas/numero/{numero}/cancelar', async () => {
+    const spy = mockFetch({ ...VENDA, cancelada_em: '2026-08-14T12:00:00Z' })
+    await vendasService.cancelarPorNumero(1)
+    expect(spy.mock.calls[0][0]).toBe(`${BASE}/vendas/numero/1/cancelar`)
   })
 })

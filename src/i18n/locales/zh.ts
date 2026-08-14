@@ -102,11 +102,15 @@ const zh = {
     debtPaymentDonePaid: '本次支付金额', debtPaymentDoneTotalPaid: '已结清总额',
     debtPaymentDoneBalance: '未结余额（欠款）',
     searchByNumber: '发票编号', searchByNumberPlaceholder: '例如：12',
+    cancelSale: '作废销售', cancelled: '已作废',
+    cancelSaleConfirmTitle: '确定要作废此销售吗？',
+    cancelSaleConfirmDesc: '产品库存将被退回，客户忠诚度将重新计算；如果是现金销售，相应的现金流水将被删除；如果是信用销售且尚未有还款，产生的欠款将被删除。此操作无法撤销。',
     toasts: {
       minOneProduct: '请至少添加一个产品', registered: '销售记录成功',
       loadError: '加载数据时出错', registerError: '登记销售时出错',
       debtConfirmRequired: '请确认在有未结债务的情况下继续本次销售',
       debtPaymentRegistered: '还款登记成功', debtPaymentError: '登记还款时出错',
+      cancelled: '销售已成功作废', cancelError: '作废销售时出错',
     },
   },
   stock: {
@@ -156,12 +160,15 @@ const zh = {
     vencEmpty: '本月无到期付款',
     paymentHistoryTitle: '付款历史', paymentHistoryEmpty: '没有已登记的付款',
     downloadPaymentHistory: '付款历史', colPaidToDate: '迄今已付总额',
+    cancelPayment: '作废付款', cancelPaymentConfirmTitle: '确定要作废此付款吗？',
+    cancelPaymentConfirmDesc: '该收据将被删除，欠款的已付金额将被扣减；如果该欠款因此付款而变为已结清，将恢复为未结清状态。此操作无法撤销。',
     toasts: {
       selectSale: '请选择销售', invalidInstallments: '分期数: 1 到 48',
       planCreated: '计划创建成功', planCreateError: '创建计划时出错',
       paymentRegistered: '付款登记成功', paymentError: '登记付款时出错',
       invalidValue: '请输入有效金额', loadError: '加载数据时出错',
       selectClient: '请选择客户', selectProduct: '请选择产品', debtError: '查询债务时出错',
+      paymentCancelled: '付款已成功作废', paymentCancelError: '作废付款时出错',
     },
   },
   invoices: {

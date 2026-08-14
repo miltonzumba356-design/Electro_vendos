@@ -102,11 +102,15 @@ const ar = {
     debtPaymentDonePaid: 'المبلغ المدفوع الآن', debtPaymentDoneTotalPaid: 'إجمالي المسدد',
     debtPaymentDoneBalance: 'الرصيد المستحق (الدين)',
     searchByNumber: 'رقم الفاتورة', searchByNumberPlaceholder: 'مثال: 12',
+    cancelSale: 'إلغاء البيع', cancelled: 'ملغى',
+    cancelSaleConfirmTitle: 'هل تريد إلغاء هذا البيع؟',
+    cancelSaleConfirmDesc: 'سيتم إعادة المخزون، وإعادة احتساب ولاء العميل، وإذا كان البيع نقديًا سيتم حذف قيد الصندوق. إذا كان بالائتمان ولم يُسجَّل أي سداد بعد، سيُحذف الدين الناتج. لا يمكن التراجع عن هذا الإجراء.',
     toasts: {
       minOneProduct: 'أضف منتجًا واحدًا على الأقل', registered: 'تم تسجيل البيع بنجاح',
       loadError: 'خطأ في تحميل البيانات', registerError: 'خطأ في تسجيل البيع',
       debtConfirmRequired: 'أكّد رغبتك في المتابعة في البيع رغم الدين المستحق',
       debtPaymentRegistered: 'تم تسجيل السداد بنجاح', debtPaymentError: 'خطأ في تسجيل السداد',
+      cancelled: 'تم إلغاء البيع بنجاح', cancelError: 'خطأ في إلغاء البيع',
     },
   },
   stock: {
@@ -157,12 +161,15 @@ const ar = {
     vencEmpty: 'لا توجد استحقاقات هذا الشهر',
     paymentHistoryTitle: 'سجل المدفوعات', paymentHistoryEmpty: 'لا توجد مدفوعات مسجلة',
     downloadPaymentHistory: 'سجل المدفوعات', colPaidToDate: 'إجمالي المدفوع حتى الآن',
+    cancelPayment: 'إلغاء الدفعة', cancelPaymentConfirmTitle: 'هل تريد إلغاء هذه الدفعة؟',
+    cancelPaymentConfirmDesc: 'سيتم حذف الإيصال، وخصم المبلغ المدفوع من الدين، وإذا كان الدين قد أصبح مسددًا بسبب هذه الدفعة فسيعود إلى حالة مستحق. لا يمكن التراجع عن هذا الإجراء.',
     toasts: {
       selectSale: 'اختر بيعًا', invalidInstallments: 'عدد الأقساط: 1 إلى 48',
       planCreated: 'تم إنشاء الخطة بنجاح', planCreateError: 'خطأ في إنشاء الخطة',
       paymentRegistered: 'تم تسجيل الدفع بنجاح', paymentError: 'خطأ في تسجيل الدفع',
       invalidValue: 'أدخل مبلغًا صالحًا', loadError: 'خطأ في تحميل البيانات',
       selectClient: 'اختر عميلًا', selectProduct: 'اختر منتجًا', debtError: 'خطأ في استعلام الديون',
+      paymentCancelled: 'تم إلغاء الدفعة بنجاح', paymentCancelError: 'خطأ في إلغاء الدفعة',
     },
   },
   invoices: {

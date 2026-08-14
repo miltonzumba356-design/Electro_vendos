@@ -1,6 +1,7 @@
 /**
  * SDD — Serviço de Dívidas
- * Spec: /dividas/clientes/{cliente_id} · /dividas · /dividas/total · /dividas/{id} · /dividas/{id}/pagar
+ * Spec: /dividas/clientes/{cliente_id} · /dividas · /dividas/total · /dividas/{id} · /dividas/{id}/pagar ·
+ * /dividas/{divida_id}/pagamentos/{pagamento_id}/cancelar · /dividas/pagamentos/numero/{numero}/cancelar
  */
 import { describe, it, expect } from 'vitest'
 import { BASE, mockFetch } from './helpers'
@@ -74,5 +75,26 @@ describe('dividasService.pagar — POST /dividas/{id}/pagar', () => {
     expect((spy.mock.calls[0][1] as RequestInit).method).toBe('POST')
     const body = JSON.parse((spy.mock.calls[0][1] as RequestInit).body as string)
     expect(body.valor).toBe(15000)
+  })
+})
+
+describe('dividasService.cancelarPagamento — POST /dividas/{divida_id}/pagamentos/{pagamento_id}/cancelar', () => {
+  it('chama POST sem corpo e devolve a dívida atualizada', async () => {
+    const spy = mockFetch({ ...DIVIDA_RESP, valor_pago: 0, saldo: 25000, status: 'DIVIDA', pagamentos: [] })
+    const result = await dividasService.cancelarPagamento('div-uuid-1', 'pag-uuid-1')
+    expect(spy.mock.calls[0][0]).toBe(`${BASE}/dividas/div-uuid-1/pagamentos/pag-uuid-1/cancelar`)
+    expect((spy.mock.calls[0][1] as RequestInit).method).toBe('POST')
+    expect((spy.mock.calls[0][1] as RequestInit).body).toBeUndefined()
+    expect(result.valor_pago).toBe(0)
+    expect(result.saldo).toBe(25000)
+    expect(result.status).toBe('DIVIDA')
+  })
+})
+
+describe('dividasService.cancelarPagamentoPorNumero — POST /dividas/pagamentos/numero/{numero}/cancelar', () => {
+  it('chama POST /dividas/pagamentos/numero/{numero}/cancelar', async () => {
+    const spy = mockFetch({ ...DIVIDA_RESP, valor_pago: 0, saldo: 25000 })
+    await dividasService.cancelarPagamentoPorNumero(1)
+    expect(spy.mock.calls[0][0]).toBe(`${BASE}/dividas/pagamentos/numero/1/cancelar`)
   })
 })

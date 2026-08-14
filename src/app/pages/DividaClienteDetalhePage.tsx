@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { dividasService } from '@/services/dividas'
 import { clientesService } from '@/services/clientes'
-import type { DividaResponse } from '@/types'
+import { useAuth } from '@/contexts/AuthContext'
+import type { DividaResponse, PagamentoDividaResponse } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import {
@@ -14,11 +15,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/app/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/app/components/ui/alert-dialog'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import { exportTablePdf, getTablePdfBlob, type PdfColumn } from '@/lib/pdf'
 import { partilharArquivoOuTexto } from '@/lib/share'
-import { ArrowLeft, FileDown, MessageCircle, Printer } from 'lucide-react'
+import { ArrowLeft, FileDown, MessageCircle, Printer, XCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -43,11 +54,14 @@ export default function DividaClienteDetalhePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const { t } = useTranslation()
+  const { isGestor } = useAuth()
 
   const [divida, setDivida] = useState<DividaResponse | null>(null)
   const [telefone, setTelefone] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [sharing, setSharing] = useState(false)
+  const [cancelarPagamentoAlvo, setCancelarPagamentoAlvo] = useState<PagamentoDividaResponse | null>(null)
+  const [cancelando, setCancelando] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -156,6 +170,21 @@ export default function DividaClienteDetalhePage() {
     }
   }
 
+  async function handleCancelarPagamento() {
+    if (!divida || !cancelarPagamentoAlvo) return
+    setCancelando(true)
+    try {
+      const atualizada = await dividasService.cancelarPagamento(divida.id, cancelarPagamentoAlvo.id)
+      setDivida(atualizada)
+      toast.success(t('installments.toasts.paymentCancelled'))
+      setCancelarPagamentoAlvo(null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('installments.toasts.paymentCancelError'))
+    } finally {
+      setCancelando(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
@@ -224,12 +253,13 @@ export default function DividaClienteDetalhePage() {
                     <TableHead className="text-right">{t('installments.colPaidToDate')}</TableHead>
                     <TableHead className="text-right">{t('common.balance')}</TableHead>
                     <TableHead>{t('suppliers.paymentCurrency')}</TableHead>
+                    {isGestor && <TableHead className="text-right">{t('installments.colActions')}</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pagamentosComSaldo().map((p, i) => (
-                    <TableRow key={i}>
-                      <TableCell className="text-muted-foreground text-sm">{p.numero ?? '—'}</TableCell>
+                  {pagamentosComSaldo().map((p) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="text-muted-foreground text-sm">{p.numero_formatado ?? p.numero ?? '—'}</TableCell>
                       <TableCell className="text-muted-foreground text-sm">
                         {format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm')}
                       </TableCell>
@@ -237,6 +267,13 @@ export default function DividaClienteDetalhePage() {
                       <TableCell className="text-right text-green-600">{formatKz(p.totalPago)}</TableCell>
                       <TableCell className="text-right font-medium text-destructive">{formatKz(p.saldo)}</TableCell>
                       <TableCell><Badge variant="outline">{p.moeda}</Badge></TableCell>
+                      {isGestor && (
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" onClick={() => setCancelarPagamentoAlvo(p)}>
+                            <XCircle className="size-4 text-destructive" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -245,6 +282,27 @@ export default function DividaClienteDetalhePage() {
           )}
         </div>
       ) : null}
+
+      <AlertDialog open={!!cancelarPagamentoAlvo} onOpenChange={(open) => !open && setCancelarPagamentoAlvo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('installments.cancelPaymentConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('installments.cancelPaymentConfirmDesc')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelando}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelarPagamento}
+              disabled={cancelando}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {cancelando ? t('common.loading') : t('installments.cancelPayment')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

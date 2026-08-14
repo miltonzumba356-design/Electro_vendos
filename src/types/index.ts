@@ -172,6 +172,8 @@ export interface VendaResponse {
   // Nº sequencial da factura (dívida) gerada, preenchido só quando credito=true.
   numero_factura?: number | null
   criado_em: string
+  // Data/hora da anulação da venda; null enquanto a venda está ativa.
+  cancelada_em?: string | null
   itens: VendaItemResponse[]
 }
 
@@ -269,6 +271,8 @@ export interface PagamentoDividaResponse {
   id: string
   // Nº sequencial do recibo.
   numero?: number | null
+  // Nº do recibo formatado, ex: "RC0001".
+  numero_formatado?: string | null
   valor: number
   moeda: string
   data_pagamento: string

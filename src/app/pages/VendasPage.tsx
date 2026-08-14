@@ -6,6 +6,7 @@ import { vendasService } from '@/services/vendas'
 import { produtosService } from '@/services/produtos'
 import { clientesService } from '@/services/clientes'
 import { dividasService } from '@/services/dividas'
+import { useAuth } from '@/contexts/AuthContext'
 import type {
   VendaResponse,
   ProdutoResponse,
@@ -38,13 +39,23 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/app/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/app/components/ui/alert-dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select'
 import { Combobox } from '@/app/components/ui/combobox'
 import { Skeleton } from '@/app/components/ui/skeleton'
 import { Separator } from '@/app/components/ui/separator'
 import { TablePagination } from '@/app/components/ui/table-pagination'
 import { usePagination } from '@/lib/usePagination'
-import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature, FileDown, History } from 'lucide-react'
+import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature, FileDown, History, XCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp, partilharPagamentoDividaWhatsapp } from '@/lib/recibo'
@@ -68,6 +79,7 @@ interface ItemForm {
 
 /* ── Tab: Vendas ──────────────────────────────────────────────── */
 function VendasTab({ t }: { t: TFunction }) {
+  const { isGestor } = useAuth()
   const [vendas, setVendas] = useState<VendaResponse[]>([])
   const [produtos, setProdutos] = useState<ProdutoResponse[]>([])
   const [clientes, setClientes] = useState<ClienteResponse[]>([])
@@ -78,6 +90,8 @@ function VendasTab({ t }: { t: TFunction }) {
   const [detalhesVenda, setDetalhesVenda] = useState<VendaResponse | null>(null)
   const [vendaConcluida, setVendaConcluida] = useState<{ venda: VendaResponse; telefone: string | null } | null>(null)
   const [notaEntregaOrigem, setNotaEntregaOrigem] = useState<NotaEntregaOrigem | null>(null)
+  const [cancelarVendaAlvo, setCancelarVendaAlvo] = useState<VendaResponse | null>(null)
+  const [cancelando, setCancelando] = useState(false)
 
   const [clienteMode, setClienteMode] = useState<'existente' | 'novo' | 'nenhum'>('nenhum')
   const [clienteId, setClienteId] = useState('')
@@ -211,6 +225,22 @@ function VendasTab({ t }: { t: TFunction }) {
     }
   }
 
+  async function handleCancelarVenda() {
+    if (!cancelarVendaAlvo) return
+    setCancelando(true)
+    try {
+      const anulada = await vendasService.cancelar(cancelarVendaAlvo.id)
+      setVendas((prev) => prev.map((v) => (v.id === anulada.id ? anulada : v)))
+      setDetalhesVenda((prev) => (prev && prev.id === anulada.id ? anulada : prev))
+      toast.success(t('sales.toasts.cancelled'))
+      setCancelarVendaAlvo(null)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('sales.toasts.cancelError'))
+    } finally {
+      setCancelando(false)
+    }
+  }
+
   const filtered = [...vendas]
     .sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime())
     .filter(
@@ -320,18 +350,21 @@ function VendasTab({ t }: { t: TFunction }) {
                   <TableCell className="text-right">{formatKz(v.total_sem_iva)}</TableCell>
                   <TableCell className="text-right font-semibold">{formatKz(v.total_final)}</TableCell>
                   <TableCell>
-                    {v.credito ? (
-                      <div className="flex items-center gap-1.5">
-                        <Badge variant={v.credito_pago ? 'default' : 'destructive'}>
-                          {v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
-                        </Badge>
-                        {v.numero_factura != null && (
-                          <span className="text-xs text-muted-foreground">#{v.numero_factura}</span>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">{t('sales.cash')}</span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {v.cancelada_em && <Badge variant="destructive">{t('sales.cancelled')}</Badge>}
+                      {v.credito ? (
+                        <>
+                          <Badge variant={v.credito_pago ? 'default' : 'destructive'}>
+                            {v.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}
+                          </Badge>
+                          {v.numero_factura != null && (
+                            <span className="text-xs text-muted-foreground">#{v.numero_factura}</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">{t('sales.cash')}</span>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon" onClick={() => setDetalhesVenda(v)}>
@@ -686,6 +719,12 @@ function VendasTab({ t }: { t: TFunction }) {
                     <p className="font-medium">{detalhesVenda.numero_factura}</p>
                   </div>
                 )}
+                {detalhesVenda.cancelada_em && (
+                  <div>
+                    <p className="text-muted-foreground">{t('sales.cancelled')}</p>
+                    <p className="font-medium">{format(new Date(detalhesVenda.cancelada_em), 'dd/MM/yyyy HH:mm')}</p>
+                  </div>
+                )}
               </div>
 
               <Separator />
@@ -722,10 +761,43 @@ function VendasTab({ t }: { t: TFunction }) {
                   <span>{formatKz(detalhesVenda.total_final)}</span>
                 </div>
               </div>
+
+              {isGestor && !detalhesVenda.cancelada_em && (
+                <Button
+                  variant="destructive"
+                  className="w-full gap-2"
+                  onClick={() => setCancelarVendaAlvo(detalhesVenda)}
+                >
+                  <XCircle className="size-4" />
+                  {t('sales.cancelSale')}
+                </Button>
+              )}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Anular venda — confirmação */}
+      <AlertDialog open={!!cancelarVendaAlvo} onOpenChange={(open) => !open && setCancelarVendaAlvo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('sales.cancelSaleConfirmTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('sales.cancelSaleConfirmDesc')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelando}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelarVenda}
+              disabled={cancelando}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {cancelando ? t('common.loading') : t('sales.cancelSale')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <NotaEntregaDialog origem={notaEntregaOrigem} clientes={clientes} onClose={() => setNotaEntregaOrigem(null)} t={t} />
     </div>

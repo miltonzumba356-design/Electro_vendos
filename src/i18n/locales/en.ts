@@ -104,11 +104,15 @@ const en = {
     debtPaymentDonePaid: 'Amount paid now', debtPaymentDoneTotalPaid: 'Total already settled',
     debtPaymentDoneBalance: 'Outstanding balance (debt)',
     searchByNumber: 'Invoice No.', searchByNumberPlaceholder: 'E.g.: 12',
+    cancelSale: 'Cancel sale', cancelled: 'Cancelled',
+    cancelSaleConfirmTitle: 'Cancel this sale?',
+    cancelSaleConfirmDesc: 'Product stock is returned, the client loyalty is recalculated and, if it was a cash sale, the cash flow entry is removed. If it was a credit sale with no payments yet, the generated debt is deleted. This action cannot be undone.',
     toasts: {
       minOneProduct: 'Add at least one product to the sale', registered: 'Sale registered successfully',
       loadError: 'Error loading data', registerError: 'Error registering sale',
       debtConfirmRequired: 'Confirm you want to proceed with the sale despite the pending debt',
       debtPaymentRegistered: 'Payment registered successfully', debtPaymentError: 'Error registering payment',
+      cancelled: 'Sale cancelled successfully', cancelError: 'Error cancelling sale',
     },
   },
   stock: {
@@ -159,6 +163,8 @@ const en = {
     vencEmpty: 'No due dates for this month',
     paymentHistoryTitle: 'Payment history', paymentHistoryEmpty: 'No payments recorded',
     downloadPaymentHistory: 'Payment history', colPaidToDate: 'Total paid to date',
+    cancelPayment: 'Cancel payment', cancelPaymentConfirmTitle: 'Cancel this payment?',
+    cancelPaymentConfirmDesc: 'The receipt is removed, the amount paid on the debt is deducted and, if the debt had been settled because of this payment, it goes back to outstanding. This action cannot be undone.',
     toasts: {
       selectSale: 'Select a sale', invalidInstallments: 'Installments: 1 to 48',
       planCreated: 'Plan created successfully', planCreateError: 'Error creating plan',
@@ -166,6 +172,7 @@ const en = {
       invalidValue: 'Enter a valid amount', loadError: 'Error loading data',
       selectClient: 'Select a client', selectProduct: 'Select a product',
       debtError: 'Error consulting debts',
+      paymentCancelled: 'Payment cancelled successfully', paymentCancelError: 'Error cancelling payment',
     },
   },
   invoices: {

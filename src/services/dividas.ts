@@ -20,4 +20,10 @@ export const dividasService = {
 
   pagar: (id: string, data: PagarDividaRequest) =>
     api.post<DividaResponse>(`/dividas/${id}/pagar`, data),
+
+  cancelarPagamento: (dividaId: string, pagamentoId: string) =>
+    api.post<DividaResponse>(`/dividas/${dividaId}/pagamentos/${pagamentoId}/cancelar`),
+
+  cancelarPagamentoPorNumero: (numero: number) =>
+    api.post<DividaResponse>(`/dividas/pagamentos/numero/${numero}/cancelar`),
 }

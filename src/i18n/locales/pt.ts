@@ -105,11 +105,15 @@ const pt = {
     debtPaymentDonePaid: 'Valor pago agora', debtPaymentDoneTotalPaid: 'Total já liquidado',
     debtPaymentDoneBalance: 'Saldo em aberto (dívida)',
     searchByNumber: 'Nº da factura', searchByNumberPlaceholder: 'Ex: 12',
+    cancelSale: 'Anular venda', cancelled: 'Anulada',
+    cancelSaleConfirmTitle: 'Anular esta venda?',
+    cancelSaleConfirmDesc: 'O stock dos produtos é devolvido, a fidelidade do cliente é recalculada e, se for uma venda à vista, o lançamento de caixa é removido. Se for a crédito e sem pagamentos, a dívida gerada é eliminada. Esta ação não pode ser desfeita.',
     toasts: {
       minOneProduct: 'Adicione pelo menos um produto à venda', registered: 'Venda registada com sucesso',
       loadError: 'Erro ao carregar dados', registerError: 'Erro ao registar venda',
       debtConfirmRequired: 'Confirme que deseja prosseguir com a venda apesar da dívida pendente',
       debtPaymentRegistered: 'Pagamento registado com sucesso', debtPaymentError: 'Erro ao registar pagamento',
+      cancelled: 'Venda anulada com sucesso', cancelError: 'Erro ao anular venda',
     },
   },
   stock: {
@@ -162,6 +166,8 @@ const pt = {
     vencEmpty: 'Sem vencimentos para este mês',
     paymentHistoryTitle: 'Histórico de pagamentos', paymentHistoryEmpty: 'Nenhum pagamento registado',
     downloadPaymentHistory: 'Histórico de pagamentos', colPaidToDate: 'Total pago até à data',
+    cancelPayment: 'Anular pagamento', cancelPaymentConfirmTitle: 'Anular este pagamento?',
+    cancelPaymentConfirmDesc: 'O recibo é removido, o valor pago da dívida é descontado e, se a dívida tinha ficado paga por causa deste pagamento, volta a ficar em aberto. Esta ação não pode ser desfeita.',
     toasts: {
       selectSale: 'Selecione uma venda', invalidInstallments: 'Número de prestações: 1 a 48',
       planCreated: 'Plano criado com sucesso', planCreateError: 'Erro ao criar plano',
@@ -169,6 +175,7 @@ const pt = {
       invalidValue: 'Introduza um valor válido', loadError: 'Erro ao carregar dados',
       selectClient: 'Selecione um cliente', selectProduct: 'Selecione um produto',
       debtError: 'Erro ao consultar dívidas',
+      paymentCancelled: 'Pagamento anulado com sucesso', paymentCancelError: 'Erro ao anular pagamento',
     },
   },
   invoices: {
