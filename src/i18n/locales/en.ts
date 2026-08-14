@@ -100,6 +100,9 @@ const en = {
     debtStatus: { DIVIDA: 'Outstanding', PAGA: 'Paid', TODAS: 'All' },
     debtProduct: 'Product', debtEmpty: 'No credit debt found',
     payDebtTitle: 'Register debt payment',
+    debtPaymentDoneTitle: 'Payment registered!',
+    debtPaymentDonePaid: 'Amount paid now', debtPaymentDoneTotalPaid: 'Total already settled',
+    debtPaymentDoneBalance: 'Outstanding balance (debt)',
     searchByNumber: 'Invoice No.', searchByNumberPlaceholder: 'E.g.: 12',
     toasts: {
       minOneProduct: 'Add at least one product to the sale', registered: 'Sale registered successfully',

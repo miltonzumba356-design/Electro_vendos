@@ -1,4 +1,4 @@
-import type { VendaResponse, MovimentoResponse, DividaFornecedorResponse } from '@/types'
+import type { VendaResponse, MovimentoResponse, DividaFornecedorResponse, DividaResponse } from '@/types'
 import { exportHtmlToPdf } from '@/lib/pdf'
 import { GOLDENMARK_LOGO_DATA_URL } from '@/assets/goldenmarkLogo'
 
@@ -438,6 +438,37 @@ export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string |
     '',
     'Obrigado pela sua preferência!',
   ].join('\n')
+
+  const numero = telefone ? telefone.replace(/[^0-9]/g, '') : ''
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`
+  window.open(url, '_blank')
+}
+
+// Recibo de pagamento de uma dívida de crédito — mostra o valor pago agora
+// contra o total já liquidado e o saldo que ainda falta (a dívida em si é
+// `divida.valor_total`, já devolvida atualizada pela API após o pagamento).
+export function partilharPagamentoDividaWhatsapp(
+  divida: DividaResponse,
+  valorPago: number,
+  moeda: string,
+  telefone?: string | null
+) {
+  const quitada = divida.saldo <= 0
+  const linhas = [
+    `*ELECTRO VENDOS* — Recibo de Pagamento`,
+    `Cliente: ${divida.cliente_nome ?? '—'}`,
+    (divida.numero_formatado || divida.numero) ? `Nº Factura: ${divida.numero_formatado ?? divida.numero}` : null,
+    `Data: ${fmtData(new Date().toISOString())}`,
+    '',
+    `Pagamento efetuado: ${fmtKz(valorPago)}${moeda !== 'KZ' ? ` (${moeda})` : ''}`,
+    '',
+    `Total da dívida: ${fmtKz(divida.valor_total)}`,
+    `Total já pago: ${fmtKz(divida.valor_pago)}`,
+    `Saldo em aberto: ${fmtKz(divida.saldo)}`,
+    '',
+    quitada ? 'Dívida totalmente quitada. Obrigado!' : 'Obrigado pela sua preferência!',
+  ]
+  const mensagem = linhas.filter((l): l is string => l !== null).join('\n')
 
   const numero = telefone ? telefone.replace(/[^0-9]/g, '') : ''
   const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensagem)}`

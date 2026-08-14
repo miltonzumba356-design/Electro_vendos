@@ -47,7 +47,7 @@ import { usePagination } from '@/lib/usePagination'
 import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature, FileDown, History } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp } from '@/lib/recibo'
+import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp, partilharPagamentoDividaWhatsapp } from '@/lib/recibo'
 import { exportTablePdf, formatPeriodoPdf } from '@/lib/pdf'
 import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
 import type { NotaEntregaOrigem } from '@/app/components/NotaEntregaDialog'
@@ -737,7 +737,7 @@ function PagarDividaDialog({
   divida, onSuccess, onClose, t,
 }: {
   divida: DividaResponse | null
-  onSuccess: (updated: DividaResponse) => void
+  onSuccess: (updated: DividaResponse, valorPago: number, moeda: MoedaPagamento) => void
   onClose: () => void
   t: TFunction
 }) {
@@ -760,8 +760,9 @@ function PagarDividaDialog({
     }
     setSaving(true)
     try {
-      const updated = await dividasService.pagar(divida.id, { valor: Number(valor), moeda })
-      onSuccess(updated)
+      const valorPago = Number(valor)
+      const updated = await dividasService.pagar(divida.id, { valor: valorPago, moeda })
+      onSuccess(updated, valorPago, moeda)
       toast.success(t('sales.toasts.debtPaymentRegistered'))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.debtPaymentError'))
@@ -830,6 +831,10 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   const [dataInicio, setDataInicio] = useState('')
   const [dataFim, setDataFim] = useState('')
   const [pagarDivida, setPagarDivida] = useState<DividaResponse | null>(null)
+  const [clientes, setClientes] = useState<ClienteResponse[]>([])
+  const [pagamentoConcluido, setPagamentoConcluido] = useState<{
+    divida: DividaResponse; valor: number; moeda: MoedaPagamento; telefone: string | null
+  } | null>(null)
 
   const filtered = dividas
     .filter((d) => (d.cliente_nome ?? '').toLowerCase().includes(search.toLowerCase()))
@@ -857,10 +862,13 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   }
 
   useEffect(() => { load(); resetPage() }, [statusFiltro, dataInicio, dataFim])
+  useEffect(() => { clientesService.listar().then(setClientes).catch(() => {}) }, [])
 
-  function handlePago(updated: DividaResponse) {
+  function handlePago(updated: DividaResponse, valorPago: number, moeda: MoedaPagamento) {
     setDividas((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
     setPagarDivida(null)
+    const telefone = clientes.find((c) => c.id === updated.cliente_id)?.telefone ?? null
+    setPagamentoConcluido({ divida: updated, valor: valorPago, moeda, telefone })
   }
 
   return (
@@ -1050,6 +1058,49 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
         onClose={() => setPagarDivida(null)}
         t={t}
       />
+
+      {/* Pagamento registado — perguntar se quer partilhar via WhatsApp */}
+      <Dialog open={!!pagamentoConcluido} onOpenChange={() => setPagamentoConcluido(null)}>
+        <DialogContent className="max-w-[95vw] sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t('sales.debtPaymentDoneTitle')}</DialogTitle>
+          </DialogHeader>
+          {pagamentoConcluido && (
+            <div className="space-y-3 pt-2">
+              <div className="space-y-1 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t('sales.debtPaymentDonePaid')}</span>
+                  <span className="font-semibold">{formatKz(pagamentoConcluido.valor)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t('sales.debtPaymentDoneTotalPaid')}</span>
+                  <span>{formatKz(pagamentoConcluido.divida.valor_pago)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t('sales.debtPaymentDoneBalance')}</span>
+                  <span className="font-semibold text-destructive">{formatKz(pagamentoConcluido.divida.saldo)}</span>
+                </div>
+              </div>
+              <div className="grid gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  className="justify-start gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                  onClick={() => partilharPagamentoDividaWhatsapp(
+                    pagamentoConcluido.divida, pagamentoConcluido.valor, pagamentoConcluido.moeda, pagamentoConcluido.telefone
+                  )}
+                >
+                  <MessageCircle className="size-4" />
+                  {t('sales.shareWhatsapp')}
+                </Button>
+              </div>
+              <Button variant="ghost" className="w-full gap-2" onClick={() => setPagamentoConcluido(null)}>
+                <X className="size-4" />
+                {t('common.close')}
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

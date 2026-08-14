@@ -101,6 +101,9 @@ const pt = {
     debtStatus: { DIVIDA: 'Em dívida', PAGA: 'Pagas', TODAS: 'Todas' },
     debtProduct: 'Produto', debtEmpty: 'Nenhuma dívida de crédito encontrada',
     payDebtTitle: 'Registar pagamento de dívida',
+    debtPaymentDoneTitle: 'Pagamento registado!',
+    debtPaymentDonePaid: 'Valor pago agora', debtPaymentDoneTotalPaid: 'Total já liquidado',
+    debtPaymentDoneBalance: 'Saldo em aberto (dívida)',
     searchByNumber: 'Nº da factura', searchByNumberPlaceholder: 'Ex: 12',
     toasts: {
       minOneProduct: 'Adicione pelo menos um produto à venda', registered: 'Venda registada com sucesso',

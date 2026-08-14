@@ -102,6 +102,9 @@ const fr = {
     debtStatus: { DIVIDA: 'En cours', PAGA: 'Payées', TODAS: 'Toutes' },
     debtProduct: 'Produit', debtEmpty: 'Aucune dette de crédit trouvée',
     payDebtTitle: 'Enregistrer le paiement de la dette',
+    debtPaymentDoneTitle: 'Paiement enregistré !',
+    debtPaymentDonePaid: 'Montant payé maintenant', debtPaymentDoneTotalPaid: 'Total déjà réglé',
+    debtPaymentDoneBalance: 'Solde restant (dette)',
     searchByNumber: 'N° de facture', searchByNumberPlaceholder: 'Ex: 12',
     toasts: {
       minOneProduct: 'Ajoutez au moins un produit à la vente',

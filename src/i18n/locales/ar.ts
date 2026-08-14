@@ -98,6 +98,9 @@ const ar = {
     debtStatus: { DIVIDA: 'مستحق', PAGA: 'مسدد', TODAS: 'الكل' },
     debtProduct: 'المنتج', debtEmpty: 'لم يتم العثور على ديون ائتمانية',
     payDebtTitle: 'تسجيل سداد الدين',
+    debtPaymentDoneTitle: 'تم تسجيل الدفع!',
+    debtPaymentDonePaid: 'المبلغ المدفوع الآن', debtPaymentDoneTotalPaid: 'إجمالي المسدد',
+    debtPaymentDoneBalance: 'الرصيد المستحق (الدين)',
     searchByNumber: 'رقم الفاتورة', searchByNumberPlaceholder: 'مثال: 12',
     toasts: {
       minOneProduct: 'أضف منتجًا واحدًا على الأقل', registered: 'تم تسجيل البيع بنجاح',

@@ -98,6 +98,9 @@ const zh = {
     debtStatus: { DIVIDA: '未结', PAGA: '已还', TODAS: '全部' },
     debtProduct: '产品', debtEmpty: '未找到信用债务',
     payDebtTitle: '登记债务还款',
+    debtPaymentDoneTitle: '付款已登记！',
+    debtPaymentDonePaid: '本次支付金额', debtPaymentDoneTotalPaid: '已结清总额',
+    debtPaymentDoneBalance: '未结余额（欠款）',
     searchByNumber: '发票编号', searchByNumberPlaceholder: '例如：12',
     toasts: {
       minOneProduct: '请至少添加一个产品', registered: '销售记录成功',
