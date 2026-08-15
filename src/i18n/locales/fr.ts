@@ -92,6 +92,7 @@ const fr = {
     printReceipt: 'Imprimer le reçu',
     doneTitle: 'Vente enregistrée !', doneDesc: 'Total : {{total}}. Que souhaitez-vous faire ensuite ?',
     preview: 'Aperçu', shareWhatsapp: 'Partager via WhatsApp',
+    shareTextWhatsapp: 'Envoyer le texte (WhatsApp)', sharePdfWhatsapp: 'Envoyer le PDF (WhatsApp)',
     cash: 'Comptant', creditPaid: 'Crédit payé', creditPending: 'Crédit en dette',
     creditSaleLabel: 'Vente à crédit (génère une dette)', discountLabel: 'Remise manuelle (%)',
     finalValueLabel: 'Valeur finale souhaitée (Kz)', finalValueHint: 'Prioritaire sur la remise manuelle',

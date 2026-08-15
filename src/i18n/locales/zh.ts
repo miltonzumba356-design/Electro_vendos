@@ -88,6 +88,7 @@ const zh = {
     printReceipt: '打印收据',
     doneTitle: '销售已登记！', doneDesc: '合计：{{total}}。接下来要做什么？',
     preview: '预览', shareWhatsapp: '通过WhatsApp分享',
+    shareTextWhatsapp: '发送文本 (WhatsApp)', sharePdfWhatsapp: '发送PDF (WhatsApp)',
     cash: '现金', creditPaid: '信用已还', creditPending: '信用欠款',
     creditSaleLabel: '信用销售（产生债务）', discountLabel: '手动折扣 (%)',
     finalValueLabel: '期望的最终金额 (Kz)', finalValueHint: '优先于手动折扣',

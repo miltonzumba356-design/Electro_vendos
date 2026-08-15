@@ -91,6 +91,7 @@ const pt = {
     printReceipt: 'Imprimir Recibo',
     doneTitle: 'Venda registada!', doneDesc: 'Total: {{total}}. O que deseja fazer a seguir?',
     preview: 'Pré-visualizar', shareWhatsapp: 'Partilhar via WhatsApp',
+    shareTextWhatsapp: 'Enviar texto (WhatsApp)', sharePdfWhatsapp: 'Enviar PDF (WhatsApp)',
     cash: 'A pronto', creditPaid: 'Crédito pago', creditPending: 'Crédito em dívida',
     creditSaleLabel: 'Venda a crédito (gera dívida)', discountLabel: 'Desconto manual (%)',
     finalValueLabel: 'Valor final desejado (Kz)', finalValueHint: 'Tem prioridade sobre o desconto manual',

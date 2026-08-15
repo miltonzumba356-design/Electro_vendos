@@ -88,6 +88,7 @@ const ar = {
     printReceipt: 'طباعة الإيصال',
     doneTitle: 'تم تسجيل البيع!', doneDesc: 'الإجمالي: {{total}}. ماذا تريد أن تفعل بعد ذلك؟',
     preview: 'معاينة', shareWhatsapp: 'مشاركة عبر واتساب',
+    shareTextWhatsapp: 'إرسال نص (واتساب)', sharePdfWhatsapp: 'إرسال PDF (واتساب)',
     cash: 'نقدًا', creditPaid: 'ائتمان مسدد', creditPending: 'ائتمان مستحق',
     creditSaleLabel: 'بيع بالائتمان (ينشئ دينًا)', discountLabel: 'خصم يدوي (%)',
     finalValueLabel: 'القيمة النهائية المطلوبة (Kz)', finalValueHint: 'له أولوية على الخصم اليدوي',

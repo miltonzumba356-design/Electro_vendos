@@ -90,6 +90,7 @@ const en = {
     printReceipt: 'Print Receipt',
     doneTitle: 'Sale registered!', doneDesc: 'Total: {{total}}. What would you like to do next?',
     preview: 'Preview', shareWhatsapp: 'Share via WhatsApp',
+    shareTextWhatsapp: 'Send text (WhatsApp)', sharePdfWhatsapp: 'Send PDF (WhatsApp)',
     cash: 'Cash', creditPaid: 'Credit paid', creditPending: 'Credit pending',
     creditSaleLabel: 'Credit sale (generates debt)', discountLabel: 'Manual discount (%)',
     finalValueLabel: 'Desired final value (Kz)', finalValueHint: 'Takes priority over the manual discount',

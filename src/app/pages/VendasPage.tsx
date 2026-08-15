@@ -59,7 +59,8 @@ import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircl
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp, partilharPagamentoDividaWhatsapp } from '@/lib/recibo'
-import { exportTablePdf, formatPeriodoPdf } from '@/lib/pdf'
+import { exportTablePdf, getTablePdfBlob, formatPeriodoPdf } from '@/lib/pdf'
+import { partilharArquivoOuTexto } from '@/lib/share'
 import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
 import type { NotaEntregaOrigem } from '@/app/components/NotaEntregaDialog'
 import PrestacoesPage from '@/app/pages/PrestacoesPage'
@@ -92,6 +93,7 @@ function VendasTab({ t }: { t: TFunction }) {
   const [notaEntregaOrigem, setNotaEntregaOrigem] = useState<NotaEntregaOrigem | null>(null)
   const [cancelarVendaAlvo, setCancelarVendaAlvo] = useState<VendaResponse | null>(null)
   const [cancelando, setCancelando] = useState(false)
+  const [sharingPdf, setSharingPdf] = useState(false)
 
   const [clienteMode, setClienteMode] = useState<'existente' | 'novo' | 'nenhum'>('nenhum')
   const [clienteId, setClienteId] = useState('')
@@ -222,6 +224,49 @@ function VendasTab({ t }: { t: TFunction }) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.registerError'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handlePartilharPdfWhatsapp(venda: VendaResponse) {
+    setSharingPdf(true)
+    try {
+      const blob = await getTablePdfBlob({
+        title: t('sales.detailsTitle'),
+        subtitle: venda.cliente_nome,
+        infoLines: [
+          `${t('sales.detailsOperator')}: ${venda.utilizador_nome}`,
+          `${t('sales.detailsDate')}: ${format(new Date(venda.criado_em), 'dd/MM/yyyy HH:mm')}`,
+          venda.credito
+            ? `${t('sales.colType')}: ${venda.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}${venda.numero_factura != null ? ` #${venda.numero_factura}` : ''}`
+            : `${t('sales.colType')}: ${t('sales.cash')}`,
+        ],
+        columns: [
+          { header: t('sales.detailsItems'), key: 'produto' },
+          { header: t('sales.qty'), key: 'quantidade', align: 'right' },
+          { header: t('sales.subtotal'), key: 'subtotal', align: 'right' },
+        ],
+        rows: venda.itens.map((i) => ({
+          produto: i.produto_nome, quantidade: i.quantidade, subtotal: formatKz(i.subtotal),
+        })),
+        totalsRow: [t('sales.detailsFinalTotal'), '', formatKz(venda.total_final)],
+        qrUrl: `${window.location.origin}/vendas`,
+      })
+      const file = new File([blob], `venda-${venda.id.slice(0, 8)}.pdf`, { type: 'application/pdf' })
+      const telefoneCliente = clientes.find((c) => c.id === venda.cliente_id)?.telefone ?? null
+      const mensagem = [
+        `*ELECTRO VENDOS* — ${t('sales.detailsTitle')}`,
+        `${t('sales.detailsClient')}: ${venda.cliente_nome}`,
+        `${t('sales.detailsDate')}: ${format(new Date(venda.criado_em), 'dd/MM/yyyy HH:mm')}`,
+        `${t('sales.detailsFinalTotal')}: ${formatKz(venda.total_final)}`,
+      ].join('\n')
+      const resultado = await partilharArquivoOuTexto(file, mensagem, telefoneCliente)
+      if (resultado === 'descarregado') {
+        toast.info(t('suppliers.toasts.pdfDownloadedAttachManually'))
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('common.loadError'))
+    } finally {
+      setSharingPdf(false)
     }
   }
 
@@ -760,6 +805,29 @@ function VendasTab({ t }: { t: TFunction }) {
                   <span>{t('sales.detailsFinalTotal')}</span>
                   <span>{formatKz(detalhesVenda.total_final)}</span>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  className="gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                  onClick={() => partilharVendaWhatsapp(
+                    detalhesVenda,
+                    clientes.find((c) => c.id === detalhesVenda.cliente_id)?.telefone ?? null
+                  )}
+                >
+                  <MessageCircle className="size-4" />
+                  {t('sales.shareTextWhatsapp')}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
+                  disabled={sharingPdf}
+                  onClick={() => handlePartilharPdfWhatsapp(detalhesVenda)}
+                >
+                  <FileDown className="size-4" />
+                  {sharingPdf ? t('reports.loading') : t('sales.sharePdfWhatsapp')}
+                </Button>
               </div>
 
               {isGestor && !detalhesVenda.cancelada_em && (
