@@ -425,8 +425,19 @@ export function visualizarNotaEntrega(dados: NotaEntregaData, formato: NotaEntre
 
 // Constrói o link wa.me com um resumo em texto da venda. Sem número de
 // telefone do cliente, o WhatsApp mostra o seletor de contactos do utilizador.
-export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string | null) {
+// `dividaAnterior` é o saldo em aberto que o cliente já tinha ANTES desta
+// venda (dívidas de outras compras a crédito) — quando > 0, o recibo passa a
+// mostrar também esse valor e o total combinado a pagar.
+export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string | null, dividaAnterior = 0) {
   const linhas = venda.itens.map((item) => `• ${item.produto_nome} x${item.quantidade} — ${fmtKz(item.subtotal)}`)
+  const temDividaAnterior = dividaAnterior > 0
+  const totaisLinhas = temDividaAnterior
+    ? [
+        `Total da compra: ${fmtKz(venda.total_final)}`,
+        `Dívida anterior: ${fmtKz(dividaAnterior)}`,
+        `Total a pagar: ${fmtKz(venda.total_final + dividaAnterior)}`,
+      ]
+    : [`Total: ${fmtKz(venda.total_final)}`]
   const mensagem = [
     `*ELECTRO VENDOS* — Recibo de Venda`,
     `Cliente: ${venda.cliente_nome}`,
@@ -434,7 +445,7 @@ export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string |
     '',
     ...linhas,
     '',
-    `Total: ${fmtKz(venda.total_final)}`,
+    ...totaisLinhas,
     '',
     'Obrigado pela sua preferência!',
   ].join('\n')

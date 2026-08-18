@@ -98,6 +98,7 @@ const en = {
     debtWarningDesc: 'This client has an outstanding balance of {{value}}.',
     debtConfirmLabel: 'I confirm proceeding with the sale despite the pending debt',
     debtDiscountLabel: 'Additional discount (%)',
+    previousDebt: 'Previous debt', totalToPay: 'Total to pay',
     debtStatus: { DIVIDA: 'Outstanding', PAGA: 'Paid', TODAS: 'All' },
     debtProduct: 'Product', debtEmpty: 'No credit debt found',
     payDebtTitle: 'Register debt payment',

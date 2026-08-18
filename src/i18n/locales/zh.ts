@@ -96,6 +96,7 @@ const zh = {
     debtWarningDesc: '该客户有未结余额 {{value}}。',
     debtConfirmLabel: '我确认在有未结债务的情况下继续本次销售',
     debtDiscountLabel: '额外折扣 (%)',
+    previousDebt: '此前欠款', totalToPay: '应付总额',
     debtStatus: { DIVIDA: '未结', PAGA: '已还', TODAS: '全部' },
     debtProduct: '产品', debtEmpty: '未找到信用债务',
     payDebtTitle: '登记债务还款',

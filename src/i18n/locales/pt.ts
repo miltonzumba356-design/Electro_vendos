@@ -99,6 +99,7 @@ const pt = {
     debtWarningDesc: 'Este cliente tem um saldo em dívida de {{value}}.',
     debtConfirmLabel: 'Confirmo prosseguir com a venda mesmo com dívida pendente',
     debtDiscountLabel: 'Desconto adicional (%)',
+    previousDebt: 'Dívida anterior', totalToPay: 'Total a pagar',
     debtStatus: { DIVIDA: 'Em dívida', PAGA: 'Pagas', TODAS: 'Todas' },
     debtProduct: 'Produto', debtEmpty: 'Nenhuma dívida de crédito encontrada',
     payDebtTitle: 'Registar pagamento de dívida',

@@ -100,6 +100,7 @@ const fr = {
     debtWarningDesc: 'Ce client a un solde dû de {{value}}.',
     debtConfirmLabel: 'Je confirme vouloir poursuivre la vente malgré la dette en cours',
     debtDiscountLabel: 'Remise supplémentaire (%)',
+    previousDebt: 'Dette antérieure', totalToPay: 'Total à payer',
     debtStatus: { DIVIDA: 'En cours', PAGA: 'Payées', TODAS: 'Toutes' },
     debtProduct: 'Produit', debtEmpty: 'Aucune dette de crédit trouvée',
     payDebtTitle: 'Enregistrer le paiement de la dette',

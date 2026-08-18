@@ -89,7 +89,8 @@ function VendasTab({ t }: { t: TFunction }) {
 
   const [novaVendaOpen, setNovaVendaOpen] = useState(false)
   const [detalhesVenda, setDetalhesVenda] = useState<VendaResponse | null>(null)
-  const [vendaConcluida, setVendaConcluida] = useState<{ venda: VendaResponse; telefone: string | null } | null>(null)
+  const [vendaConcluida, setVendaConcluida] = useState<{ venda: VendaResponse; telefone: string | null; dividaAnterior: number } | null>(null)
+  const [detalhesDividaAnterior, setDetalhesDividaAnterior] = useState(0)
   const [notaEntregaOrigem, setNotaEntregaOrigem] = useState<NotaEntregaOrigem | null>(null)
   const [cancelarVendaAlvo, setCancelarVendaAlvo] = useState<VendaResponse | null>(null)
   const [cancelando, setCancelando] = useState(false)
@@ -139,6 +140,25 @@ function VendasTab({ t }: { t: TFunction }) {
     setConfirmarDivida(false)
     setDescontoDivida('')
   }, [clienteMode, clienteId])
+
+  // Dívida do cliente já existente antes desta venda (para incluir no recibo
+  // partilhado) — exclui a própria dívida gerada por esta venda, se houver,
+  // para não contar o mesmo valor duas vezes.
+  useEffect(() => {
+    if (!detalhesVenda?.cliente_id) {
+      setDetalhesDividaAnterior(0)
+      return
+    }
+    let cancelado = false
+    dividasService.verificarCliente(detalhesVenda.cliente_id)
+      .then((check) => {
+        if (cancelado) return
+        const outras = check.dividas.filter((d) => d.venda_id !== detalhesVenda.id)
+        setDetalhesDividaAnterior(outras.reduce((sum, d) => sum + d.saldo, 0))
+      })
+      .catch(() => { if (!cancelado) setDetalhesDividaAnterior(0) })
+    return () => { cancelado = true }
+  }, [detalhesVenda])
 
   function openNovaVenda() {
     setClienteMode('nenhum')
@@ -219,7 +239,14 @@ function VendasTab({ t }: { t: TFunction }) {
       setVendas((prev) => [nova, ...prev])
       toast.success(t('sales.toasts.registered'))
       setNovaVendaOpen(false)
-      setVendaConcluida({ venda: nova, telefone: telefoneCliente })
+      // dividaCheck ainda reflete o saldo do cliente ANTES desta venda (foi
+      // carregado ao selecionar o cliente, antes do submit) — é exatamente
+      // a dívida anterior a somar no recibo, se houver.
+      setVendaConcluida({
+        venda: nova,
+        telefone: telefoneCliente,
+        dividaAnterior: dividaCheck?.tem_divida ? dividaCheck.total_devido : 0,
+      })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.registerError'))
     } finally {
@@ -227,9 +254,10 @@ function VendasTab({ t }: { t: TFunction }) {
     }
   }
 
-  async function handlePartilharPdfWhatsapp(venda: VendaResponse) {
+  async function handlePartilharPdfWhatsapp(venda: VendaResponse, dividaAnterior = 0) {
     setSharingPdf(true)
     try {
+      const temDividaAnterior = dividaAnterior > 0
       const blob = await getTablePdfBlob({
         title: t('sales.detailsTitle'),
         subtitle: venda.cliente_nome,
@@ -239,6 +267,12 @@ function VendasTab({ t }: { t: TFunction }) {
           venda.credito
             ? `${t('sales.colType')}: ${venda.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}${venda.numero_factura != null ? ` #${venda.numero_factura}` : ''}`
             : `${t('sales.colType')}: ${t('sales.cash')}`,
+          ...(temDividaAnterior
+            ? [
+                `${t('sales.previousDebt')}: ${formatKz(dividaAnterior)}`,
+                `${t('sales.totalToPay')}: ${formatKz(venda.total_final + dividaAnterior)}`,
+              ]
+            : []),
         ],
         columns: [
           { header: t('sales.detailsItems'), key: 'produto' },
@@ -258,6 +292,12 @@ function VendasTab({ t }: { t: TFunction }) {
         `${t('sales.detailsClient')}: ${venda.cliente_nome}`,
         `${t('sales.detailsDate')}: ${format(new Date(venda.criado_em), 'dd/MM/yyyy HH:mm')}`,
         `${t('sales.detailsFinalTotal')}: ${formatKz(venda.total_final)}`,
+        ...(temDividaAnterior
+          ? [
+              `${t('sales.previousDebt')}: ${formatKz(dividaAnterior)}`,
+              `${t('sales.totalToPay')}: ${formatKz(venda.total_final + dividaAnterior)}`,
+            ]
+          : []),
       ].join('\n')
       const resultado = await partilharArquivoOuTexto(file, mensagem, telefoneCliente)
       if (resultado === 'descarregado') {
@@ -680,7 +720,7 @@ function VendasTab({ t }: { t: TFunction }) {
                 <Button
                   variant="outline"
                   className="justify-start gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-                  onClick={() => partilharVendaWhatsapp(vendaConcluida.venda, vendaConcluida.telefone)}
+                  onClick={() => partilharVendaWhatsapp(vendaConcluida.venda, vendaConcluida.telefone, vendaConcluida.dividaAnterior)}
                 >
                   <MessageCircle className="size-4" />
                   {t('sales.shareWhatsapp')}
@@ -813,7 +853,8 @@ function VendasTab({ t }: { t: TFunction }) {
                   className="gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
                   onClick={() => partilharVendaWhatsapp(
                     detalhesVenda,
-                    clientes.find((c) => c.id === detalhesVenda.cliente_id)?.telefone ?? null
+                    clientes.find((c) => c.id === detalhesVenda.cliente_id)?.telefone ?? null,
+                    detalhesDividaAnterior
                   )}
                 >
                   <MessageCircle className="size-4" />
@@ -823,7 +864,7 @@ function VendasTab({ t }: { t: TFunction }) {
                   variant="outline"
                   className="gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
                   disabled={sharingPdf}
-                  onClick={() => handlePartilharPdfWhatsapp(detalhesVenda)}
+                  onClick={() => handlePartilharPdfWhatsapp(detalhesVenda, detalhesDividaAnterior)}
                 >
                   <FileDown className="size-4" />
                   {sharingPdf ? t('reports.loading') : t('sales.sharePdfWhatsapp')}

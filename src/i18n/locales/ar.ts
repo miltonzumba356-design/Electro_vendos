@@ -96,6 +96,7 @@ const ar = {
     debtWarningDesc: 'لدى هذا العميل رصيد مستحق قدره {{value}}.',
     debtConfirmLabel: 'أؤكد المتابعة في البيع رغم الدين المستحق',
     debtDiscountLabel: 'خصم إضافي (%)',
+    previousDebt: 'الدين السابق', totalToPay: 'الإجمالي المستحق',
     debtStatus: { DIVIDA: 'مستحق', PAGA: 'مسدد', TODAS: 'الكل' },
     debtProduct: 'المنتج', debtEmpty: 'لم يتم العثور على ديون ائتمانية',
     payDebtTitle: 'تسجيل سداد الدين',
