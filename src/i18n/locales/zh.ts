@@ -15,7 +15,7 @@ const zh = {
   nav: {
     dashboard: '仪表板', products: '产品', clients: '客户', sales: '销售',
     invoices: '发票', suppliers: '供应商', stock: '库存', users: '用户',
-    cashFlow: '现金流', reports: '报告', logout: '退出登录',
+    cashFlow: '现金流', reports: '报告', trash: '回收站', logout: '退出登录',
   },
   login: {
     title: '登录', subtitle: '登录您的账户以继续。',
@@ -345,6 +345,21 @@ const zh = {
       activated: '用户 "{{name}}" 已启用', deactivated: '用户 "{{name}}" 已停用',
       updateError: '更新用户状态时出错',
       updated: '用户 "{{name}}" 更新成功', editError: '更新用户时出错',
+    },
+  },
+  trash: {
+    title: '回收站', subtitle: '已删除的欠款、销售、产品和发票 — 可恢复或永久删除',
+    searchPlaceholder: '搜索...', filterAll: '所有类型',
+    typeDivida: '欠款', typeVenda: '销售', typeProduto: '产品', typeFatura: '发票',
+    colType: '类型', colDescription: '描述', colDeletedAt: '删除时间',
+    restore: '恢复', deletePermanent: '永久删除',
+    empty: '回收站是空的',
+    deleteConfirmTitle: '永久删除？',
+    deleteConfirmDesc: '此操作不可撤销。"{{descricao}}" 将被永久删除且无法恢复。',
+    toasts: {
+      loadError: '加载回收站时出错',
+      restored: '"{{descricao}}" 已恢复', restoreError: '恢复项目时出错',
+      deleted: '"{{descricao}}" 已永久删除', deleteError: '删除项目时出错',
     },
   },
 } as const

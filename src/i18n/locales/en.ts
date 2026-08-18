@@ -15,7 +15,7 @@ const en = {
   nav: {
     dashboard: 'Dashboard', products: 'Products', clients: 'Clients', sales: 'Sales',
     invoices: 'Invoices', suppliers: 'Suppliers', stock: 'Stock', users: 'Users',
-    cashFlow: 'Cash Flow', reports: 'Reports', logout: 'Sign out',
+    cashFlow: 'Cash Flow', reports: 'Reports', trash: 'Trash', logout: 'Sign out',
   },
   login: {
     title: 'Sign In', subtitle: 'Access your account to continue.',
@@ -350,6 +350,21 @@ const en = {
       activated: 'User "{{name}}" activated', deactivated: 'User "{{name}}" deactivated',
       updateError: 'Error updating user status',
       updated: 'User "{{name}}" updated successfully', editError: 'Error updating user',
+    },
+  },
+  trash: {
+    title: 'Trash', subtitle: 'Deleted debts, sales, products and invoices — restore or permanently delete',
+    searchPlaceholder: 'Search...', filterAll: 'All types',
+    typeDivida: 'Debt', typeVenda: 'Sale', typeProduto: 'Product', typeFatura: 'Invoice',
+    colType: 'Type', colDescription: 'Description', colDeletedAt: 'Deleted at',
+    restore: 'Restore', deletePermanent: 'Delete permanently',
+    empty: 'The trash is empty',
+    deleteConfirmTitle: 'Delete permanently?',
+    deleteConfirmDesc: 'This action is irreversible. "{{descricao}}" will be permanently deleted and cannot be recovered.',
+    toasts: {
+      loadError: 'Error loading trash',
+      restored: '"{{descricao}}" was restored', restoreError: 'Error restoring item',
+      deleted: '"{{descricao}}" was permanently deleted', deleteError: 'Error deleting item',
     },
   },
 } as const

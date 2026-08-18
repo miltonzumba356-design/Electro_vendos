@@ -15,7 +15,7 @@ const pt = {
   nav: {
     dashboard: 'Dashboard', products: 'Produtos', clients: 'Clientes', sales: 'Vendas',
     invoices: 'Faturas', suppliers: 'Fornecedores', stock: 'Stock', users: 'Utilizadores',
-    cashFlow: 'Fluxo de Caixa', reports: 'Relatórios', logout: 'Terminar sessão',
+    cashFlow: 'Fluxo de Caixa', reports: 'Relatórios', trash: 'Lixeira', logout: 'Terminar sessão',
   },
   login: {
     title: 'Entrar', subtitle: 'Acesse a sua conta para continuar.',
@@ -354,6 +354,21 @@ const pt = {
       activated: 'Utilizador "{{name}}" ativado', deactivated: 'Utilizador "{{name}}" desativado',
       updateError: 'Erro ao atualizar o estado do utilizador',
       updated: 'Utilizador "{{name}}" atualizado com sucesso', editError: 'Erro ao atualizar utilizador',
+    },
+  },
+  trash: {
+    title: 'Lixeira', subtitle: 'Dívidas, vendas, produtos e facturas eliminados — restaure ou elimine em definitivo',
+    searchPlaceholder: 'Pesquisar...', filterAll: 'Todos os tipos',
+    typeDivida: 'Dívida', typeVenda: 'Venda', typeProduto: 'Produto', typeFatura: 'Factura',
+    colType: 'Tipo', colDescription: 'Descrição', colDeletedAt: 'Eliminado em',
+    restore: 'Restaurar', deletePermanent: 'Eliminar em definitivo',
+    empty: 'A lixeira está vazia',
+    deleteConfirmTitle: 'Eliminar em definitivo?',
+    deleteConfirmDesc: 'Esta ação é irreversível. "{{descricao}}" será eliminado permanentemente e não poderá ser recuperado.',
+    toasts: {
+      loadError: 'Erro ao carregar a lixeira',
+      restored: '"{{descricao}}" foi restaurado', restoreError: 'Erro ao restaurar o item',
+      deleted: '"{{descricao}}" foi eliminado em definitivo', deleteError: 'Erro ao eliminar o item',
     },
   },
 } as const

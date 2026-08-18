@@ -18,6 +18,7 @@ import FornecedorExtratoPage from '@/app/pages/FornecedorExtratoPage'
 import DividaClienteDetalhePage from '@/app/pages/DividaClienteDetalhePage'
 import DividaFornecedorDetalhePage from '@/app/pages/DividaFornecedorDetalhePage'
 import ClienteExtratoPage from '@/app/pages/ClienteExtratoPage'
+import LixeiraPage from '@/app/pages/LixeiraPage'
 
 function ProtectedRoute({ children, gestorOnly = false }: {
   children: React.ReactNode
@@ -115,6 +116,10 @@ function AppRoutes() {
       <Route
         path="/relatorios"
         element={<ProtectedRoute><RelatoriosPage /></ProtectedRoute>}
+      />
+      <Route
+        path="/lixeira"
+        element={<ProtectedRoute gestorOnly><LixeiraPage /></ProtectedRoute>}
       />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

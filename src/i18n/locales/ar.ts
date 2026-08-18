@@ -15,7 +15,7 @@ const ar = {
   nav: {
     dashboard: 'لوحة التحكم', products: 'المنتجات', clients: 'العملاء', sales: 'المبيعات',
     invoices: 'الفواتير', suppliers: 'الموردون', stock: 'المخزون', users: 'المستخدمون',
-    cashFlow: 'التدفق النقدي', reports: 'التقارير', logout: 'تسجيل الخروج',
+    cashFlow: 'التدفق النقدي', reports: 'التقارير', trash: 'سلة المهملات', logout: 'تسجيل الخروج',
   },
   login: {
     title: 'تسجيل الدخول', subtitle: 'ادخل إلى حسابك للمتابعة.',
@@ -348,6 +348,21 @@ const ar = {
       activated: 'تم تفعيل المستخدم "{{name}}"', deactivated: 'تم تعطيل المستخدم "{{name}}"',
       updateError: 'خطأ في تحديث حالة المستخدم',
       updated: 'تم تحديث المستخدم "{{name}}" بنجاح', editError: 'خطأ في تحديث المستخدم',
+    },
+  },
+  trash: {
+    title: 'سلة المهملات', subtitle: 'الديون والمبيعات والمنتجات والفواتير المحذوفة — استعادة أو حذف نهائي',
+    searchPlaceholder: 'بحث...', filterAll: 'كل الأنواع',
+    typeDivida: 'دين', typeVenda: 'بيع', typeProduto: 'منتج', typeFatura: 'فاتورة',
+    colType: 'النوع', colDescription: 'الوصف', colDeletedAt: 'تاريخ الحذف',
+    restore: 'استعادة', deletePermanent: 'حذف نهائي',
+    empty: 'سلة المهملات فارغة',
+    deleteConfirmTitle: 'حذف نهائي؟',
+    deleteConfirmDesc: 'هذا الإجراء لا رجعة فيه. سيتم حذف "{{descricao}}" نهائيًا ولن يمكن استرجاعه.',
+    toasts: {
+      loadError: 'خطأ في تحميل سلة المهملات',
+      restored: 'تمت استعادة "{{descricao}}"', restoreError: 'خطأ في استعادة العنصر',
+      deleted: 'تم حذف "{{descricao}}" نهائيًا', deleteError: 'خطأ في حذف العنصر',
     },
   },
 } as const

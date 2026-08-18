@@ -740,3 +740,17 @@ export interface PerguntaResponse {
   resposta: string
   mensagem_id: string
 }
+
+// ── Lixeira (itens eliminados: dívidas anuladas, vendas canceladas,
+// produtos desativados, facturas canceladas) ────────────────────
+export type LixeiraTipo = 'divida' | 'venda' | 'produto' | 'fatura'
+
+export interface LixeiraItemResponse {
+  id: string
+  tipo: LixeiraTipo
+  descricao: string
+  // Dados adicionais devolvidos pela API, formato livre por tipo — usado só
+  // para exibição extra, nunca assumir campos específicos presentes.
+  detalhes: Record<string, unknown> | null
+  eliminado_em: string | null
+}

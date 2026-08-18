@@ -24,6 +24,7 @@ import {
   Banknote,
   Globe,
   Truck,
+  Trash2,
 } from 'lucide-react'
 import vendosLogo from '@/assets/vendos-logo.png'
 import { cn } from '@/app/components/ui/utils'
@@ -41,6 +42,7 @@ const navDefs = [
   { to: '/utilizadores', key: 'users',        icon: UsersRound,      gestorOnly: true  },
   { to: '/fluxo-caixa',  key: 'cashFlow',     icon: Banknote,        gestorOnly: true  },
   { to: '/relatorios',   key: 'reports',      icon: BarChart3,       gestorOnly: false },
+  { to: '/lixeira',      key: 'trash',        icon: Trash2,          gestorOnly: true  },
 ]
 
 /* ── Compact language picker (topbar + sidebar) ─────────────── */

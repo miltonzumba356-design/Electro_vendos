@@ -15,7 +15,7 @@ const fr = {
   nav: {
     dashboard: 'Tableau de bord', products: 'Produits', clients: 'Clients', sales: 'Ventes',
     invoices: 'Factures', suppliers: 'Fournisseurs', stock: 'Stock', users: 'Utilisateurs',
-    cashFlow: 'Flux de Trésorerie', reports: 'Rapports', logout: 'Se déconnecter',
+    cashFlow: 'Flux de Trésorerie', reports: 'Rapports', trash: 'Corbeille', logout: 'Se déconnecter',
   },
   login: {
     title: 'Se connecter', subtitle: 'Accédez à votre compte pour continuer.',
@@ -357,6 +357,21 @@ const fr = {
       activated: 'Utilisateur "{{name}}" activé', deactivated: 'Utilisateur "{{name}}" désactivé',
       updateError: "Erreur lors de la mise à jour du statut de l'utilisateur",
       updated: 'Utilisateur "{{name}}" mis à jour avec succès', editError: "Erreur lors de la mise à jour de l'utilisateur",
+    },
+  },
+  trash: {
+    title: 'Corbeille', subtitle: 'Dettes, ventes, produits et factures supprimés — restaurer ou supprimer définitivement',
+    searchPlaceholder: 'Rechercher...', filterAll: 'Tous les types',
+    typeDivida: 'Dette', typeVenda: 'Vente', typeProduto: 'Produit', typeFatura: 'Facture',
+    colType: 'Type', colDescription: 'Description', colDeletedAt: 'Supprimé le',
+    restore: 'Restaurer', deletePermanent: 'Supprimer définitivement',
+    empty: 'La corbeille est vide',
+    deleteConfirmTitle: 'Supprimer définitivement ?',
+    deleteConfirmDesc: 'Cette action est irréversible. "{{descricao}}" sera supprimé définitivement et ne pourra pas être récupéré.',
+    toasts: {
+      loadError: 'Erreur de chargement de la corbeille',
+      restored: '"{{descricao}}" a été restauré', restoreError: 'Erreur lors de la restauration',
+      deleted: '"{{descricao}}" a été supprimé définitivement', deleteError: 'Erreur lors de la suppression',
     },
   },
 } as const

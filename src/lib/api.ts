@@ -72,8 +72,8 @@ function buildUrl(path: string, params?: Params): string {
 export const api = {
   get: <T>(path: string, params?: Params) =>
     request<T>(buildUrl(path, params)),
-  post: <T>(path: string, body?: unknown) =>
-    request<T>(path, {
+  post: <T>(path: string, body?: unknown, params?: Params) =>
+    request<T>(buildUrl(path, params), {
       method: 'POST',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
@@ -87,6 +87,6 @@ export const api = {
       method: 'PATCH',
       body: body !== undefined ? JSON.stringify(body) : undefined,
     }),
-  delete: <T>(path: string) =>
-    request<T>(path, { method: 'DELETE' }),
+  delete: <T>(path: string, params?: Params) =>
+    request<T>(buildUrl(path, params), { method: 'DELETE' }),
 }
