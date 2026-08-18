@@ -257,7 +257,17 @@ function VendasTab({ t }: { t: TFunction }) {
   async function handlePartilharPdfWhatsapp(venda: VendaResponse, dividaAnterior = 0) {
     setSharingPdf(true)
     try {
-      const temDividaAnterior = dividaAnterior > 0
+      const creditoAplicado = venda.credito_cliente_aplicado ?? 0
+      const totalAPagarVenda = venda.total_a_pagar ?? venda.total_final
+      const totalGeralAPagar = totalAPagarVenda + dividaAnterior
+      const temExtras = dividaAnterior > 0 || creditoAplicado > 0
+      const linhasExtras = temExtras
+        ? [
+            ...(creditoAplicado > 0 ? [`${t('sales.creditBalanceApplied')}: -${formatKz(creditoAplicado)}`] : []),
+            ...(dividaAnterior > 0 ? [`${t('sales.previousDebt')}: ${formatKz(dividaAnterior)}`] : []),
+            `${t('sales.totalToPay')}: ${formatKz(totalGeralAPagar)}`,
+          ]
+        : []
       const blob = await getTablePdfBlob({
         title: t('sales.detailsTitle'),
         subtitle: venda.cliente_nome,
@@ -267,12 +277,7 @@ function VendasTab({ t }: { t: TFunction }) {
           venda.credito
             ? `${t('sales.colType')}: ${venda.credito_pago ? t('sales.creditPaid') : t('sales.creditPending')}${venda.numero_factura != null ? ` #${venda.numero_factura}` : ''}`
             : `${t('sales.colType')}: ${t('sales.cash')}`,
-          ...(temDividaAnterior
-            ? [
-                `${t('sales.previousDebt')}: ${formatKz(dividaAnterior)}`,
-                `${t('sales.totalToPay')}: ${formatKz(venda.total_final + dividaAnterior)}`,
-              ]
-            : []),
+          ...linhasExtras,
         ],
         columns: [
           { header: t('sales.detailsItems'), key: 'produto' },
@@ -292,12 +297,7 @@ function VendasTab({ t }: { t: TFunction }) {
         `${t('sales.detailsClient')}: ${venda.cliente_nome}`,
         `${t('sales.detailsDate')}: ${format(new Date(venda.criado_em), 'dd/MM/yyyy HH:mm')}`,
         `${t('sales.detailsFinalTotal')}: ${formatKz(venda.total_final)}`,
-        ...(temDividaAnterior
-          ? [
-              `${t('sales.previousDebt')}: ${formatKz(dividaAnterior)}`,
-              `${t('sales.totalToPay')}: ${formatKz(venda.total_final + dividaAnterior)}`,
-            ]
-          : []),
+        ...linhasExtras,
       ].join('\n')
       const resultado = await partilharArquivoOuTexto(file, mensagem, telefoneCliente)
       if (resultado === 'descarregado') {
@@ -561,6 +561,18 @@ function VendasTab({ t }: { t: TFunction }) {
                   </AlertDescription>
                 </Alert>
               )}
+
+              {clienteMode === 'existente' && (clientes.find((c) => c.id === clienteId)?.saldo_credito ?? 0) > 0 && (
+                <Alert className="border-green-200 bg-green-50 text-green-800 [&>svg]:text-green-600">
+                  <Wallet />
+                  <AlertTitle>{t('sales.creditBalanceTitle')}</AlertTitle>
+                  <AlertDescription className="text-green-700">
+                    {t('sales.creditBalanceDesc', {
+                      value: formatKz(clientes.find((c) => c.id === clienteId)?.saldo_credito ?? 0),
+                    })}
+                  </AlertDescription>
+                </Alert>
+              )}
             </div>
 
             <Separator />
@@ -694,6 +706,18 @@ function VendasTab({ t }: { t: TFunction }) {
               <p className="text-sm text-muted-foreground">
                 {t('sales.doneDesc', { total: formatKz(vendaConcluida.venda.total_final) })}
               </p>
+              {vendaConcluida.venda.credito_cliente_aplicado > 0 && (
+                <div className="space-y-1 text-sm rounded-md border border-green-200 bg-green-50 p-3">
+                  <div className="flex justify-between text-green-700">
+                    <span>{t('sales.creditBalanceApplied')}</span>
+                    <span className="font-semibold">-{formatKz(vendaConcluida.venda.credito_cliente_aplicado)}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-green-800">
+                    <span>{t('sales.totalToPay')}</span>
+                    <span>{formatKz(vendaConcluida.venda.total_a_pagar)}</span>
+                  </div>
+                </div>
+              )}
               <div className="grid gap-2">
                 <Button
                   variant="outline"
@@ -841,10 +865,22 @@ function VendasTab({ t }: { t: TFunction }) {
                     <span>-{formatKz(detalhesVenda.total_desconto)}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-base pt-1">
+                <div className={`flex justify-between ${detalhesVenda.credito_cliente_aplicado > 0 ? '' : 'font-bold text-base'} pt-1`}>
                   <span>{t('sales.detailsFinalTotal')}</span>
                   <span>{formatKz(detalhesVenda.total_final)}</span>
                 </div>
+                {detalhesVenda.credito_cliente_aplicado > 0 && (
+                  <>
+                    <div className="flex justify-between text-green-600">
+                      <span>{t('sales.creditBalanceApplied')}</span>
+                      <span>-{formatKz(detalhesVenda.credito_cliente_aplicado)}</span>
+                    </div>
+                    <div className="flex justify-between font-bold text-base pt-1">
+                      <span>{t('sales.totalToPay')}</span>
+                      <span>{formatKz(detalhesVenda.total_a_pagar)}</span>
+                    </div>
+                  </>
+                )}
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -913,25 +949,34 @@ function VendasTab({ t }: { t: TFunction }) {
   )
 }
 
+const FORMAS_PAGAMENTO = ['Dinheiro', 'Transferência', 'Multicaixa', 'TPA'] as const
+
 /* ── Pagar dívida dialog (dívidas de crédito) ────────────────────── */
 function PagarDividaDialog({
   divida, onSuccess, onClose, t,
 }: {
   divida: DividaResponse | null
-  onSuccess: (updated: DividaResponse, valorPago: number, moeda: MoedaPagamento) => void
+  onSuccess: (updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number) => void
   onClose: () => void
   t: TFunction
 }) {
   const [valor, setValor] = useState('')
   const [moeda, setMoeda] = useState<MoedaPagamento>('KZ')
+  const [formaPagamento, setFormaPagamento] = useState('')
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     if (divida) {
       setValor(String(divida.saldo))
       setMoeda('KZ')
+      setFormaPagamento('')
     }
   }, [divida])
+
+  // Excesso do valor digitado sobre o saldo em aberto — a API não bloqueia
+  // mais pagamentos acima do saldo, o excedente vira saldo de crédito do
+  // cliente automaticamente (ver MT0090).
+  const excedentePrevisto = divida && valor ? Math.max(0, Number(valor) - divida.saldo) : 0
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -942,8 +987,13 @@ function PagarDividaDialog({
     setSaving(true)
     try {
       const valorPago = Number(valor)
-      const updated = await dividasService.pagar(divida.id, { valor: valorPago, moeda })
-      onSuccess(updated, valorPago, moeda)
+      const excedente = Math.max(0, valorPago - divida.saldo)
+      const updated = await dividasService.pagar(divida.id, {
+        valor: valorPago,
+        moeda,
+        forma_pagamento: formaPagamento || undefined,
+      })
+      onSuccess(updated, valorPago, moeda, excedente)
       toast.success(t('sales.toasts.debtPaymentRegistered'))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.debtPaymentError'))
@@ -970,12 +1020,16 @@ function PagarDividaDialog({
                 id="valor-divida"
                 type="number"
                 min="0.01"
-                max={divida.saldo}
                 step="0.01"
                 value={valor}
                 onChange={(e) => setValor(e.target.value)}
                 required
               />
+              {excedentePrevisto > 0 && (
+                <p className="text-xs text-green-600">
+                  {t('sales.debtOverpaymentHint', { value: formatKz(excedentePrevisto) })}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>{t('suppliers.paymentCurrency')}</Label>
@@ -983,6 +1037,16 @@ function PagarDividaDialog({
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {MOEDAS_PAGAMENTO.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('sales.fieldPaymentMethod')}</Label>
+              <Select value={formaPagamento || '__none__'} onValueChange={(v) => setFormaPagamento(v === '__none__' ? '' : v)}>
+                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">{t('sales.paymentMethodNotInformed')}</SelectItem>
+                  {FORMAS_PAGAMENTO.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -1014,7 +1078,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   const [pagarDivida, setPagarDivida] = useState<DividaResponse | null>(null)
   const [clientes, setClientes] = useState<ClienteResponse[]>([])
   const [pagamentoConcluido, setPagamentoConcluido] = useState<{
-    divida: DividaResponse; valor: number; moeda: MoedaPagamento; telefone: string | null
+    divida: DividaResponse; valor: number; moeda: MoedaPagamento; telefone: string | null; excedente: number
   } | null>(null)
 
   const filtered = dividas
@@ -1045,11 +1109,11 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   useEffect(() => { load(); resetPage() }, [statusFiltro, dataInicio, dataFim])
   useEffect(() => { clientesService.listar().then(setClientes).catch(() => {}) }, [])
 
-  function handlePago(updated: DividaResponse, valorPago: number, moeda: MoedaPagamento) {
+  function handlePago(updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number) {
     setDividas((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
     setPagarDivida(null)
     const telefone = clientes.find((c) => c.id === updated.cliente_id)?.telefone ?? null
-    setPagamentoConcluido({ divida: updated, valor: valorPago, moeda, telefone })
+    setPagamentoConcluido({ divida: updated, valor: valorPago, moeda, telefone, excedente })
   }
 
   return (
@@ -1262,12 +1326,22 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
                   <span className="font-semibold text-destructive">{formatKz(pagamentoConcluido.divida.saldo)}</span>
                 </div>
               </div>
+              {pagamentoConcluido.excedente > 0 && (
+                <Alert className="border-green-200 bg-green-50 text-green-800 [&>svg]:text-green-600">
+                  <Wallet />
+                  <AlertTitle>{t('sales.debtOverpaymentDoneTitle')}</AlertTitle>
+                  <AlertDescription className="text-green-700">
+                    {t('sales.debtOverpaymentDoneDesc', { value: formatKz(pagamentoConcluido.excedente) })}
+                  </AlertDescription>
+                </Alert>
+              )}
               <div className="grid gap-2 pt-1">
                 <Button
                   variant="outline"
                   className="justify-start gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
                   onClick={() => partilharPagamentoDividaWhatsapp(
-                    pagamentoConcluido.divida, pagamentoConcluido.valor, pagamentoConcluido.moeda, pagamentoConcluido.telefone
+                    pagamentoConcluido.divida, pagamentoConcluido.valor, pagamentoConcluido.moeda,
+                    pagamentoConcluido.telefone, pagamentoConcluido.excedente
                   )}
                 >
                   <MessageCircle className="size-4" />

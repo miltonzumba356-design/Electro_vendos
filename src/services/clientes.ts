@@ -1,5 +1,5 @@
 import { api } from '@/lib/api'
-import type { ClienteCreate, ClienteUpdate, ClienteResponse } from '@/types'
+import type { ClienteCreate, ClienteUpdate, ClienteResponse, HistoricoSaldoClienteResponse } from '@/types'
 
 export const clientesService = {
   listar: () =>
@@ -13,4 +13,7 @@ export const clientesService = {
 
   atualizar: (id: string, data: ClienteUpdate) =>
     api.put<ClienteResponse>(`/clientes/${id}`, data),
+
+  saldoHistorico: (id: string) =>
+    api.get<HistoricoSaldoClienteResponse>(`/clientes/${id}/saldo/historico`),
 }

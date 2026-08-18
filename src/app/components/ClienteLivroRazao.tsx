@@ -2,7 +2,8 @@ import { useState, useMemo, Fragment, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
-import type { ClienteResponse, VendaResponse, ExtratoCliente } from '@/types'
+import type { ClienteResponse, VendaResponse, ExtratoCliente, HistoricoSaldoClienteResponse } from '@/types'
+import { clientesService } from '@/services/clientes'
 import { Badge } from '@/app/components/ui/badge'
 import { Input } from '@/app/components/ui/input'
 import { Separator } from '@/app/components/ui/separator'
@@ -14,9 +15,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/app/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/app/components/ui/dialog'
+import { Skeleton } from '@/app/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/app/components/ui/tooltip'
 import { ArrowUp, ArrowDown, ArrowUpDown, Search } from 'lucide-react'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
 
 // Bloco "Livro Razão" do histórico de um cliente — usado tanto na página
 // dedicada (/clientes/:id) como na aba "Histórico do Cliente" de Relatórios,
@@ -129,6 +138,20 @@ export default function ClienteLivroRazao({
   const [busca, setBusca] = useState('')
   const [ordenarPor, setOrdenarPor] = useState<OrdenarPor>('data')
   const [ordemAsc, setOrdemAsc] = useState(true)
+
+  const [historicoOpen, setHistoricoOpen] = useState(false)
+  const [historico, setHistorico] = useState<HistoricoSaldoClienteResponse | null>(null)
+  const [historicoLoading, setHistoricoLoading] = useState(false)
+
+  function abrirHistoricoSaldo() {
+    setHistoricoOpen(true)
+    if (historico) return
+    setHistoricoLoading(true)
+    clientesService.saldoHistorico(cliente.id)
+      .then(setHistorico)
+      .catch((err) => toast.error(err instanceof Error ? err.message : t('common.loadError')))
+      .finally(() => setHistoricoLoading(false))
+  }
 
   const totalGasto = vendasCliente.reduce((s, v) => s + v.total_final, 0)
 
@@ -264,7 +287,14 @@ export default function ClienteLivroRazao({
             />
             <MiniStat label={t('reports.ledgerTotalPurchased')} value={formatKz(totalGasto)} />
             <MiniStat label={t('reports.ledgerTotalPaid')} value={formatKz(totalPagoDerivado)} />
-            <MiniStat label={t('reports.ledgerAvailableCredit')} value="—" hint={t('reports.ledgerNotTracked')} />
+            <button type="button" className="text-left" onClick={abrirHistoricoSaldo}>
+              <MiniStat
+                label={t('reports.ledgerAvailableCredit')}
+                value={formatKz(cliente.saldo_credito)}
+                positive={cliente.saldo_credito > 0}
+                hint={t('reports.ledgerViewCreditHistory')}
+              />
+            </button>
             <MiniStat label={t('reports.ledgerTotalInvoices')} value={String(totalFaturas)} />
             <MiniStat label={t('reports.ledgerTotalReceipts')} value={String(totalRecibos)} />
           </div>
@@ -425,6 +455,59 @@ export default function ClienteLivroRazao({
           </>
         )}
       </div>
+
+      {/* Histórico do saldo de crédito (excesso de pagamentos / uso automático em vendas) */}
+      <Dialog open={historicoOpen} onOpenChange={setHistoricoOpen}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{t('reports.ledgerCreditHistoryTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-1">
+            <div className="flex justify-between items-center rounded-md border bg-muted/30 p-3">
+              <span className="text-sm text-muted-foreground">{t('reports.ledgerCurrentCreditBalance')}</span>
+              <span className="text-lg font-bold text-green-600">
+                {formatKz(historico?.saldo_atual ?? cliente.saldo_credito)}
+              </span>
+            </div>
+            {historicoLoading ? (
+              <div className="space-y-2">
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+                <Skeleton className="h-14 w-full" />
+              </div>
+            ) : !historico || historico.movimentos.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">{t('reports.ledgerCreditHistoryEmpty')}</p>
+            ) : (
+              <div className="space-y-2">
+                {historico.movimentos.map((m) => (
+                  <div key={m.id} className="rounded-md border bg-card p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge
+                          variant="outline"
+                          className={m.tipo === 'CREDITO' ? 'text-green-600 border-green-200' : 'text-destructive border-destructive/30'}
+                        >
+                          {m.tipo === 'CREDITO' ? t('reports.ledgerCreditMovementIn') : t('reports.ledgerCreditMovementOut')}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground shrink-0">
+                          {format(new Date(m.criado_em), 'dd/MM/yyyy HH:mm')}
+                        </span>
+                      </div>
+                      <span className={`font-semibold ${m.tipo === 'CREDITO' ? 'text-green-600' : 'text-destructive'}`}>
+                        {m.tipo === 'CREDITO' ? '+' : '-'}{formatKz(m.valor)}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1 truncate">{m.motivo}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t('reports.ledgerCreditBalanceAfter')}: <span className="font-medium">{formatKz(m.saldo_apos)}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

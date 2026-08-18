@@ -159,6 +159,16 @@ function gerarFaturaVendaHtml(venda: VendaResponse, clienteNif: string | null, c
     ? `<div class="totais-row"><span>Desconto (${venda.desconto_percentual}%)</span><span>-${fmtKz(venda.total_desconto)}</span></div>`
     : ''
 
+  // Saldo de crédito do cliente (excesso de pagamentos anteriores) usado
+  // automaticamente nesta venda — quando > 0, o TOTAL deixa de ser a linha
+  // final e passa a aparecer como subtotal, com o desconto do saldo e o
+  // TOTAL A PAGAR (o que realmente falta liquidar) por baixo.
+  const creditoAplicado = venda.credito_cliente_aplicado ?? 0
+  const creditoHtml = creditoAplicado > 0
+    ? `<div class="totais-row"><span>Saldo de crédito aplicado</span><span>-${fmtKz(creditoAplicado)}</span></div>
+       <div class="totais-row final"><span>TOTAL A PAGAR</span><span>${fmtKz(venda.total_a_pagar)}</span></div>`
+    : ''
+
   const nifHtml = clienteNif
     ? `<p class="cliente-nif">NIF: ${esc(clienteNif)}</p>`
     : ''
@@ -203,7 +213,8 @@ function gerarFaturaVendaHtml(venda: VendaResponse, clienteNif: string | null, c
     <div class="totais-row"><span>Subtotal s/ IVA</span><span>${fmtKz(venda.total_sem_iva)}</span></div>
     <div class="totais-row"><span>IVA</span><span>${fmtKz(venda.total_iva)}</span></div>
     ${descontoHtml}
-    <div class="totais-row final"><span>TOTAL</span><span>${fmtKz(venda.total_final)}</span></div>
+    <div class="totais-row ${creditoAplicado > 0 ? '' : 'final'}"><span>TOTAL</span><span>${fmtKz(venda.total_final)}</span></div>
+    ${creditoHtml}
   </div>
 
   <div class="footer"><p>Obrigado pela sua preferência!</p><p>${new Date().getFullYear()} &copy; Electro Vendos</p></div>
@@ -427,15 +438,20 @@ export function visualizarNotaEntrega(dados: NotaEntregaData, formato: NotaEntre
 // telefone do cliente, o WhatsApp mostra o seletor de contactos do utilizador.
 // `dividaAnterior` é o saldo em aberto que o cliente já tinha ANTES desta
 // venda (dívidas de outras compras a crédito) — quando > 0, o recibo passa a
-// mostrar também esse valor e o total combinado a pagar.
+// mostrar também esse valor e o total combinado a pagar. `venda.credito_cliente_aplicado`
+// é o saldo de crédito do próprio cliente (excesso de pagamentos) já descontado
+// automaticamente nesta venda — `venda.total_a_pagar` já vem líquido desse valor.
 export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string | null, dividaAnterior = 0) {
   const linhas = venda.itens.map((item) => `• ${item.produto_nome} x${item.quantidade} — ${fmtKz(item.subtotal)}`)
-  const temDividaAnterior = dividaAnterior > 0
-  const totaisLinhas = temDividaAnterior
+  const creditoAplicado = venda.credito_cliente_aplicado ?? 0
+  const totalAPagarVenda = venda.total_a_pagar ?? venda.total_final
+  const temExtras = dividaAnterior > 0 || creditoAplicado > 0
+  const totaisLinhas = temExtras
     ? [
         `Total da compra: ${fmtKz(venda.total_final)}`,
-        `Dívida anterior: ${fmtKz(dividaAnterior)}`,
-        `Total a pagar: ${fmtKz(venda.total_final + dividaAnterior)}`,
+        ...(creditoAplicado > 0 ? [`Saldo de crédito aplicado: -${fmtKz(creditoAplicado)}`] : []),
+        ...(dividaAnterior > 0 ? [`Dívida anterior: ${fmtKz(dividaAnterior)}`] : []),
+        `Total a pagar: ${fmtKz(totalAPagarVenda + dividaAnterior)}`,
       ]
     : [`Total: ${fmtKz(venda.total_final)}`]
   const mensagem = [
@@ -458,13 +474,17 @@ export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string |
 // Recibo de pagamento de uma dívida de crédito — mostra o valor pago agora
 // contra o total já liquidado e o saldo que ainda falta (a dívida em si é
 // `divida.valor_total`, já devolvida atualizada pela API após o pagamento).
+// `saldoCreditoGerado` é o excesso do pagamento (valorPago acima do que era
+// devido) que a API converteu automaticamente em saldo de crédito do cliente.
 export function partilharPagamentoDividaWhatsapp(
   divida: DividaResponse,
   valorPago: number,
   moeda: string,
-  telefone?: string | null
+  telefone?: string | null,
+  saldoCreditoGerado = 0
 ) {
   const quitada = divida.saldo <= 0
+  const gerouCredito = saldoCreditoGerado > 0
   const linhas = [
     `*ELECTRO VENDOS* — Recibo de Pagamento`,
     `Cliente: ${divida.cliente_nome ?? '—'}`,
@@ -476,8 +496,11 @@ export function partilharPagamentoDividaWhatsapp(
     `Total da dívida: ${fmtKz(divida.valor_total)}`,
     `Total já pago: ${fmtKz(divida.valor_pago)}`,
     `Saldo em aberto: ${fmtKz(divida.saldo)}`,
+    gerouCredito ? `Saldo de crédito gerado: ${fmtKz(saldoCreditoGerado)}` : null,
     '',
-    quitada ? 'Dívida totalmente quitada. Obrigado!' : 'Obrigado pela sua preferência!',
+    gerouCredito
+      ? `Dívida quitada! O excesso de ${fmtKz(saldoCreditoGerado)} ficou como crédito para a sua próxima compra.`
+      : quitada ? 'Dívida totalmente quitada. Obrigado!' : 'Obrigado pela sua preferência!',
   ]
   const mensagem = linhas.filter((l): l is string => l !== null).join('\n')
 

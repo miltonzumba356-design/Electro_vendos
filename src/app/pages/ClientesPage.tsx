@@ -6,6 +6,7 @@ import type { ClienteResponse, ClienteCreate, ClienteUpdate } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import { Label } from '@/app/components/ui/label'
+import { Badge } from '@/app/components/ui/badge'
 import {
   Table,
   TableBody,
@@ -26,6 +27,14 @@ import { usePagination } from '@/lib/usePagination'
 import { Plus, Pencil, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+
+function formatKz(v: number) {
+  return new Intl.NumberFormat('pt-AO', {
+    style: 'currency',
+    currency: 'AOA',
+    maximumFractionDigits: 0,
+  }).format(v)
+}
 
 interface FormData {
   nome: string
@@ -166,6 +175,7 @@ export default function ClientesPage() {
               <TableHead>{t('clients.colEmail')}</TableHead>
               <TableHead>{t('clients.colNif')}</TableHead>
               <TableHead>{t('clients.colAddress')}</TableHead>
+              <TableHead>{t('clients.colCreditBalance')}</TableHead>
               <TableHead>{t('clients.colRegistered')}</TableHead>
               <TableHead className="text-right">{t('clients.colActions')}</TableHead>
             </TableRow>
@@ -174,14 +184,14 @@ export default function ClientesPage() {
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
+                  {Array.from({ length: 8 }).map((_, j) => (
                     <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                   ))}
                 </TableRow>
               ))
             ) : filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                   {t('clients.empty')}
                 </TableCell>
               </TableRow>
@@ -197,6 +207,13 @@ export default function ClientesPage() {
                   <TableCell>{c.email ?? '—'}</TableCell>
                   <TableCell>{c.nif ?? '—'}</TableCell>
                   <TableCell className="max-w-40 truncate">{c.endereco ?? '—'}</TableCell>
+                  <TableCell>
+                    {c.saldo_credito > 0 ? (
+                      <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-100">
+                        {formatKz(c.saldo_credito)}
+                      </Badge>
+                    ) : '—'}
+                  </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {format(new Date(c.criado_em), 'dd/MM/yyyy')}
                   </TableCell>

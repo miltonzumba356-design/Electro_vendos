@@ -124,6 +124,9 @@ export interface ClienteResponse {
   email: string | null
   nif: string | null
   endereco: string | null
+  // Excesso de pagamentos de dívidas (pagou a mais do que devia) — aplicado
+  // automaticamente na próxima venda do cliente. Ver MovimentoSaldoClienteResponse.
+  saldo_credito: number
   criado_em: string
 }
 
@@ -166,7 +169,14 @@ export interface VendaResponse {
   total_com_iva: number
   desconto_percentual: number
   total_desconto: number
+  // Total da venda (itens + IVA - desconto), sem considerar o saldo de
+  // crédito do cliente.
   total_final: number
+  // Quanto do saldo de crédito do cliente foi usado automaticamente nesta venda.
+  credito_cliente_aplicado: number
+  // O que realmente falta pagar (total_final - credito_cliente_aplicado) —
+  // é este valor que vira dívida (se credito=true) ou lançamento de caixa (à vista).
+  total_a_pagar: number
   credito: boolean
   credito_pago: boolean
   // Nº sequencial da factura (dívida) gerada, preenchido só quando credito=true.
@@ -275,6 +285,8 @@ export interface PagamentoDividaResponse {
   numero_formatado?: string | null
   valor: number
   moeda: string
+  // Texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA.
+  forma_pagamento?: string | null
   data_pagamento: string
 }
 
@@ -294,6 +306,8 @@ export interface DividaResponse {
   status: string
   criado_em: string
   pago_em: string | null
+  // Data/hora da anulação da dívida (vai para a lixeira); null enquanto ativa.
+  cancelada_em?: string | null
   pagamentos: PagamentoDividaResponse[]
 }
 
@@ -307,6 +321,32 @@ export interface DividaCheckResponse {
 export interface PagarDividaRequest {
   valor: number
   moeda?: MoedaPagamento
+  // Texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA.
+  forma_pagamento?: string | null
+}
+
+// ── Saldo de crédito do cliente (excesso de pagamentos de dívidas) ──────
+export type MovimentoSaldoTipo = 'CREDITO' | 'DEBITO'
+
+export interface MovimentoSaldoClienteResponse {
+  id: string
+  // CREDITO: saldo entrou (excesso no pagamento de uma dívida, vem com divida_id).
+  // DEBITO: saldo foi usado (aplicado automaticamente numa venda, vem com venda_id).
+  tipo: MovimentoSaldoTipo
+  valor: number
+  motivo: string
+  // Saldo do cliente logo após este movimento — permite reconstruir a
+  // linha do tempo sem precisar recalcular.
+  saldo_apos: number
+  divida_id?: string | null
+  venda_id?: string | null
+  criado_em: string
+}
+
+export interface HistoricoSaldoClienteResponse {
+  cliente_id: string
+  saldo_atual: number
+  movimentos: MovimentoSaldoClienteResponse[]
 }
 
 export interface TotalDividasResponse {
