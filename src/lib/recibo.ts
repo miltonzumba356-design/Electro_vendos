@@ -441,7 +441,12 @@ export function visualizarNotaEntrega(dados: NotaEntregaData, formato: NotaEntre
 // mostrar também esse valor e o total combinado a pagar. `venda.credito_cliente_aplicado`
 // é o saldo de crédito do próprio cliente (excesso de pagamentos) já descontado
 // automaticamente nesta venda — `venda.total_a_pagar` já vem líquido desse valor.
-export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string | null, dividaAnterior = 0) {
+// `formaPagamento` (Dinheiro/Transferência/Multicaixa/TPA) só existe no frontend —
+// a API não guarda forma de pagamento na venda, por isso só está disponível
+// logo a seguir a registar a venda (não é possível recuperá-la mais tarde).
+export function partilharVendaWhatsapp(
+  venda: VendaResponse, telefone?: string | null, dividaAnterior = 0, formaPagamento?: string | null
+) {
   const linhas = venda.itens.map((item) => `• ${item.produto_nome} x${item.quantidade} — ${fmtKz(item.subtotal)}`)
   const creditoAplicado = venda.credito_cliente_aplicado ?? 0
   const totalAPagarVenda = venda.total_a_pagar ?? venda.total_final
@@ -454,10 +459,12 @@ export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string |
         `Total a pagar: ${fmtKz(totalAPagarVenda + dividaAnterior)}`,
       ]
     : [`Total: ${fmtKz(venda.total_final)}`]
+  const formaPagamentoLabel = venda.credito ? 'Crédito' : (formaPagamento || 'À vista')
   const mensagem = [
     `*ELECTRO VENDOS* — Recibo de Venda`,
     `Cliente: ${venda.cliente_nome}`,
     `Data: ${fmtData(venda.criado_em)}`,
+    `Forma de pagamento: ${formaPagamentoLabel}`,
     '',
     ...linhas,
     '',
@@ -476,12 +483,15 @@ export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string |
 // `divida.valor_total`, já devolvida atualizada pela API após o pagamento).
 // `saldoCreditoGerado` é o excesso do pagamento (valorPago acima do que era
 // devido) que a API converteu automaticamente em saldo de crédito do cliente.
+// `formaPagamento` (Dinheiro/Transferência/Multicaixa/TPA) vem do campo
+// homónimo da API (PagamentoDividaResponse.forma_pagamento).
 export function partilharPagamentoDividaWhatsapp(
   divida: DividaResponse,
   valorPago: number,
   moeda: string,
   telefone?: string | null,
-  saldoCreditoGerado = 0
+  saldoCreditoGerado = 0,
+  formaPagamento?: string | null
 ) {
   const quitada = divida.saldo <= 0
   const gerouCredito = saldoCreditoGerado > 0
@@ -490,6 +500,7 @@ export function partilharPagamentoDividaWhatsapp(
     `Cliente: ${divida.cliente_nome ?? '—'}`,
     (divida.numero_formatado || divida.numero) ? `Nº Factura: ${divida.numero_formatado ?? divida.numero}` : null,
     `Data: ${fmtData(new Date().toISOString())}`,
+    formaPagamento ? `Forma de pagamento: ${formaPagamento}` : null,
     '',
     `Pagamento efetuado: ${fmtKz(valorPago)}${moeda !== 'KZ' ? ` (${moeda})` : ''}`,
     '',

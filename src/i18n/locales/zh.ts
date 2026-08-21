@@ -102,6 +102,7 @@ const zh = {
     debtProduct: '产品', debtEmpty: '未找到信用债务',
     payDebtTitle: '登记债务还款',
     fieldPaymentMethod: '付款方式', paymentMethodNotInformed: '未说明',
+    paymentMethodCredit: '信用',
     debtOverpaymentHint: '超付的 {{value}} 将转为客户的信用余额。',
     debtPaymentDoneTitle: '付款已登记！',
     debtPaymentDonePaid: '本次支付金额', debtPaymentDoneTotalPaid: '已结清总额',

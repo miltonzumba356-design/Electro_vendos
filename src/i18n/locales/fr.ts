@@ -106,6 +106,7 @@ const fr = {
     debtProduct: 'Produit', debtEmpty: 'Aucune dette de crédit trouvée',
     payDebtTitle: 'Enregistrer le paiement de la dette',
     fieldPaymentMethod: 'Mode de paiement', paymentMethodNotInformed: 'Non renseigné',
+    paymentMethodCredit: 'Crédit',
     debtOverpaymentHint: "L'excédent de {{value}} deviendra un solde de crédit pour le client.",
     debtPaymentDoneTitle: 'Paiement enregistré !',
     debtPaymentDonePaid: 'Montant payé maintenant', debtPaymentDoneTotalPaid: 'Total déjà réglé',

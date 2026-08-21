@@ -83,6 +83,7 @@ export default function DividaClienteDetalhePage() {
     { header: t('installments.colPaidToDate'), key: 'totalPago', align: 'right' },
     { header: t('common.balance'), key: 'saldo', align: 'right' },
     { header: t('suppliers.paymentCurrency'), key: 'moeda' },
+    { header: t('sales.fieldPaymentMethod'), key: 'formaPagamento' },
   ]
 
   // Ordena por data e vai descontando do valor_total — cada pagamento mostra
@@ -104,6 +105,7 @@ export default function DividaClienteDetalhePage() {
       numero: p.numero ?? '—',
       data: format(new Date(p.data_pagamento), 'dd/MM/yyyy HH:mm'),
       valor: formatKz(p.valor), totalPago: formatKz(p.totalPago), saldo: formatKz(p.saldo), moeda: p.moeda,
+      formaPagamento: p.forma_pagamento ?? '—',
     }))
   }
 
@@ -152,7 +154,7 @@ export default function DividaClienteDetalhePage() {
         `${t('reports.colProduct')}: ${divida.produto_nome ?? '—'}`,
         '',
         ...pagamentosComSaldo().map((p) =>
-          `• ${format(new Date(p.data_pagamento), 'dd/MM/yyyy')} — ${formatKz(p.valor)} (${p.moeda}) — ${t('common.balance')}: ${formatKz(p.saldo)}`
+          `• ${format(new Date(p.data_pagamento), 'dd/MM/yyyy')} — ${formatKz(p.valor)} (${p.moeda})${p.forma_pagamento ? ` — ${p.forma_pagamento}` : ''} — ${t('common.balance')}: ${formatKz(p.saldo)}`
         ),
         '',
         `${t('common.total')}: ${formatKz(divida.valor_total)}`,
@@ -253,6 +255,7 @@ export default function DividaClienteDetalhePage() {
                     <TableHead className="text-right">{t('installments.colPaidToDate')}</TableHead>
                     <TableHead className="text-right">{t('common.balance')}</TableHead>
                     <TableHead>{t('suppliers.paymentCurrency')}</TableHead>
+                    <TableHead>{t('sales.fieldPaymentMethod')}</TableHead>
                     {isGestor && <TableHead className="text-right">{t('installments.colActions')}</TableHead>}
                   </TableRow>
                 </TableHeader>
@@ -267,6 +270,7 @@ export default function DividaClienteDetalhePage() {
                       <TableCell className="text-right text-green-600">{formatKz(p.totalPago)}</TableCell>
                       <TableCell className="text-right font-medium text-destructive">{formatKz(p.saldo)}</TableCell>
                       <TableCell><Badge variant="outline">{p.moeda}</Badge></TableCell>
+                      <TableCell className="text-muted-foreground text-sm">{p.forma_pagamento ?? '—'}</TableCell>
                       {isGestor && (
                         <TableCell className="text-right">
                           <Button variant="ghost" size="icon" onClick={() => setCancelarPagamentoAlvo(p)}>

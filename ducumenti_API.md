@@ -645,13 +645,65 @@
         }
       }
     },
+    "/clientes/{id}/saldo/historico": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Histórico do saldo de crédito do cliente",
+        "description": "Retorna o saldo de crédito atual do cliente e o histórico completo de movimentos (mais recente primeiro). Um movimento `CREDITO` acontece quando o cliente paga uma dívida a mais do que devia (o excesso vira saldo). Um movimento `DEBITO` acontece quando esse saldo é usado automaticamente para abater o valor de uma nova venda.",
+        "operationId": "historico_saldo_clientes__id__saldo_historico_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoricoSaldoClienteResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/vendas": {
       "post": {
         "tags": [
           "Vendas"
         ],
         "summary": "Registar nova venda",
-        "description": "Cria uma venda com cálculo de IVA, atualização de stock e fidelidade. Suporta `desconto_percentual` manual (substitui automático da fidelidade), `valor_final_desejado` (valor que o cliente quer pagar — o desconto necessário é calculado automaticamente, tem prioridade sobre `desconto_percentual`), `credito` para venda a crédito (gera dívida automaticamente) e `desconto_divida` para prosseguir com desconto quando cliente tem dívida pendente.",
+        "description": "Cria uma venda com cálculo de IVA, atualização de stock e fidelidade. Suporta `desconto_percentual` manual (substitui automático da fidelidade), `valor_final_desejado` (valor que o cliente quer pagar — o desconto necessário é calculado automaticamente, tem prioridade sobre `desconto_percentual`), `credito` para venda a crédito (gera dívida automaticamente) e `desconto_divida` para prosseguir com desconto quando cliente tem dívida pendente. Se o cliente tiver saldo de crédito (`saldo_credito`, de excesso de pagamentos anteriores), esse saldo é aplicado automaticamente para reduzir o valor a pagar desta venda (`credito_cliente_aplicado` mostra quanto foi usado).",
         "operationId": "criar_vendas_post",
         "security": [
           {
@@ -670,7 +722,7 @@
         },
         "responses": {
           "201": {
-            "description": "Venda criada. Se `credito=true`, uma `Divida` é gerada automaticamente e seu `numero_factura` já vem na resposta.",
+            "description": "Venda criada. Se `credito=true`, uma `Divida` é gerada automaticamente e seu `numero_factura` já vem na resposta. `total_a_pagar` é o valor real em falta, já descontado o saldo de crédito do cliente se aplicável.",
             "content": {
               "application/json": {
                 "schema": {
@@ -1312,7 +1364,7 @@
           "Relatórios"
         ],
         "summary": "Extrato de dívidas e compras a crédito do cliente",
-        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve. Cada dívida traz também `pagamentos`: a lista de cada valor pago até zerar, com a moeda usada em cada um. Sem data_inicio/data_fim, traz todo o histórico do cliente. Se informar `numero`, traz só aquela factura (e ignora prestações, já que o número é específico da dívida).",
+        "description": "Histórico detalhado das dívidas e prestações do cliente: produto, data da compra a crédito, quanto já pagou, saldo por dívida/prestação e o total geral que ainda deve. Cada dívida traz também `pagamentos`: a lista de cada valor pago até zerar, com a moeda e a `forma_pagamento` de cada um (também presente nos 'Recibo' de `documentos`). Sem data_inicio/data_fim, traz todo o histórico do cliente. Se informar `numero`, traz só aquela factura (e ignora prestações, já que o número é específico da dívida).",
         "operationId": "extrato_cliente_relatorios_clientes__cliente_id__extrato_get",
         "security": [
           {
@@ -1876,7 +1928,7 @@
           "Dívidas"
         ],
         "summary": "Listar dívidas",
-        "description": "Lista paginada de dívidas. Filtro opcional por status (DIVIDA/PAGA), por período (data_inicio/data_fim, com base na data de criação da dívida), por nome do cliente (pesquisa parcial) e por número exato da factura — combináveis.",
+        "description": "Lista todas as dívidas. Filtro opcional por status (DIVIDA/PAGA), por período (data_inicio/data_fim, com base na data de criação da dívida), por nome do cliente (pesquisa parcial) e por número exato da factura — combináveis.",
         "operationId": "listar_dividas_dividas_get",
         "security": [
           {
@@ -1996,17 +2048,19 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "integer"
+                  "type": "string"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "description": "Filtra pelo número exato da factura",
-              "examples": [1],
+              "description": "Pesquisa por número da factura (parcial, ex: 1, 12, FT001)",
+              "examples": [
+                "FT001"
+              ],
               "title": "Numero"
             },
-            "description": "Filtra pelo número exato da factura"
+            "description": "Pesquisa por número da factura (parcial, ex: 1, 12, FT001)"
           }
         ],
         "responses": {
@@ -2172,7 +2226,7 @@
           "Dívidas"
         ],
         "summary": "Pagar dívida",
-        "description": "Regista um pagamento para a dívida, com a moeda usada (KZ/AOA/USD/EUR — apenas registo, sem conversão de câmbio). Aceita pagamento parcial ou total; cada pagamento fica guardado no histórico (`pagamentos`) da dívida. Se o valor total for atingido, a dívida é marcada como PAGA e a venda associada (se existir) tem `credito_pago=true`.",
+        "description": "Regista um pagamento para a dívida, com a moeda usada (KZ/AOA/USD/EUR — apenas registo, sem conversão de câmbio). Aceita pagamento parcial ou total; cada pagamento fica guardado no histórico (`pagamentos`) da dívida. Se o valor total for atingido, a dívida é marcada como PAGA e a venda associada (se existir) tem `credito_pago=true`. Se o valor pago for maior que o saldo em aberto, a dívida fica paga e o excesso vira saldo de crédito do cliente (`Cliente.saldo_credito`), aplicado automaticamente na próxima venda — ver `GET /clientes/{id}/saldo/historico`.",
         "operationId": "pagar_divida_dividas__divida_id__pagar_post",
         "security": [
           {
@@ -2213,7 +2267,7 @@
             }
           },
           "400": {
-            "description": "Dívida já está paga ou valor excede saldo"
+            "description": "Dívida já está paga"
           },
           "404": {
             "description": "Dívida não encontrada"
@@ -2731,7 +2785,7 @@
           "Fornecedores"
         ],
         "summary": "Pagar dívida a fornecedor (Gestor)",
-        "description": "Regista um pagamento à dívida do fornecedor (divida_id vai no corpo do pedido), com a moeda usada (KZ/AOA/USD/EUR — apenas registo, sem conversão de câmbio). Aceita pagamento parcial ou total; cada pagamento fica guardado no histórico (`pagamentos`) da dívida. Não gera nenhum lançamento no fluxo de caixa.",
+        "description": "Regista um pagamento à dívida do fornecedor (divida_id vai no corpo do pedido), com a moeda usada (KZ/AOA/USD/EUR — apenas registo, sem conversão de câmbio) e `forma_pagamento` opcional (texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA). Aceita pagamento parcial ou total; cada pagamento fica guardado no histórico (`pagamentos`) da dívida. Não gera nenhum lançamento no fluxo de caixa.",
         "operationId": "pagar_divida_fornecedores_dividas_pagar_post",
         "requestBody": {
           "content": {
@@ -2784,7 +2838,7 @@
           "Fornecedores"
         ],
         "summary": "Extrato de dívidas e compras a crédito do fornecedor",
-        "description": "Histórico cronológico de documentos do fornecedor: cada compra a crédito vira uma 'Factura' e cada pagamento feito vira um 'Recibo', com o saldo total ainda em aberto. Filtro opcional por período (data_inicio/data_fim, com base na data de criação da dívida). Sem as datas, traz todo o histórico.",
+        "description": "Histórico cronológico de documentos do fornecedor: cada compra a crédito vira uma 'Factura' e cada pagamento feito vira um 'Recibo' (com a `forma_pagamento` usada), com o saldo total ainda em aberto. Filtro opcional por período (data_inicio/data_fim, com base na data de criação da dívida). Sem as datas, traz todo o histórico.",
         "operationId": "extrato_fornecedor_fornecedores__fornecedor_id__extrato_get",
         "security": [
           {
@@ -3570,7 +3624,7 @@
           "Prestações"
         ],
         "summary": "Registar pagamento de uma prestação",
-        "description": "Regista um pagamento parcial ou total para um plano. Atualiza o saldo e altera a situação para PARCIAL, PAGO ou ATRASADO. Se a parcela paga estiver vencida, calcula automaticamente a multa com base na taxa_multa do plano.",
+        "description": "Regista um pagamento parcial ou total para um plano. Atualiza o saldo e altera a situação para PARCIAL, PAGO ou ATRASADO. Se a parcela paga estiver vencida, calcula automaticamente a multa com base na taxa_multa do plano. Aceita `forma_pagamento` opcional (texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA), guardado em cada pagamento.",
         "operationId": "pagar_prestacoes__id__pagamentos_post",
         "security": [
           {
@@ -4103,6 +4157,190 @@
         }
       }
     },
+    "/lixeira": {
+      "get": {
+        "tags": [
+          "Lixeira"
+        ],
+        "summary": "Listar lixeira",
+        "description": "Lista todos os itens eliminados: dívidas anuladas, vendas canceladas, produtos desativados e facturas canceladas. Filtro opcional por tipo.",
+        "operationId": "listar_lixeira_lixeira_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filtrar por tipo: divida, venda, produto, fatura",
+              "examples": [
+                "divida"
+              ],
+              "title": "Tipo"
+            },
+            "description": "Filtrar por tipo: divida, venda, produto, fatura"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LixeiraItemResponse"
+                  },
+                  "title": "Response Listar Lixeira Lixeira Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lixeira/{item_id}/restaurar": {
+      "post": {
+        "tags": [
+          "Lixeira"
+        ],
+        "summary": "Restaurar item da lixeira",
+        "description": "Restaura um item eliminado para o seu estado ativo. Dívida volta a DIVIDA, venda volta a ativa, produto volta a ativo, factura volta a emitida.",
+        "operationId": "restaurar_item_lixeira__item_id__restaurar_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Tipo do item: divida, venda, produto, fatura",
+              "title": "Tipo"
+            },
+            "description": "Tipo do item: divida, venda, produto, fatura"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/lixeira/{item_id}": {
+      "delete": {
+        "tags": [
+          "Lixeira"
+        ],
+        "summary": "Eliminar permanentemente",
+        "description": "Elimina o item da lixeira de forma permanente. Esta ação é irreversível.",
+        "operationId": "eliminar_permanente_lixeira__item_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Tipo do item: divida, venda, produto, fatura",
+              "title": "Tipo"
+            },
+            "description": "Tipo do item: divida, venda, produto, fatura"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/metas": {
       "post": {
         "tags": [
@@ -4459,6 +4697,12 @@
               }
             ],
             "title": "Endereco"
+          },
+          "saldo_credito": {
+            "type": "number",
+            "title": "Saldo Credito",
+            "description": "Saldo de crédito do cliente (excesso de pagamentos), aplicado automaticamente na próxima venda",
+            "default": 0
           },
           "criado_em": {
             "type": "string",
@@ -4929,6 +5173,18 @@
               }
             ],
             "title": "Pago Em"
+          },
+          "cancelada_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cancelada Em"
           }
         },
         "type": "object",
@@ -5565,6 +5821,33 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "HistoricoSaldoClienteResponse": {
+        "properties": {
+          "cliente_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Cliente Id"
+          },
+          "saldo_atual": {
+            "type": "number",
+            "title": "Saldo Atual"
+          },
+          "movimentos": {
+            "items": {
+              "$ref": "#/components/schemas/MovimentoSaldoClienteResponse"
+            },
+            "type": "array",
+            "title": "Movimentos",
+            "description": "Histórico completo, mais recente primeiro"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cliente_id",
+          "saldo_atual"
+        ],
+        "title": "HistoricoSaldoClienteResponse"
+      },
       "ItemCompraFornecedorInput": {
         "properties": {
           "produto_id": {
@@ -5921,6 +6204,57 @@
         ],
         "title": "LancamentoResponse"
       },
+      "LixeiraItemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "Tipo: divida, venda, produto ou fatura"
+          },
+          "descricao": {
+            "type": "string",
+            "title": "Descricao",
+            "description": "Descrição resumida do item"
+          },
+          "detalhes": {
+            "anyOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detalhes",
+            "description": "Dados adicionais do item"
+          },
+          "eliminado_em": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eliminado Em",
+            "description": "Data em que foi cancelado/desativado"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "descricao"
+        ],
+        "title": "LixeiraItemResponse"
+      },
       "LoginRequest": {
         "properties": {
           "email": {
@@ -6245,6 +6579,72 @@
         ],
         "title": "MovimentoResponse"
       },
+      "MovimentoSaldoClienteResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "title": "Tipo",
+            "description": "CREDITO (saldo entrou) ou DEBITO (saldo foi usado)"
+          },
+          "valor": {
+            "type": "number",
+            "title": "Valor"
+          },
+          "motivo": {
+            "type": "string",
+            "title": "Motivo"
+          },
+          "saldo_apos": {
+            "type": "number",
+            "title": "Saldo Apos",
+            "description": "Saldo do cliente logo após este movimento"
+          },
+          "divida_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Divida Id"
+          },
+          "venda_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Venda Id"
+          },
+          "criado_em": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Criado Em"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "valor",
+          "motivo",
+          "saldo_apos",
+          "criado_em"
+        ],
+        "title": "MovimentoSaldoClienteResponse"
+      },
       "PagamentoCreate": {
         "properties": {
           "valor": {
@@ -6262,6 +6662,22 @@
             "examples": [
               "2026-07-27T14:30:00Z"
             ]
+          },
+          "forma_pagamento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forma Pagamento",
+            "description": "Forma de pagamento (texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA)",
+            "examples": [
+              "Dinheiro"
+            ]
           }
         },
         "type": "object",
@@ -6272,6 +6688,7 @@
         "title": "PagamentoCreate",
         "example": {
           "data_pagamento": "2026-07-27T14:30:00Z",
+          "forma_pagamento": "Dinheiro",
           "valor": 25000
         }
       },
@@ -6300,6 +6717,21 @@
             "title": "Moeda",
             "examples": [
               "KZ"
+            ]
+          },
+          "forma_pagamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forma Pagamento",
+            "description": "Forma de pagamento (texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA)",
+            "examples": [
+              "Multicaixa"
             ]
           },
           "data_pagamento": {
@@ -6346,6 +6778,21 @@
             "title": "Moeda",
             "examples": [
               "USD"
+            ]
+          },
+          "forma_pagamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forma Pagamento",
+            "description": "Forma de pagamento (texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA)",
+            "examples": [
+              "Transferência"
             ]
           },
           "data_pagamento": {
@@ -6408,6 +6855,21 @@
             "title": "Moeda",
             "examples": [
               "KZ"
+            ]
+          },
+          "forma_pagamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forma Pagamento",
+            "description": "Forma de pagamento (texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA)",
+            "examples": [
+              "Multicaixa"
             ]
           },
           "data_pagamento": {
@@ -6474,6 +6936,21 @@
             "description": "Multa por atraso aplicada",
             "default": 0,
             "examples": [1250]
+          },
+          "forma_pagamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forma Pagamento",
+            "description": "Forma de pagamento (texto livre)",
+            "examples": [
+              "Dinheiro"
+            ]
           }
         },
         "type": "object",
@@ -6504,6 +6981,22 @@
             "$ref": "#/components/schemas/MoedaPagamento",
             "description": "Moeda em que o pagamento foi feito (apenas registo, sem conversão)",
             "default": "KZ"
+          },
+          "forma_pagamento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forma Pagamento",
+            "description": "Forma de pagamento (texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA)",
+            "examples": [
+              "Transferência"
+            ]
           }
         },
         "type": "object",
@@ -6525,6 +7018,22 @@
             "$ref": "#/components/schemas/MoedaPagamento",
             "description": "Moeda em que o pagamento foi feito (apenas registo, sem conversão)",
             "default": "KZ"
+          },
+          "forma_pagamento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forma Pagamento",
+            "description": "Forma de pagamento (texto livre, ex: Dinheiro, Transferência, Multicaixa, TPA)",
+            "examples": [
+              "Multicaixa"
+            ]
           }
         },
         "type": "object",
@@ -8750,7 +9259,18 @@
           "total_final": {
             "type": "number",
             "title": "Total Final",
-            "description": "Total a pagar"
+            "description": "Total da venda (sem considerar saldo de crédito do cliente)"
+          },
+          "credito_cliente_aplicado": {
+            "type": "number",
+            "title": "Credito Cliente Aplicado",
+            "description": "Valor do saldo de crédito do cliente que foi usado automaticamente nesta venda",
+            "default": 0
+          },
+          "total_a_pagar": {
+            "type": "number",
+            "title": "Total A Pagar",
+            "description": "Valor que realmente falta pagar (total_final - credito_cliente_aplicado)"
           },
           "credito": {
             "type": "boolean",
@@ -8813,6 +9333,7 @@
           "desconto_percentual",
           "total_desconto",
           "total_final",
+          "total_a_pagar",
           "credito",
           "credito_pago",
           "criado_em",
@@ -8882,6 +9403,21 @@
             "description": "Moeda da compra (Factura) ou do pagamento (Recibo)",
             "examples": [
               "USD"
+            ]
+          },
+          "forma_pagamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forma Pagamento",
+            "description": "Forma de pagamento, preenchido só nos Recibos",
+            "examples": [
+              "Transferência"
             ]
           }
         },
@@ -8956,6 +9492,21 @@
             "description": "Preenchido só nos Recibos",
             "examples": [
               "USD"
+            ]
+          },
+          "forma_pagamento": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forma Pagamento",
+            "description": "Forma de pagamento, preenchido só nos Recibos",
+            "examples": [
+              "Multicaixa"
             ]
           }
         },

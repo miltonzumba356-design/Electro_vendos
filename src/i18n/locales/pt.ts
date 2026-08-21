@@ -105,6 +105,7 @@ const pt = {
     debtProduct: 'Produto', debtEmpty: 'Nenhuma dívida de crédito encontrada',
     payDebtTitle: 'Registar pagamento de dívida',
     fieldPaymentMethod: 'Forma de pagamento', paymentMethodNotInformed: 'Não informar',
+    paymentMethodCredit: 'Crédito',
     debtOverpaymentHint: 'O excesso de {{value}} vai virar saldo de crédito do cliente.',
     debtPaymentDoneTitle: 'Pagamento registado!',
     debtPaymentDonePaid: 'Valor pago agora', debtPaymentDoneTotalPaid: 'Total já liquidado',

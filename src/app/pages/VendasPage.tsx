@@ -89,7 +89,9 @@ function VendasTab({ t }: { t: TFunction }) {
 
   const [novaVendaOpen, setNovaVendaOpen] = useState(false)
   const [detalhesVenda, setDetalhesVenda] = useState<VendaResponse | null>(null)
-  const [vendaConcluida, setVendaConcluida] = useState<{ venda: VendaResponse; telefone: string | null; dividaAnterior: number } | null>(null)
+  const [vendaConcluida, setVendaConcluida] = useState<{
+    venda: VendaResponse; telefone: string | null; dividaAnterior: number; formaPagamento: string | null
+  } | null>(null)
   const [detalhesDividaAnterior, setDetalhesDividaAnterior] = useState(0)
   const [notaEntregaOrigem, setNotaEntregaOrigem] = useState<NotaEntregaOrigem | null>(null)
   const [cancelarVendaAlvo, setCancelarVendaAlvo] = useState<VendaResponse | null>(null)
@@ -102,6 +104,11 @@ function VendasTab({ t }: { t: TFunction }) {
   const [novoClienteTelefone, setNovoClienteTelefone] = useState('')
   const [itens, setItens] = useState<ItemForm[]>([{ produto_id: '', quantidade: 1 }])
   const [credito, setCredito] = useState(false)
+  // Só para enriquecer o recibo partilhado logo após registar a venda — a
+  // API não guarda forma de pagamento na venda (só existe para pagamento de
+  // dívidas), por isso este valor não é enviado no payload nem fica
+  // disponível mais tarde ao reabrir a venda em "detalhes".
+  const [formaPagamento, setFormaPagamento] = useState('')
   const [descontoPercentual, setDescontoPercentual] = useState('')
   const [valorFinalDesejado, setValorFinalDesejado] = useState('')
   const [saving, setSaving] = useState(false)
@@ -167,6 +174,7 @@ function VendasTab({ t }: { t: TFunction }) {
     setNovoClienteTelefone('')
     setItens([{ produto_id: '', quantidade: 1 }])
     setCredito(false)
+    setFormaPagamento('')
     setDescontoPercentual('')
     setValorFinalDesejado('')
     setDividaCheck(null)
@@ -246,6 +254,7 @@ function VendasTab({ t }: { t: TFunction }) {
         venda: nova,
         telefone: telefoneCliente,
         dividaAnterior: dividaCheck?.tem_divida ? dividaCheck.total_devido : 0,
+        formaPagamento: credito ? null : (formaPagamento || null),
       })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.registerError'))
@@ -292,10 +301,12 @@ function VendasTab({ t }: { t: TFunction }) {
       })
       const file = new File([blob], `venda-${venda.id.slice(0, 8)}.pdf`, { type: 'application/pdf' })
       const telefoneCliente = clientes.find((c) => c.id === venda.cliente_id)?.telefone ?? null
+      const formaPagamentoLabel = venda.credito ? t('sales.paymentMethodCredit') : t('sales.cash')
       const mensagem = [
         `*ELECTRO VENDOS* — ${t('sales.detailsTitle')}`,
         `${t('sales.detailsClient')}: ${venda.cliente_nome}`,
         `${t('sales.detailsDate')}: ${format(new Date(venda.criado_em), 'dd/MM/yyyy HH:mm')}`,
+        `${t('sales.fieldPaymentMethod')}: ${formaPagamentoLabel}`,
         `${t('sales.detailsFinalTotal')}: ${formatKz(venda.total_final)}`,
         ...linhasExtras,
       ].join('\n')
@@ -647,6 +658,18 @@ function VendasTab({ t }: { t: TFunction }) {
                     {t('sales.creditSaleLabel')}
                   </Label>
                 </div>
+                {!credito && (
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t('sales.fieldPaymentMethod')}</Label>
+                    <Select value={formaPagamento || '__none__'} onValueChange={(v) => setFormaPagamento(v === '__none__' ? '' : v)}>
+                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">{t('sales.paymentMethodNotInformed')}</SelectItem>
+                        {FORMAS_PAGAMENTO.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <Label htmlFor="desconto-pct" className="text-xs">{t('sales.discountLabel')}</Label>
                   <Input
@@ -744,7 +767,9 @@ function VendasTab({ t }: { t: TFunction }) {
                 <Button
                   variant="outline"
                   className="justify-start gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-                  onClick={() => partilharVendaWhatsapp(vendaConcluida.venda, vendaConcluida.telefone, vendaConcluida.dividaAnterior)}
+                  onClick={() => partilharVendaWhatsapp(
+                    vendaConcluida.venda, vendaConcluida.telefone, vendaConcluida.dividaAnterior, vendaConcluida.formaPagamento
+                  )}
                 >
                   <MessageCircle className="size-4" />
                   {t('sales.shareWhatsapp')}
@@ -956,7 +981,7 @@ function PagarDividaDialog({
   divida, onSuccess, onClose, t,
 }: {
   divida: DividaResponse | null
-  onSuccess: (updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number) => void
+  onSuccess: (updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number, formaPagamento: string | null) => void
   onClose: () => void
   t: TFunction
 }) {
@@ -993,7 +1018,7 @@ function PagarDividaDialog({
         moeda,
         forma_pagamento: formaPagamento || undefined,
       })
-      onSuccess(updated, valorPago, moeda, excedente)
+      onSuccess(updated, valorPago, moeda, excedente, formaPagamento || null)
       toast.success(t('sales.toasts.debtPaymentRegistered'))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.debtPaymentError'))
@@ -1078,7 +1103,8 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   const [pagarDivida, setPagarDivida] = useState<DividaResponse | null>(null)
   const [clientes, setClientes] = useState<ClienteResponse[]>([])
   const [pagamentoConcluido, setPagamentoConcluido] = useState<{
-    divida: DividaResponse; valor: number; moeda: MoedaPagamento; telefone: string | null; excedente: number
+    divida: DividaResponse; valor: number; moeda: MoedaPagamento; telefone: string | null
+    excedente: number; formaPagamento: string | null
   } | null>(null)
 
   const filtered = dividas
@@ -1109,11 +1135,13 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   useEffect(() => { load(); resetPage() }, [statusFiltro, dataInicio, dataFim])
   useEffect(() => { clientesService.listar().then(setClientes).catch(() => {}) }, [])
 
-  function handlePago(updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number) {
+  function handlePago(
+    updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number, formaPagamento: string | null
+  ) {
     setDividas((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
     setPagarDivida(null)
     const telefone = clientes.find((c) => c.id === updated.cliente_id)?.telefone ?? null
-    setPagamentoConcluido({ divida: updated, valor: valorPago, moeda, telefone, excedente })
+    setPagamentoConcluido({ divida: updated, valor: valorPago, moeda, telefone, excedente, formaPagamento })
   }
 
   return (
@@ -1325,6 +1353,12 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
                   <span className="text-muted-foreground">{t('sales.debtPaymentDoneBalance')}</span>
                   <span className="font-semibold text-destructive">{formatKz(pagamentoConcluido.divida.saldo)}</span>
                 </div>
+                {pagamentoConcluido.formaPagamento && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t('sales.fieldPaymentMethod')}</span>
+                    <span>{pagamentoConcluido.formaPagamento}</span>
+                  </div>
+                )}
               </div>
               {pagamentoConcluido.excedente > 0 && (
                 <Alert className="border-green-200 bg-green-50 text-green-800 [&>svg]:text-green-600">
@@ -1341,7 +1375,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
                   className="justify-start gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
                   onClick={() => partilharPagamentoDividaWhatsapp(
                     pagamentoConcluido.divida, pagamentoConcluido.valor, pagamentoConcluido.moeda,
-                    pagamentoConcluido.telefone, pagamentoConcluido.excedente
+                    pagamentoConcluido.telefone, pagamentoConcluido.excedente, pagamentoConcluido.formaPagamento
                   )}
                 >
                   <MessageCircle className="size-4" />

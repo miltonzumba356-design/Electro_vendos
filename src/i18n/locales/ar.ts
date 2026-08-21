@@ -102,6 +102,7 @@ const ar = {
     debtProduct: 'المنتج', debtEmpty: 'لم يتم العثور على ديون ائتمانية',
     payDebtTitle: 'تسجيل سداد الدين',
     fieldPaymentMethod: 'طريقة الدفع', paymentMethodNotInformed: 'غير محدد',
+    paymentMethodCredit: 'ائتمان',
     debtOverpaymentHint: 'الفائض البالغ {{value}} سيصبح رصيد ائتمان للعميل.',
     debtPaymentDoneTitle: 'تم تسجيل الدفع!',
     debtPaymentDonePaid: 'المبلغ المدفوع الآن', debtPaymentDoneTotalPaid: 'إجمالي المسدد',

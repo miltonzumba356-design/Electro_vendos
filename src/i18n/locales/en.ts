@@ -104,6 +104,7 @@ const en = {
     debtProduct: 'Product', debtEmpty: 'No credit debt found',
     payDebtTitle: 'Register debt payment',
     fieldPaymentMethod: 'Payment method', paymentMethodNotInformed: 'Not informed',
+    paymentMethodCredit: 'Credit',
     debtOverpaymentHint: 'The excess of {{value}} will become the client\'s credit balance.',
     debtPaymentDoneTitle: 'Payment registered!',
     debtPaymentDonePaid: 'Amount paid now', debtPaymentDoneTotalPaid: 'Total already settled',
