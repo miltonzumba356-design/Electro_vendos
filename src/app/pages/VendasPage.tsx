@@ -58,7 +58,7 @@ import { usePagination } from '@/lib/usePagination'
 import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature, FileDown, History, XCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp, partilharPagamentoDividaWhatsapp } from '@/lib/recibo'
+import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp, partilharPagamentoDividaWhatsapp, referenciaVenda } from '@/lib/recibo'
 import { exportTablePdf, getTablePdfBlob, formatPeriodoPdf } from '@/lib/pdf'
 import { partilharArquivoOuTexto } from '@/lib/share'
 import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
@@ -90,7 +90,7 @@ function VendasTab({ t }: { t: TFunction }) {
   const [novaVendaOpen, setNovaVendaOpen] = useState(false)
   const [detalhesVenda, setDetalhesVenda] = useState<VendaResponse | null>(null)
   const [vendaConcluida, setVendaConcluida] = useState<{
-    venda: VendaResponse; telefone: string | null; dividaAnterior: number; formaPagamento: string | null
+    venda: VendaResponse; telefone: string | null; dividaAnterior: number
   } | null>(null)
   const [detalhesDividaAnterior, setDetalhesDividaAnterior] = useState(0)
   const [notaEntregaOrigem, setNotaEntregaOrigem] = useState<NotaEntregaOrigem | null>(null)
@@ -104,11 +104,6 @@ function VendasTab({ t }: { t: TFunction }) {
   const [novoClienteTelefone, setNovoClienteTelefone] = useState('')
   const [itens, setItens] = useState<ItemForm[]>([{ produto_id: '', quantidade: 1 }])
   const [credito, setCredito] = useState(false)
-  // Só para enriquecer o recibo partilhado logo após registar a venda — a
-  // API não guarda forma de pagamento na venda (só existe para pagamento de
-  // dívidas), por isso este valor não é enviado no payload nem fica
-  // disponível mais tarde ao reabrir a venda em "detalhes".
-  const [formaPagamento, setFormaPagamento] = useState('')
   const [descontoPercentual, setDescontoPercentual] = useState('')
   const [valorFinalDesejado, setValorFinalDesejado] = useState('')
   const [saving, setSaving] = useState(false)
@@ -174,7 +169,6 @@ function VendasTab({ t }: { t: TFunction }) {
     setNovoClienteTelefone('')
     setItens([{ produto_id: '', quantidade: 1 }])
     setCredito(false)
-    setFormaPagamento('')
     setDescontoPercentual('')
     setValorFinalDesejado('')
     setDividaCheck(null)
@@ -254,7 +248,6 @@ function VendasTab({ t }: { t: TFunction }) {
         venda: nova,
         telefone: telefoneCliente,
         dividaAnterior: dividaCheck?.tem_divida ? dividaCheck.total_devido : 0,
-        formaPagamento: credito ? null : (formaPagamento || null),
       })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.registerError'))
@@ -281,6 +274,7 @@ function VendasTab({ t }: { t: TFunction }) {
         title: t('sales.detailsTitle'),
         subtitle: venda.cliente_nome,
         infoLines: [
+          `${t('invoices.colNumber')}: ${referenciaVenda(venda)}`,
           `${t('sales.detailsOperator')}: ${venda.utilizador_nome}`,
           `${t('sales.detailsDate')}: ${format(new Date(venda.criado_em), 'dd/MM/yyyy HH:mm')}`,
           venda.credito
@@ -304,6 +298,7 @@ function VendasTab({ t }: { t: TFunction }) {
       const formaPagamentoLabel = venda.credito ? t('sales.paymentMethodCredit') : t('sales.cash')
       const mensagem = [
         `*ELECTRO VENDOS* — ${t('sales.detailsTitle')}`,
+        `${t('invoices.colNumber')}: ${referenciaVenda(venda)}`,
         `${t('sales.detailsClient')}: ${venda.cliente_nome}`,
         `${t('sales.detailsDate')}: ${format(new Date(venda.criado_em), 'dd/MM/yyyy HH:mm')}`,
         `${t('sales.fieldPaymentMethod')}: ${formaPagamentoLabel}`,
@@ -658,18 +653,6 @@ function VendasTab({ t }: { t: TFunction }) {
                     {t('sales.creditSaleLabel')}
                   </Label>
                 </div>
-                {!credito && (
-                  <div className="space-y-1">
-                    <Label className="text-xs">{t('sales.fieldPaymentMethod')}</Label>
-                    <Select value={formaPagamento || '__none__'} onValueChange={(v) => setFormaPagamento(v === '__none__' ? '' : v)}>
-                      <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">{t('sales.paymentMethodNotInformed')}</SelectItem>
-                        {FORMAS_PAGAMENTO.map((f) => <SelectItem key={f} value={f}>{f}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
                 <div className="space-y-1">
                   <Label htmlFor="desconto-pct" className="text-xs">{t('sales.discountLabel')}</Label>
                   <Input
@@ -767,9 +750,7 @@ function VendasTab({ t }: { t: TFunction }) {
                 <Button
                   variant="outline"
                   className="justify-start gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
-                  onClick={() => partilharVendaWhatsapp(
-                    vendaConcluida.venda, vendaConcluida.telefone, vendaConcluida.dividaAnterior, vendaConcluida.formaPagamento
-                  )}
+                  onClick={() => partilharVendaWhatsapp(vendaConcluida.venda, vendaConcluida.telefone, vendaConcluida.dividaAnterior)}
                 >
                   <MessageCircle className="size-4" />
                   {t('sales.shareWhatsapp')}
@@ -981,7 +962,10 @@ function PagarDividaDialog({
   divida, onSuccess, onClose, t,
 }: {
   divida: DividaResponse | null
-  onSuccess: (updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number, formaPagamento: string | null) => void
+  onSuccess: (
+    updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number,
+    formaPagamento: string | null, numeroRecibo: string | number | null
+  ) => void
   onClose: () => void
   t: TFunction
 }) {
@@ -1018,7 +1002,11 @@ function PagarDividaDialog({
         moeda,
         forma_pagamento: formaPagamento || undefined,
       })
-      onSuccess(updated, valorPago, moeda, excedente, formaPagamento || null)
+      // O pagamento que acabou de ser feito é sempre o de maior `numero`
+      // (sequencial, atribuído pela API a cada recibo) na lista devolvida.
+      const ultimoPagamento = [...updated.pagamentos].sort((a, b) => (b.numero ?? 0) - (a.numero ?? 0))[0]
+      const numeroRecibo = ultimoPagamento?.numero_formatado ?? ultimoPagamento?.numero ?? null
+      onSuccess(updated, valorPago, moeda, excedente, formaPagamento || null, numeroRecibo)
       toast.success(t('sales.toasts.debtPaymentRegistered'))
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('sales.toasts.debtPaymentError'))
@@ -1104,7 +1092,7 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   const [clientes, setClientes] = useState<ClienteResponse[]>([])
   const [pagamentoConcluido, setPagamentoConcluido] = useState<{
     divida: DividaResponse; valor: number; moeda: MoedaPagamento; telefone: string | null
-    excedente: number; formaPagamento: string | null
+    excedente: number; formaPagamento: string | null; numeroRecibo: string | number | null
   } | null>(null)
 
   const filtered = dividas
@@ -1136,12 +1124,13 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
   useEffect(() => { clientesService.listar().then(setClientes).catch(() => {}) }, [])
 
   function handlePago(
-    updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number, formaPagamento: string | null
+    updated: DividaResponse, valorPago: number, moeda: MoedaPagamento, excedente: number,
+    formaPagamento: string | null, numeroRecibo: string | number | null
   ) {
     setDividas((prev) => prev.map((d) => (d.id === updated.id ? updated : d)))
     setPagarDivida(null)
     const telefone = clientes.find((c) => c.id === updated.cliente_id)?.telefone ?? null
-    setPagamentoConcluido({ divida: updated, valor: valorPago, moeda, telefone, excedente, formaPagamento })
+    setPagamentoConcluido({ divida: updated, valor: valorPago, moeda, telefone, excedente, formaPagamento, numeroRecibo })
   }
 
   return (
@@ -1341,6 +1330,12 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
           {pagamentoConcluido && (
             <div className="space-y-3 pt-2">
               <div className="space-y-1 text-sm">
+                {pagamentoConcluido.numeroRecibo != null && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">{t('invoices.colNumber')}</span>
+                    <span className="font-medium">{pagamentoConcluido.numeroRecibo}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t('sales.debtPaymentDonePaid')}</span>
                   <span className="font-semibold">{formatKz(pagamentoConcluido.valor)}</span>
@@ -1375,7 +1370,8 @@ function DividasCreditoTab({ t }: { t: TFunction }) {
                   className="justify-start gap-2 text-green-600 border-green-200 hover:bg-green-50 hover:text-green-700"
                   onClick={() => partilharPagamentoDividaWhatsapp(
                     pagamentoConcluido.divida, pagamentoConcluido.valor, pagamentoConcluido.moeda,
-                    pagamentoConcluido.telefone, pagamentoConcluido.excedente, pagamentoConcluido.formaPagamento
+                    pagamentoConcluido.telefone, pagamentoConcluido.excedente, pagamentoConcluido.formaPagamento,
+                    pagamentoConcluido.numeroRecibo
                   )}
                 >
                   <MessageCircle className="size-4" />

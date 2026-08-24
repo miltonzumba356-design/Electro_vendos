@@ -150,17 +150,18 @@ export default function DividaClienteDetalhePage() {
       const file = new File([blob], `divida-${divida.id.slice(0, 8)}.pdf`, { type: 'application/pdf' })
       const mensagem = [
         `*ELECTRO VENDOS* — ${t('installments.paymentHistoryTitle')}`,
+        (divida.numero_formatado || divida.numero) ? `${t('invoices.colNumber')}: ${divida.numero_formatado ?? divida.numero}` : null,
         `${t('common.client')}: ${divida.cliente_nome ?? '—'}`,
         `${t('reports.colProduct')}: ${divida.produto_nome ?? '—'}`,
         '',
         ...pagamentosComSaldo().map((p) =>
-          `• ${format(new Date(p.data_pagamento), 'dd/MM/yyyy')} — ${formatKz(p.valor)} (${p.moeda})${p.forma_pagamento ? ` — ${p.forma_pagamento}` : ''} — ${t('common.balance')}: ${formatKz(p.saldo)}`
+          `• ${p.numero_formatado ?? (p.numero != null ? `Nº ${p.numero}` : '—')} — ${format(new Date(p.data_pagamento), 'dd/MM/yyyy')} — ${formatKz(p.valor)} (${p.moeda})${p.forma_pagamento ? ` — ${p.forma_pagamento}` : ''} — ${t('common.balance')}: ${formatKz(p.saldo)}`
         ),
         '',
         `${t('common.total')}: ${formatKz(divida.valor_total)}`,
         `${t('common.paid')}: ${formatKz(divida.valor_pago)}`,
         `${t('common.balance')}: ${formatKz(divida.saldo)}`,
-      ].join('\n')
+      ].filter((l): l is string => l !== null).join('\n')
       const resultado = await partilharArquivoOuTexto(file, mensagem, telefone)
       if (resultado === 'descarregado') {
         toast.info(t('suppliers.toasts.pdfDownloadedAttachManually'))

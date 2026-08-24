@@ -434,6 +434,16 @@ export function visualizarNotaEntrega(dados: NotaEntregaData, formato: NotaEntre
   abrirJanela(gerarNotaEntregaHtmlPorFormato(dados, true, formato), false, estreito ? 380 : 900, estreito ? 680 : 1000)
 }
 
+// Referência de uma venda para exibir em recibos/documentos: nº da factura
+// gerada quando é a crédito (sequencial, dado pela API), ou os primeiros 8
+// caracteres do id quando é à vista (a API não numera vendas à vista) —
+// mesma convenção já usada em gerarFaturaVendaHtml e nas Notas de Entrega.
+export function referenciaVenda(venda: VendaResponse): string {
+  return venda.numero_factura != null
+    ? `Nº ${venda.numero_factura}`
+    : venda.id.slice(0, 8).toUpperCase()
+}
+
 // Constrói o link wa.me com um resumo em texto da venda. Sem número de
 // telefone do cliente, o WhatsApp mostra o seletor de contactos do utilizador.
 // `dividaAnterior` é o saldo em aberto que o cliente já tinha ANTES desta
@@ -441,12 +451,10 @@ export function visualizarNotaEntrega(dados: NotaEntregaData, formato: NotaEntre
 // mostrar também esse valor e o total combinado a pagar. `venda.credito_cliente_aplicado`
 // é o saldo de crédito do próprio cliente (excesso de pagamentos) já descontado
 // automaticamente nesta venda — `venda.total_a_pagar` já vem líquido desse valor.
-// `formaPagamento` (Dinheiro/Transferência/Multicaixa/TPA) só existe no frontend —
-// a API não guarda forma de pagamento na venda, por isso só está disponível
-// logo a seguir a registar a venda (não é possível recuperá-la mais tarde).
-export function partilharVendaWhatsapp(
-  venda: VendaResponse, telefone?: string | null, dividaAnterior = 0, formaPagamento?: string | null
-) {
+// Forma de pagamento: a API só distingue crédito (`venda.credito`) de à vista —
+// não guarda Dinheiro/Transferência/etc. para vendas (só para pagamento de
+// dívidas), por isso não é mostrado aqui um método mais específico.
+export function partilharVendaWhatsapp(venda: VendaResponse, telefone?: string | null, dividaAnterior = 0) {
   const linhas = venda.itens.map((item) => `• ${item.produto_nome} x${item.quantidade} — ${fmtKz(item.subtotal)}`)
   const creditoAplicado = venda.credito_cliente_aplicado ?? 0
   const totalAPagarVenda = venda.total_a_pagar ?? venda.total_final
@@ -459,12 +467,12 @@ export function partilharVendaWhatsapp(
         `Total a pagar: ${fmtKz(totalAPagarVenda + dividaAnterior)}`,
       ]
     : [`Total: ${fmtKz(venda.total_final)}`]
-  const formaPagamentoLabel = venda.credito ? 'Crédito' : (formaPagamento || 'À vista')
   const mensagem = [
     `*ELECTRO VENDOS* — Recibo de Venda`,
+    `Nº: ${referenciaVenda(venda)}`,
     `Cliente: ${venda.cliente_nome}`,
     `Data: ${fmtData(venda.criado_em)}`,
-    `Forma de pagamento: ${formaPagamentoLabel}`,
+    `Forma de pagamento: ${venda.credito ? 'Crédito' : 'À vista'}`,
     '',
     ...linhas,
     '',
@@ -484,19 +492,23 @@ export function partilharVendaWhatsapp(
 // `saldoCreditoGerado` é o excesso do pagamento (valorPago acima do que era
 // devido) que a API converteu automaticamente em saldo de crédito do cliente.
 // `formaPagamento` (Dinheiro/Transferência/Multicaixa/TPA) vem do campo
-// homónimo da API (PagamentoDividaResponse.forma_pagamento).
+// homónimo da API (PagamentoDividaResponse.forma_pagamento). `numeroRecibo` é
+// o nº sequencial do próprio pagamento (numero_formatado, ex.: "RC0001"),
+// distinto do nº da factura/dívida a que ele se refere.
 export function partilharPagamentoDividaWhatsapp(
   divida: DividaResponse,
   valorPago: number,
   moeda: string,
   telefone?: string | null,
   saldoCreditoGerado = 0,
-  formaPagamento?: string | null
+  formaPagamento?: string | null,
+  numeroRecibo?: string | number | null
 ) {
   const quitada = divida.saldo <= 0
   const gerouCredito = saldoCreditoGerado > 0
   const linhas = [
     `*ELECTRO VENDOS* — Recibo de Pagamento`,
+    numeroRecibo != null ? `Nº Recibo: ${numeroRecibo}` : null,
     `Cliente: ${divida.cliente_nome ?? '—'}`,
     (divida.numero_formatado || divida.numero) ? `Nº Factura: ${divida.numero_formatado ?? divida.numero}` : null,
     `Data: ${fmtData(new Date().toISOString())}`,
