@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { relatoriosService } from '@/services/relatorios'
@@ -6,6 +7,7 @@ import { clientesService } from '@/services/clientes'
 import { vendasService } from '@/services/vendas'
 import { produtosService } from '@/services/produtos'
 import { metasService } from '@/services/metas'
+import { dividasService } from '@/services/dividas'
 import type {
   RelatorioVendasPeriodo,
   RelatorioClienteFiel,
@@ -186,6 +188,109 @@ function VendasPeriodo({ t }: { t: TFunction }) {
       </form>
       {loading && <Skeleton className="h-32 w-full" />}
       {result && <PeriodoStats data={result} t={t} />}
+    </div>
+  )
+}
+
+// Um cliente por linha, com o total ainda em aberto somado de todas as suas
+// dívidas — a API não tem um endpoint dedicado para isto, por isso agregamos
+// aqui a partir de GET /dividas?status=DIVIDA (a mesma lista que já alimenta
+// a aba "Dívidas" de Vendas).
+interface ClienteDividaAgregada {
+  cliente_id: string
+  cliente_nome: string
+  quantidade_dividas: number
+  total_devido: number
+}
+
+/* ── Clientes com dívida ────────────────────────────────────── */
+function ClientesComDivida({ t }: { t: TFunction }) {
+  const navigate = useNavigate()
+  const [result, setResult] = useState<ClienteDividaAgregada[]>([])
+  const [loading, setLoading] = useState(true)
+
+  async function carregar() {
+    setLoading(true)
+    try {
+      const dividas = await dividasService.listar({ status: 'DIVIDA' })
+      const porCliente = new Map<string, ClienteDividaAgregada>()
+      for (const d of dividas) {
+        if (d.saldo <= 0) continue
+        const atual = porCliente.get(d.cliente_id) ?? {
+          cliente_id: d.cliente_id,
+          cliente_nome: d.cliente_nome ?? '—',
+          quantidade_dividas: 0,
+          total_devido: 0,
+        }
+        atual.quantidade_dividas += 1
+        atual.total_devido += d.saldo
+        porCliente.set(d.cliente_id, atual)
+      }
+      setResult(Array.from(porCliente.values()).sort((a, b) => b.total_devido - a.total_devido))
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t('common.loadError'))
+    } finally { setLoading(false) }
+  }
+
+  useEffect(() => { carregar() }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const totalGeral = result.reduce((s, r) => s + r.total_devido, 0)
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {t('reports.debtClientsCount', { count: result.length })}
+          {result.length > 0 && ` — ${t('reports.totalOwed')}: ${formatKz(totalGeral)}`}
+        </p>
+        {result.length > 0 && (
+          <DownloadPdfButton
+            t={t}
+            onClick={() => exportTablePdf({
+              title: t('reports.cardDebtClients'),
+              columns: [
+                { header: t('reports.colClient'), key: 'cliente' },
+                { header: t('reports.debtClientsCountCol'), key: 'quantidade', align: 'right' },
+                { header: t('reports.totalOwed'), key: 'total', align: 'right' },
+              ],
+              rows: result.map((r) => ({
+                cliente: r.cliente_nome, quantidade: r.quantidade_dividas, total: formatKz(r.total_devido),
+              })),
+              filename: 'clientes-com-divida',
+            })}
+          />
+        )}
+      </div>
+      {loading ? (
+        <Skeleton className="h-32 w-full" />
+      ) : result.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-10">{t('reports.debtClientsEmpty')}</p>
+      ) : (
+        <div className="rounded-md border bg-card overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t('reports.colClient')}</TableHead>
+                <TableHead className="text-right">{t('reports.debtClientsCountCol')}</TableHead>
+                <TableHead className="text-right">{t('reports.totalOwed')}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {result.map((r) => (
+                <TableRow
+                  key={r.cliente_id}
+                  className="cursor-pointer hover:bg-muted/40"
+                  onClick={() => navigate(`/clientes/${r.cliente_id}`)}
+                >
+                  <TableCell className="font-medium">{r.cliente_nome}</TableCell>
+                  <TableCell className="text-right">{r.quantidade_dividas}</TableCell>
+                  <TableCell className="text-right font-semibold text-destructive">{formatKz(r.total_devido)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </div>
   )
 }
@@ -1185,6 +1290,7 @@ export default function RelatoriosPage() {
           <TabsTrigger value="vendas-periodo">{t('reports.tabPeriod')}</TabsTrigger>
           <TabsTrigger value="vendas-por-cliente">{t('reports.tabByClient')}</TabsTrigger>
           <TabsTrigger value="historico-cliente">{t('reports.tabClientHistory')}</TabsTrigger>
+          <TabsTrigger value="clientes-divida">{t('reports.tabDebtClients')}</TabsTrigger>
           <TabsTrigger value="clientes-fieis">{t('reports.tabLoyal')}</TabsTrigger>
           <TabsTrigger value="clientes-inativos">{t('reports.tabInactive')}</TabsTrigger>
           <TabsTrigger value="mais-vendidos">{t('reports.tabBestSelling')}</TabsTrigger>
@@ -1205,6 +1311,10 @@ export default function RelatoriosPage() {
           <TabsContent value="historico-cliente">
             <Card><CardHeader><CardTitle className="text-base">{t('reports.cardClientHistory')}</CardTitle></CardHeader>
               <CardContent><HistoricoClienteTab t={t} /></CardContent></Card>
+          </TabsContent>
+          <TabsContent value="clientes-divida">
+            <Card><CardHeader><CardTitle className="text-base">{t('reports.cardDebtClients')}</CardTitle></CardHeader>
+              <CardContent><ClientesComDivida t={t} /></CardContent></Card>
           </TabsContent>
           <TabsContent value="clientes-fieis">
             <Card><CardHeader><CardTitle className="text-base">{t('reports.cardLoyal')}</CardTitle></CardHeader>
