@@ -271,6 +271,8 @@ const ar = {
     cardByClient: 'المبيعات حسب العميل', cardDebtClients: 'العملاء المدينون',
     debtClientsCount: '{{count}} عميل لديه دين مستحق', debtClientsCountCol: 'عدد الديون',
     debtClientsEmpty: 'لا يوجد عملاء لديهم دين مستحق',
+    debtClientsEmptyFiltered: 'لم يتم العثور على عملاء بهذه الفلاتر',
+    searchClient: 'بحث عن عميل', searchClientPlaceholder: 'اسم العميل...', minAmount: 'الحد الأدنى للمبلغ (Kz)',
     cardLoyal: 'العملاء الأوفياء',
     cardInactive: 'العملاء غير النشطين', cardBestSelling: 'المنتجات الأكثر مبيعًا',
     cardProfit: 'الربح حسب المنتج', cardGoals: 'تقدم الأهداف',

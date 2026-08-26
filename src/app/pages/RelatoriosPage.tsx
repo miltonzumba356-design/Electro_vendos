@@ -49,7 +49,7 @@ import {
   TableRow,
 } from '@/app/components/ui/table'
 import { Skeleton } from '@/app/components/ui/skeleton'
-import { AlertTriangle, FileDown, Plus } from 'lucide-react'
+import { AlertTriangle, FileDown, Plus, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 
@@ -208,6 +208,8 @@ function ClientesComDivida({ t }: { t: TFunction }) {
   const navigate = useNavigate()
   const [result, setResult] = useState<ClienteDividaAgregada[]>([])
   const [loading, setLoading] = useState(true)
+  const [busca, setBusca] = useState('')
+  const [valorMinimo, setValorMinimo] = useState('')
 
   async function carregar() {
     setLoading(true)
@@ -234,15 +236,38 @@ function ClientesComDivida({ t }: { t: TFunction }) {
 
   useEffect(() => { carregar() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const totalGeral = result.reduce((s, r) => s + r.total_devido, 0)
+  const filtrado = result
+    .filter((r) => r.cliente_nome.toLowerCase().includes(busca.trim().toLowerCase()))
+    .filter((r) => !valorMinimo || r.total_devido >= Number(valorMinimo))
+
+  const totalGeral = filtrado.reduce((s, r) => s + r.total_devido, 0)
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
-          {t('reports.debtClientsCount', { count: result.length })}
-          {result.length > 0 && ` — ${t('reports.totalOwed')}: ${formatKz(totalGeral)}`}
-        </p>
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="space-y-1 flex-1 min-w-[200px]">
+          <Label className="text-xs">{t('reports.searchClient')}</Label>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <Input
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              placeholder={t('reports.searchClientPlaceholder')}
+              className="pl-9"
+            />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">{t('reports.minAmount')}</Label>
+          <Input
+            type="number"
+            min="0"
+            value={valorMinimo}
+            onChange={(e) => setValorMinimo(e.target.value)}
+            placeholder="0"
+            className="w-32"
+          />
+        </div>
         {result.length > 0 && (
           <DownloadPdfButton
             t={t}
@@ -253,7 +278,7 @@ function ClientesComDivida({ t }: { t: TFunction }) {
                 { header: t('reports.debtClientsCountCol'), key: 'quantidade', align: 'right' },
                 { header: t('reports.totalOwed'), key: 'total', align: 'right' },
               ],
-              rows: result.map((r) => ({
+              rows: filtrado.map((r) => ({
                 cliente: r.cliente_nome, quantidade: r.quantidade_dividas, total: formatKz(r.total_devido),
               })),
               filename: 'clientes-com-divida',
@@ -261,10 +286,16 @@ function ClientesComDivida({ t }: { t: TFunction }) {
           />
         )}
       </div>
+      <p className="text-sm text-muted-foreground">
+        {t('reports.debtClientsCount', { count: filtrado.length })}
+        {filtrado.length > 0 && ` — ${t('reports.totalOwed')}: ${formatKz(totalGeral)}`}
+      </p>
       {loading ? (
         <Skeleton className="h-32 w-full" />
       ) : result.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-10">{t('reports.debtClientsEmpty')}</p>
+      ) : filtrado.length === 0 ? (
+        <p className="text-sm text-muted-foreground text-center py-10">{t('reports.debtClientsEmptyFiltered')}</p>
       ) : (
         <div className="rounded-md border bg-card overflow-x-auto">
           <Table>
@@ -276,7 +307,7 @@ function ClientesComDivida({ t }: { t: TFunction }) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {result.map((r) => (
+              {filtrado.map((r) => (
                 <TableRow
                   key={r.cliente_id}
                   className="cursor-pointer hover:bg-muted/40"

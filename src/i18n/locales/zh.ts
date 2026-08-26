@@ -270,6 +270,8 @@ const zh = {
     cardByClient: '按客户销售', cardDebtClients: '有欠款的客户',
     debtClientsCount: '{{count}} 名客户有未结欠款', debtClientsCountCol: '欠款笔数',
     debtClientsEmpty: '没有客户有未结欠款',
+    debtClientsEmptyFiltered: '没有符合筛选条件的客户',
+    searchClient: '搜索客户', searchClientPlaceholder: '客户姓名...', minAmount: '最低金额 (Kz)',
     cardLoyal: '忠实客户',
     cardInactive: '不活跃客户', cardBestSelling: '畅销产品',
     cardProfit: '按产品利润', cardGoals: '目标进度', cardCritical: '危急库存产品',

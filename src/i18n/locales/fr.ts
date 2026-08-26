@@ -279,6 +279,8 @@ const fr = {
     cardByClient: 'Ventes par client', cardDebtClients: 'Clients avec dette',
     debtClientsCount: '{{count}} client(s) avec dette en cours', debtClientsCountCol: 'Nº dettes',
     debtClientsEmpty: 'Aucun client avec dette en cours',
+    debtClientsEmptyFiltered: 'Aucun client trouvé avec ces filtres',
+    searchClient: 'Rechercher un client', searchClientPlaceholder: 'Nom du client...', minAmount: 'Montant minimum (Kz)',
     cardLoyal: 'Clients fidèles',
     cardInactive: 'Clients inactifs', cardBestSelling: 'Produits les plus vendus',
     cardProfit: 'Bénéfice par produit', cardGoals: 'Progression des objectifs',

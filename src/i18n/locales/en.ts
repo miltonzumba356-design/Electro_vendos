@@ -274,6 +274,8 @@ const en = {
     cardByClient: 'Sales by client', cardDebtClients: 'Clients with debt',
     debtClientsCount: '{{count}} client(s) with outstanding debt', debtClientsCountCol: 'Nº debts',
     debtClientsEmpty: 'No clients with outstanding debt',
+    debtClientsEmptyFiltered: 'No clients found with these filters',
+    searchClient: 'Search client', searchClientPlaceholder: 'Client name...', minAmount: 'Minimum amount (Kz)',
     cardLoyal: 'Loyal clients',
     cardInactive: 'Inactive clients', cardBestSelling: 'Best selling products',
     cardProfit: 'Profit by product', cardGoals: 'Goals progress',

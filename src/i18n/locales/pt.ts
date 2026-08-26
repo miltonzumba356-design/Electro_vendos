@@ -277,6 +277,8 @@ const pt = {
     cardByClient: 'Vendas por cliente', cardDebtClients: 'Clientes com dívida',
     debtClientsCount: '{{count}} cliente(s) com dívida em aberto', debtClientsCountCol: 'Nº dívidas',
     debtClientsEmpty: 'Nenhum cliente com dívida em aberto',
+    debtClientsEmptyFiltered: 'Nenhum cliente encontrado com estes filtros',
+    searchClient: 'Pesquisar cliente', searchClientPlaceholder: 'Nome do cliente...', minAmount: 'Valor mínimo (Kz)',
     cardLoyal: 'Clientes fiéis',
     cardInactive: 'Clientes inativos', cardBestSelling: 'Produtos mais vendidos',
     cardProfit: 'Lucro por produto', cardGoals: 'Progresso das metas',
