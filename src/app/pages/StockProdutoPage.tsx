@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { stockService } from '@/services/stock'
 import { produtosService } from '@/services/produtos'
-import type { MovimentoResponse, ProdutoResponse } from '@/types'
+import type { MovimentoResponse, ProdutoResponse, StockResumoProduto } from '@/types'
 import { Button } from '@/app/components/ui/button'
 import { Badge } from '@/app/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card'
@@ -40,22 +40,36 @@ export default function StockProdutoPage() {
 
   const [produto, setProduto] = useState<ProdutoResponse | null>(null)
   const [movimentos, setMovimentos] = useState<MovimentoResponse[]>([])
+  const [resumo, setResumo] = useState<StockResumoProduto | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!id) return
     setLoading(true)
-    Promise.all([produtosService.buscar(id), stockService.listarMovimentos(id)])
-      .then(([p, m]) => {
+    setResumo(null)
+    Promise.all([
+      // /stock/resumo só filtra por nome — escolhe a linha deste produto pelo id
+      produtosService.buscar(id).then(async (p) => {
+        const r = await stockService.resumo(p.nome).catch((): StockResumoProduto[] => [])
+        return [p, r.find((x) => x.produto_id === id) ?? null] as const
+      }),
+      stockService.listarMovimentos(id),
+    ])
+      .then(([[p, r], m]) => {
         setProduto(p)
+        setResumo(r)
         setMovimentos([...m].sort((a, b) => new Date(b.criado_em).getTime() - new Date(a.criado_em).getTime()))
       })
       .catch((err) => toast.error(err instanceof Error ? err.message : t('stock.toasts.loadError')))
       .finally(() => setLoading(false))
   }, [id])
 
-  const entradas = movimentos.filter((m) => m.tipo === 'ENTRADA').reduce((sum, m) => sum + m.quantidade, 0)
-  const saidas = movimentos.filter((m) => m.tipo === 'SAIDA').reduce((sum, m) => sum + m.quantidade, 0)
+  // Totais calculados no backend; a soma local dos movimentos fica só como recurso
+  const entradas = resumo?.total_entradas
+    ?? movimentos.filter((m) => m.tipo === 'ENTRADA').reduce((sum, m) => sum + m.quantidade, 0)
+  const saidas = resumo?.total_saidas
+    ?? movimentos.filter((m) => m.tipo === 'SAIDA').reduce((sum, m) => sum + m.quantidade, 0)
+  const stockAtual = resumo?.stock_atual ?? produto?.stock_atual
   const { page, pageItems, totalPages, setPage } = usePagination(movimentos)
 
   function handleBaixarPdf() {
@@ -64,7 +78,8 @@ export default function StockProdutoPage() {
       title: t('stock.detailsHistory'),
       subtitle: produto.nome,
       infoLines: [
-        `${t('stock.colCurrentStock')}: ${produto.stock_atual}`,
+        ...(resumo ? [`${t('stock.colInitialStock')}: ${resumo.stock_inicial}`] : []),
+        `${t('stock.colCurrentStock')}: ${stockAtual}`,
         `${t('stock.colTotalIn')}: ${entradas}   ${t('stock.colTotalOut')}: ${saidas}`,
       ],
       columns: [
@@ -109,19 +124,19 @@ export default function StockProdutoPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-24 w-full" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <Card>
             <CardHeader className="pb-1 pt-4 px-4">
-              <CardTitle className="text-xs text-muted-foreground">{t('stock.colCurrentStock')}</CardTitle>
+              <CardTitle className="text-xs text-muted-foreground">{t('stock.colInitialStock')}</CardTitle>
             </CardHeader>
             <CardContent className="pb-4 px-4">
-              <p className="text-lg font-bold">{produto?.stock_atual}</p>
+              <p className="text-lg font-bold text-muted-foreground">{resumo?.stock_inicial ?? '—'}</p>
             </CardContent>
           </Card>
           <Card>
@@ -138,6 +153,18 @@ export default function StockProdutoPage() {
             </CardHeader>
             <CardContent className="pb-4 px-4">
               <p className="text-lg font-bold text-destructive">-{saidas}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-1 pt-4 px-4">
+              <CardTitle className="text-xs text-muted-foreground">{t('stock.colCurrentStock')}</CardTitle>
+            </CardHeader>
+            <CardContent className="pb-4 px-4">
+              <p
+                className={`text-lg font-bold ${resumo && resumo.stock_atual <= resumo.stock_minimo ? 'text-destructive' : ''}`}
+              >
+                {stockAtual}
+              </p>
             </CardContent>
           </Card>
         </div>
