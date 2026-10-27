@@ -128,7 +128,7 @@ const zh = {
     title: '库存', subtitle: '按产品查看库存与移动历史', registerMovement: '登记库存移动',
     filterByProduct: '按产品筛选...', allProducts: '所有产品', colDate: '日期',
     searchPlaceholder: '按产品名称搜索...', emptyProducts: '未找到产品',
-    colCurrentStock: '当前库存', colTotalIn: '总入库', colTotalOut: '总出库',
+    colInitialStock: '初始库存', colCurrentStock: '当前库存', colTotalIn: '总入库', colTotalOut: '总出库',
     colMovements: '移动次数', detailsTitle: '产品详情', detailsCurrentStock: '当前库存',
     detailsTotalIn: '总入库', detailsTotalOut: '总出库', detailsHistory: '移动历史',
     detailsEmpty: '该产品暂无移动记录',

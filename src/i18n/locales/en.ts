@@ -130,7 +130,7 @@ const en = {
     title: 'Stock', subtitle: 'Stock and movement history by product', registerMovement: 'Register movement',
     filterByProduct: 'Filter by product...', allProducts: 'All products', colDate: 'Date',
     searchPlaceholder: 'Search by product name...', emptyProducts: 'No product found',
-    colCurrentStock: 'Current Stock', colTotalIn: 'Total In', colTotalOut: 'Total Out',
+    colInitialStock: 'Initial Stock', colCurrentStock: 'Current Stock', colTotalIn: 'Total In', colTotalOut: 'Total Out',
     colMovements: 'Movements', detailsTitle: 'Product details', detailsCurrentStock: 'Current stock',
     detailsTotalIn: 'Total in', detailsTotalOut: 'Total out', detailsHistory: 'Movement history',
     detailsEmpty: 'No movement recorded for this product',

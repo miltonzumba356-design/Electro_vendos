@@ -1,6 +1,6 @@
 /**
  * SDD — Serviço de Stock
- * Spec: POST /stock/movimento · GET /stock/movimentos · GET /stock/movimentos?produto_id=
+ * Spec: POST /stock/movimento · GET /stock/movimentos · GET /stock/movimentos?produto_id= · GET /stock/resumo
  */
 import { describe, it, expect } from 'vitest'
 import { BASE, mockFetch } from './helpers'
@@ -58,5 +58,32 @@ describe('stockService.listarMovimentos — GET /stock/movimentos', () => {
     const result = await stockService.listarMovimentos()
     expect(result).toHaveLength(2)
     expect(result[1].tipo).toBe('SAIDA')
+  })
+})
+
+const RESUMO = {
+  produto_id: 'prod-uuid-1', produto_nome: 'CHOCOLATE AKSU 12 X 1000g',
+  stock_atual: 66, stock_minimo: 10, total_entradas: 1884, total_saidas: 2452,
+  total_movimentos: 90, stock_inicial: 634,
+}
+
+describe('stockService.resumo — GET /stock/resumo', () => {
+  it('chama GET /stock/resumo sem filtro', async () => {
+    const spy = mockFetch([RESUMO])
+    await stockService.resumo()
+    expect(spy.mock.calls[0][0]).toBe(`${BASE}/stock/resumo`)
+  })
+
+  it('chama GET /stock/resumo?nome=xxx quando nome fornecido', async () => {
+    const spy = mockFetch([RESUMO])
+    await stockService.resumo('chocolate')
+    expect(spy.mock.calls[0][0]).toBe(`${BASE}/stock/resumo?nome=chocolate`)
+  })
+
+  it('retorna os totais calculados no backend', async () => {
+    mockFetch([RESUMO])
+    const [r] = await stockService.resumo()
+    expect(r.stock_inicial + r.total_entradas - r.total_saidas).toBe(r.stock_atual)
+    expect(r.total_movimentos).toBe(90)
   })
 })

@@ -128,7 +128,7 @@ const ar = {
     title: 'المخزون', subtitle: 'المخزون وسجل الحركات حسب المنتج', registerMovement: 'تسجيل حركة',
     filterByProduct: 'تصفية حسب المنتج...', allProducts: 'جميع المنتجات', colDate: 'التاريخ',
     searchPlaceholder: 'بحث باسم المنتج...', emptyProducts: 'لم يتم العثور على منتج',
-    colCurrentStock: 'المخزون الحالي', colTotalIn: 'إجمالي الوارد', colTotalOut: 'إجمالي الصادر',
+    colInitialStock: 'المخزون الأولي', colCurrentStock: 'المخزون الحالي', colTotalIn: 'إجمالي الوارد', colTotalOut: 'إجمالي الصادر',
     colMovements: 'الحركات', detailsTitle: 'تفاصيل المنتج', detailsCurrentStock: 'المخزون الحالي',
     detailsTotalIn: 'إجمالي الوارد', detailsTotalOut: 'إجمالي الصادر', detailsHistory: 'سجل الحركات',
     detailsEmpty: 'لا توجد حركات مسجلة لهذا المنتج',

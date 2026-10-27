@@ -1,5 +1,10 @@
 import { api } from '@/lib/api'
-import type { MovimentoCreate, MovimentoResponse, ValorizacaoStockResponse } from '@/types'
+import type {
+  MovimentoCreate,
+  MovimentoResponse,
+  StockResumoProduto,
+  ValorizacaoStockResponse,
+} from '@/types'
 
 export const stockService = {
   registarMovimento: (data: MovimentoCreate) =>
@@ -10,6 +15,11 @@ export const stockService = {
       '/stock/movimentos',
       produto_id ? { produto_id } : undefined
     ),
+
+  // Resumo por produto calculado no backend (entradas, saídas, nº de
+  // movimentos, stock inicial) — nome filtra por produto (pesquisa parcial).
+  resumo: (nome?: string) =>
+    api.get<StockResumoProduto[]>('/stock/resumo', nome ? { nome } : undefined),
 
   // Quanto vale o stock parado, ao custo e ao preço de venda — nome filtra
   // por produto (pesquisa parcial).

@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { stockService } from '@/services/stock'
 import { produtosService } from '@/services/produtos'
-import type { MovimentoResponse, ProdutoResponse, ValorizacaoStockResponse } from '@/types'
+import type { ProdutoResponse, StockResumoProduto, ValorizacaoStockResponse } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
@@ -183,7 +183,7 @@ export default function StockPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { isGestor } = useAuth()
-  const [movimentos, setMovimentos] = useState<MovimentoResponse[]>([])
+  const [resumo, setResumo] = useState<StockResumoProduto[]>([])
   const [produtos, setProdutos] = useState<ProdutoResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -201,11 +201,12 @@ export default function StockPage() {
   async function load() {
     setLoading(true)
     try {
-      const [m, p] = await Promise.allSettled([
-        stockService.listarMovimentos(),
+      const [r, p] = await Promise.allSettled([
+        stockService.resumo(),
         produtosService.listar(),
       ])
-      if (m.status === 'fulfilled') setMovimentos(m.value)
+      if (r.status === 'fulfilled') setResumo(r.value)
+      else toast.error(r.reason instanceof Error ? r.reason.message : t('stock.toasts.loadError'))
       if (p.status === 'fulfilled') setProdutos(p.value)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('stock.toasts.loadError'))
@@ -233,16 +234,17 @@ export default function StockPage() {
     }
     setSaving(true)
     try {
-      const novo = await stockService.registarMovimento({
+      await stockService.registarMovimento({
         produto_id: form.produto_id,
         tipo: form.tipo,
         quantidade: Number(form.quantidade),
         motivo: form.motivo || null,
         preco_unitario: form.preco_unitario ? Number(form.preco_unitario) : null,
       })
-      setMovimentos((prev) => [novo, ...prev])
       toast.success(t('stock.toasts.registered'))
       setDialogOpen(false)
+      // Os totais são calculados no backend — recarrega o resumo e o stock dos produtos
+      load()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t('stock.toasts.registerError'))
     } finally {
@@ -251,20 +253,10 @@ export default function StockPage() {
   }
 
   const resumoPorProduto = useMemo(() => {
-    return produtos
-      .map((p) => {
-        const movs = movimentos.filter((m) => m.produto_id === p.id)
-        const entradas = movs
-          .filter((m) => m.tipo === 'ENTRADA')
-          .reduce((sum, m) => sum + m.quantidade, 0)
-        const saidas = movs
-          .filter((m) => m.tipo === 'SAIDA')
-          .reduce((sum, m) => sum + m.quantidade, 0)
-        return { produto: p, entradas, saidas, movimentos: movs.length }
-      })
-      .filter((r) => r.produto.nome.toLowerCase().includes(search.toLowerCase()))
-      .sort((a, b) => a.produto.nome.localeCompare(b.produto.nome))
-  }, [produtos, movimentos, search])
+    return resumo
+      .filter((r) => r.produto_nome.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => a.produto_nome.localeCompare(b.produto_nome))
+  }, [resumo, search])
   const { page, pageItems, totalPages, setPage, resetPage } = usePagination(resumoPorProduto)
 
   return (
@@ -309,9 +301,10 @@ export default function StockPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>{t('stock.colProduct')}</TableHead>
-                    <TableHead className="text-right">{t('stock.colCurrentStock')}</TableHead>
+                    <TableHead className="text-right">{t('stock.colInitialStock')}</TableHead>
                     <TableHead className="text-right">{t('stock.colTotalIn')}</TableHead>
                     <TableHead className="text-right">{t('stock.colTotalOut')}</TableHead>
+                    <TableHead className="text-right">{t('stock.colCurrentStock')}</TableHead>
                     <TableHead className="text-right">{t('stock.colMovements')}</TableHead>
                     <TableHead className="text-right">{t('common.actions')}</TableHead>
                   </TableRow>
@@ -320,36 +313,41 @@ export default function StockPage() {
                   {loading ? (
                     Array.from({ length: 5 }).map((_, i) => (
                       <TableRow key={i}>
-                        {Array.from({ length: 6 }).map((_, j) => (
+                        {Array.from({ length: 7 }).map((_, j) => (
                           <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                         ))}
                       </TableRow>
                     ))
                   ) : resumoPorProduto.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         {t('stock.emptyProducts')}
                       </TableCell>
                     </TableRow>
                   ) : (
-                    pageItems.map(({ produto, entradas, saidas, movimentos: count }) => (
+                    pageItems.map((r) => (
                       <TableRow
-                        key={produto.id}
+                        key={r.produto_id}
                         className="cursor-pointer hover:bg-muted/40"
-                        onClick={() => navigate(`/stock/${produto.id}`)}
+                        onClick={() => navigate(`/stock/${r.produto_id}`)}
                       >
-                        <TableCell className="font-medium">{produto.nome}</TableCell>
-                        <TableCell className="text-right">{produto.stock_atual}</TableCell>
-                        <TableCell className="text-right text-green-600">+{entradas}</TableCell>
-                        <TableCell className="text-right text-destructive">-{saidas}</TableCell>
+                        <TableCell className="font-medium">{r.produto_nome}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{r.stock_inicial}</TableCell>
+                        <TableCell className="text-right text-green-600">+{r.total_entradas}</TableCell>
+                        <TableCell className="text-right text-destructive">-{r.total_saidas}</TableCell>
+                        <TableCell
+                          className={`text-right font-semibold ${r.stock_atual <= r.stock_minimo ? 'text-destructive' : ''}`}
+                        >
+                          {r.stock_atual}
+                        </TableCell>
                         <TableCell className="text-right">
-                          <Badge variant="secondary">{count}</Badge>
+                          <Badge variant="secondary">{r.total_movimentos}</Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={(e) => { e.stopPropagation(); navigate(`/stock/${produto.id}`) }}
+                            onClick={(e) => { e.stopPropagation(); navigate(`/stock/${r.produto_id}`) }}
                           >
                             <Eye className="size-4" />
                           </Button>

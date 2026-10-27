@@ -77,6 +77,17 @@ export interface ProdutoStockBaixo extends ProdutoResponse {
   diferenca: number
 }
 
+export interface StockResumoProduto {
+  produto_id: string
+  produto_nome: string
+  stock_atual: number
+  stock_minimo: number
+  total_entradas: number
+  total_saidas: number
+  total_movimentos: number
+  stock_inicial: number
+}
+
 export interface ValorizacaoStockProduto {
   produto_id: string
   produto_nome: string
