@@ -59,7 +59,13 @@ function extrairTitulo(html: string): string {
   return (m ? m[1] : 'documento').replace(/\s+/g, '_')
 }
 
-function abrirJanela(html: string, autoPrint: boolean, width = 380, height = 680) {
+// Tamanho de folha dos documentos largos (Factura e Nota de Entrega). Define o
+// @page da impressão e a página do PDF gerado por "Baixar PDF".
+export type FormatoFolha = 'a4' | 'a5'
+
+const JANELA_FOLHA: Record<FormatoFolha, [number, number]> = { a4: [900, 1000], a5: [680, 900] }
+
+function abrirJanela(html: string, autoPrint: boolean, width = 380, height = 680, formatoPdf: FormatoFolha = 'a4') {
   const win = window.open('', '_blank', `width=${width},height=${height},toolbar=no,menubar=no,location=no,scrollbars=yes`)
   if (!win) { alert('Por favor, permita pop-ups para imprimir.'); return }
   win.document.write(html)
@@ -85,7 +91,7 @@ function abrirJanela(html: string, autoPrint: boolean, width = 380, height = 680
       btnPdf.textContent = 'A gerar...'
       if (botoes) botoes.style.display = 'none'
       try {
-        await exportHtmlToPdf(win.document.body, extrairTitulo(html))
+        await exportHtmlToPdf(win.document.body, extrairTitulo(html), formatoPdf)
       } finally {
         if (botoes) botoes.style.display = ''
         btnPdf.disabled = false
@@ -139,10 +145,41 @@ const CSS_FATURA = `
   .assinatura .nome{font-size:11px;color:#444;margin-bottom:28px;min-height:14px}
   .assinatura .linha{border-top:1px solid #111;padding-top:6px;font-size:11px;color:#555}
   .footer{text-align:center;font-size:11px;color:#888;margin-top:32px;line-height:1.6}
-  @media print{@page{margin:15mm}button{display:none!important}}
+  .logo-empresa{height:52px;width:auto;flex-shrink:0}
 `
 
-function gerarFaturaVendaHtml(venda: VendaResponse, clienteNif: string | null, comBotaoImprimir: boolean): string {
+// A5 vertical (148×210mm): mesma estrutura do A4, com letra, espaçamentos e
+// blocos reduzidos para caber em meia folha. Aplicado por cima de CSS_FATURA.
+const CSS_FATURA_A5 = `
+  body{font-size:11px;max-width:560px;padding:16px}
+  .header{flex-wrap:wrap;border-bottom-width:2px;padding-bottom:10px;margin-bottom:12px;gap:10px}
+  .empresa h1{font-size:15px!important}
+  .empresa p,.doc-info p{font-size:9px}
+  .doc-info h2{font-size:13px}
+  .logo-empresa{height:38px}
+  .cliente-box{padding:8px 10px;margin-bottom:12px;gap:8px}
+  .cliente-box .label{font-size:8px}
+  .cliente-box .valor{font-size:11px}
+  .cliente-nif,.info-row{font-size:9px}
+  table{margin-bottom:10px}
+  th{padding:5px;font-size:9px}
+  td{padding:5px;font-size:10px}
+  .totais{width:220px}
+  .totais-row{font-size:10px;padding:2px 0}
+  .totais-row.final{font-size:13px;padding-top:5px}
+  .assinaturas{gap:12px;margin-top:36px}
+  .assinatura .nome{font-size:9px;margin-bottom:20px}
+  .assinatura .linha{font-size:9px}
+  .footer{font-size:9px;margin-top:18px}
+`
+
+function cssFolha(formato: FormatoFolha): string {
+  const page = formato === 'a5' ? '@page{size:A5 portrait;margin:8mm}' : '@page{size:A4 portrait;margin:15mm}'
+  return `${CSS_FATURA}${formato === 'a5' ? CSS_FATURA_A5 : ''}
+  @media print{${page}button{display:none!important}}`
+}
+
+function gerarFaturaVendaHtml(venda: VendaResponse, clienteNif: string | null, comBotaoImprimir: boolean, formato: FormatoFolha): string {
   const isCredito = venda.credito
   const titulo = isCredito ? 'FACTURA DE CRÉDITO' : 'FACTURA RECIBO'
 
@@ -177,7 +214,7 @@ function gerarFaturaVendaHtml(venda: VendaResponse, clienteNif: string | null, c
     ? `<div class="info-row"><span>Estado:</span><span class="${venda.credito_pago ? 'ok' : 'pendente'}">${venda.credito_pago ? 'Pago' : 'Pendente'}</span></div>`
     : ''
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${titulo}</title><style>${CSS_FATURA}</style></head>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${titulo}</title><style>${cssFolha(formato)}</style></head>
 <body>
   <div class="header">
     <div class="empresa">
@@ -222,12 +259,33 @@ function gerarFaturaVendaHtml(venda: VendaResponse, clienteNif: string | null, c
 </body></html>`
 }
 
-export function imprimirVenda(venda: VendaResponse, clienteNif?: string | null) {
-  abrirJanela(gerarFaturaVendaHtml(venda, clienteNif ?? null, false), true, 900, 1000)
+export function imprimirVenda(venda: VendaResponse, clienteNif?: string | null, formato: FormatoFolha = 'a4') {
+  abrirJanela(gerarFaturaVendaHtml(venda, clienteNif ?? null, false, formato), true, ...JANELA_FOLHA[formato], formato)
 }
 
-export function visualizarVenda(venda: VendaResponse, clienteNif?: string | null) {
-  abrirJanela(gerarFaturaVendaHtml(venda, clienteNif ?? null, true), false, 900, 1000)
+export function visualizarVenda(venda: VendaResponse, clienteNif?: string | null, formato: FormatoFolha = 'a4') {
+  abrirJanela(gerarFaturaVendaHtml(venda, clienteNif ?? null, true, formato), false, ...JANELA_FOLHA[formato], formato)
+}
+
+// Última folha escolhida para as facturas, lembrada entre sessões neste
+// browser. O armazenamento pode estar indisponível (modo privado, bloqueado),
+// daí o try/catch — sem ele, cai sempre em A4.
+const KEY_FORMATO_FACTURA = 'ev_formato_factura'
+
+export function lerFormatoFactura(): FormatoFolha {
+  try {
+    return localStorage.getItem(KEY_FORMATO_FACTURA) === 'a5' ? 'a5' : 'a4'
+  } catch {
+    return 'a4'
+  }
+}
+
+export function guardarFormatoFactura(formato: FormatoFolha) {
+  try {
+    localStorage.setItem(KEY_FORMATO_FACTURA, formato)
+  } catch {
+    // ignorado — a escolha vale só para esta sessão
+  }
 }
 
 // ── Nota de Entrega ──────────────────────────────────────────────
@@ -257,12 +315,12 @@ export interface NotaEntregaData {
 }
 
 // Formato de impressão escolhido pelo utilizador no diálogo da Nota de
-// Entrega — folha A4 inteira, rolo de impressora térmica (80mm, o mais comum
-// em impressoras de talão) ou o rolo estreito típico dos terminais de
-// pagamento automático (TPA, 58mm).
-export type NotaEntregaFormato = 'a4' | 'termica80' | 'tpa58'
+// Entrega — folha A4 inteira, meia folha A5 (vertical), rolo de impressora
+// térmica (80mm, o mais comum em impressoras de talão) ou o rolo estreito
+// típico dos terminais de pagamento automático (TPA, 58mm).
+export type NotaEntregaFormato = FormatoFolha | 'termica80' | 'tpa58'
 
-function gerarNotaEntregaA4Html(dados: NotaEntregaData, comBotaoImprimir: boolean): string {
+function gerarNotaEntregaFolhaHtml(dados: NotaEntregaData, comBotaoImprimir: boolean, formato: FormatoFolha): string {
   const linhas = dados.itens.map((item) => `
     <tr>
       <td>${esc(item.descricao || item.produto_nome)}</td>
@@ -287,11 +345,11 @@ function gerarNotaEntregaA4Html(dados: NotaEntregaData, comBotaoImprimir: boolea
     ? `<p style="font-size:12px;color:#444;margin-top:12px"><strong>Observações:</strong> ${esc(dados.observacoes)}</p>`
     : ''
 
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nota de Entrega</title><style>${CSS_FATURA}</style></head>
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Nota de Entrega</title><style>${cssFolha(formato)}</style></head>
 <body>
   <div class="header">
     <div class="empresa" style="display:flex;align-items:center;gap:14px">
-      <img src="${GOLDENMARK_LOGO_DATA_URL}" alt="${esc(EMPRESA_NOTA_ENTREGA.nome)}" style="height:52px;width:auto;flex-shrink:0">
+      <img class="logo-empresa" src="${GOLDENMARK_LOGO_DATA_URL}" alt="${esc(EMPRESA_NOTA_ENTREGA.nome)}">
       <div>
         <h1 style="font-size:16px">${esc(EMPRESA_NOTA_ENTREGA.nome)}</h1>
         <p>${esc(EMPRESA_NOTA_ENTREGA.local)} — ${esc(EMPRESA_NOTA_ENTREGA.razaoSocial)}</p>
@@ -421,17 +479,24 @@ function gerarNotaEntregaTermicaHtml(dados: NotaEntregaData, comBotaoImprimir: b
 function gerarNotaEntregaHtmlPorFormato(dados: NotaEntregaData, comBotaoImprimir: boolean, formato: NotaEntregaFormato): string {
   if (formato === 'termica80') return gerarNotaEntregaTermicaHtml(dados, comBotaoImprimir, 302, 80)
   if (formato === 'tpa58') return gerarNotaEntregaTermicaHtml(dados, comBotaoImprimir, 219, 58)
-  return gerarNotaEntregaA4Html(dados, comBotaoImprimir)
+  return gerarNotaEntregaFolhaHtml(dados, comBotaoImprimir, formato)
+}
+
+function abrirNotaEntrega(dados: NotaEntregaData, formato: NotaEntregaFormato, autoPrint: boolean) {
+  const html = gerarNotaEntregaHtmlPorFormato(dados, !autoPrint, formato)
+  if (formato === 'a4' || formato === 'a5') {
+    abrirJanela(html, autoPrint, ...JANELA_FOLHA[formato], formato)
+  } else {
+    abrirJanela(html, autoPrint, 380, 680)
+  }
 }
 
 export function imprimirNotaEntrega(dados: NotaEntregaData, formato: NotaEntregaFormato = 'a4') {
-  const estreito = formato !== 'a4'
-  abrirJanela(gerarNotaEntregaHtmlPorFormato(dados, false, formato), true, estreito ? 380 : 900, estreito ? 680 : 1000)
+  abrirNotaEntrega(dados, formato, true)
 }
 
 export function visualizarNotaEntrega(dados: NotaEntregaData, formato: NotaEntregaFormato = 'a4') {
-  const estreito = formato !== 'a4'
-  abrirJanela(gerarNotaEntregaHtmlPorFormato(dados, true, formato), false, estreito ? 380 : 900, estreito ? 680 : 1000)
+  abrirNotaEntrega(dados, formato, false)
 }
 
 // Referência de uma venda para exibir em recibos/documentos: nº da factura

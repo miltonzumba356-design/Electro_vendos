@@ -224,7 +224,7 @@ const en = {
     fieldPlate: 'Vehicle plate', platePlaceholder: 'E.g: LD-12-34-AB',
     fieldNotes: 'Notes', notesPlaceholder: 'Additional notes about the transport',
     preview: 'Preview', printOrDownload: 'Print / Download',
-    fieldFormat: 'Print format', formatA4: 'A4 (full sheet)',
+    fieldFormat: 'Print format', formatA4: 'A4 (full sheet)', formatA5: 'A5 (half sheet)',
     formatThermal80: 'Thermal printer (80mm)', formatTpa58: 'TPA / Narrow thermal (58mm)',
   },
   suppliers: {

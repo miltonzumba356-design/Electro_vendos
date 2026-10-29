@@ -805,18 +805,20 @@ export async function getLedgerSectionsPdfBlob(opts: Omit<ExportLedgerSectionsPd
 // Converte um documento HTML já renderizado (ex.: o popup de recibo/nota) em
 // PDF real, capturando-o como imagem paginada — preserva o layout exato do
 // documento em vez de reconstruir o texto via API do jsPDF.
-export async function exportHtmlToPdf(target: HTMLElement, filename: string) {
+// Dimensões (mm, vertical) das folhas suportadas por exportHtmlToPdf.
+const FOLHAS_MM = { a4: [210, 297], a5: [148, 210] } as const
+
+export async function exportHtmlToPdf(target: HTMLElement, filename: string, formato: 'a4' | 'a5' = 'a4') {
   const [jsPDF, html2canvas] = await Promise.all([carregarJsPdf(), carregarHtml2Canvas()])
 
   const canvas = await html2canvas(target, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
   const imgData = canvas.toDataURL('image/png')
 
-  const pdfWidth = 210 // A4 mm
-  const pageHeight = 297
+  const [pdfWidth, pageHeight] = FOLHAS_MM[formato]
   const imgWidth = pdfWidth
   const imgHeight = (canvas.height * imgWidth) / canvas.width
 
-  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: formato })
   let heightLeft = imgHeight
   let position = 0
 

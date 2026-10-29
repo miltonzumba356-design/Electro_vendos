@@ -221,7 +221,7 @@ const ar = {
     fieldPlate: 'رقم لوحة المركبة', platePlaceholder: 'مثال: LD-12-34-AB',
     fieldNotes: 'ملاحظات', notesPlaceholder: 'ملاحظات إضافية حول النقل',
     preview: 'معاينة', printOrDownload: 'طباعة / تنزيل',
-    fieldFormat: 'تنسيق الطباعة', formatA4: 'A4 (ورقة كاملة)',
+    fieldFormat: 'تنسيق الطباعة', formatA4: 'A4 (ورقة كاملة)', formatA5: 'A5 (نصف ورقة)',
     formatThermal80: 'طابعة حرارية (80مم)', formatTpa58: 'TPA / حراري ضيق (58مم)',
   },
   suppliers: {

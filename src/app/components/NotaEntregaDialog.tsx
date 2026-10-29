@@ -266,6 +266,7 @@ export function NotaEntregaDialog({
                 <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="a4">{t('deliveryNotes.formatA4')}</SelectItem>
+                  <SelectItem value="a5">{t('deliveryNotes.formatA5')}</SelectItem>
                   <SelectItem value="termica80">{t('deliveryNotes.formatThermal80')}</SelectItem>
                   <SelectItem value="tpa58">{t('deliveryNotes.formatTpa58')}</SelectItem>
                 </SelectContent>

@@ -58,7 +58,8 @@ import { usePagination } from '@/lib/usePagination'
 import { Plus, Eye, Trash2, Search, Printer, AlertTriangle, Wallet, MessageCircle, X, FileSignature, FileDown, History, XCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp, partilharPagamentoDividaWhatsapp, referenciaVenda } from '@/lib/recibo'
+import { imprimirVenda, visualizarVenda, partilharVendaWhatsapp, partilharPagamentoDividaWhatsapp, referenciaVenda, lerFormatoFactura, guardarFormatoFactura } from '@/lib/recibo'
+import type { FormatoFolha } from '@/lib/recibo'
 import { exportTablePdf, getTablePdfBlob, formatPeriodoPdf } from '@/lib/pdf'
 import { partilharArquivoOuTexto } from '@/lib/share'
 import { NotaEntregaDialog } from '@/app/components/NotaEntregaDialog'
@@ -78,6 +79,28 @@ interface ItemForm {
   quantidade: number
 }
 
+// Folha da factura (A4/A5). `compacto` mostra só "A4"/"A5" — usado no
+// cabeçalho do diálogo de detalhes, onde não há espaço para a legenda inteira.
+function FormatoFacturaSelect({
+  value, onChange, t, className = 'w-full', compacto = false,
+}: {
+  value: FormatoFolha
+  onChange: (formato: FormatoFolha) => void
+  t: TFunction
+  className?: string
+  compacto?: boolean
+}) {
+  return (
+    <Select value={value} onValueChange={(v) => onChange(v as FormatoFolha)}>
+      <SelectTrigger className={className} aria-label={t('deliveryNotes.fieldFormat')}><SelectValue /></SelectTrigger>
+      <SelectContent>
+        <SelectItem value="a4">{compacto ? 'A4' : t('deliveryNotes.formatA4')}</SelectItem>
+        <SelectItem value="a5">{compacto ? 'A5' : t('deliveryNotes.formatA5')}</SelectItem>
+      </SelectContent>
+    </Select>
+  )
+}
+
 /* ── Tab: Vendas ──────────────────────────────────────────────── */
 function VendasTab({ t }: { t: TFunction }) {
   const { isGestor } = useAuth()
@@ -94,6 +117,7 @@ function VendasTab({ t }: { t: TFunction }) {
   } | null>(null)
   const [detalhesDividaAnterior, setDetalhesDividaAnterior] = useState(0)
   const [notaEntregaOrigem, setNotaEntregaOrigem] = useState<NotaEntregaOrigem | null>(null)
+  const [formatoFactura, setFormatoFactura] = useState<FormatoFolha>(lerFormatoFactura)
   const [cancelarVendaAlvo, setCancelarVendaAlvo] = useState<VendaResponse | null>(null)
   const [cancelando, setCancelando] = useState(false)
   const [sharingPdf, setSharingPdf] = useState(false)
@@ -161,6 +185,11 @@ function VendasTab({ t }: { t: TFunction }) {
       .catch(() => { if (!cancelado) setDetalhesDividaAnterior(0) })
     return () => { cancelado = true }
   }, [detalhesVenda])
+
+  function handleFormatoFactura(formato: FormatoFolha) {
+    setFormatoFactura(formato)
+    guardarFormatoFactura(formato)
+  }
 
   function openNovaVenda() {
     setClienteMode('nenhum')
@@ -724,13 +753,18 @@ function VendasTab({ t }: { t: TFunction }) {
                   </div>
                 </div>
               )}
+              <div className="space-y-2">
+                <Label>{t('deliveryNotes.fieldFormat')}</Label>
+                <FormatoFacturaSelect value={formatoFactura} onChange={handleFormatoFactura} t={t} />
+              </div>
               <div className="grid gap-2">
                 <Button
                   variant="outline"
                   className="justify-start gap-2"
                   onClick={() => visualizarVenda(
                     vendaConcluida.venda,
-                    clientes.find((c) => c.id === vendaConcluida.venda.cliente_id)?.nif
+                    clientes.find((c) => c.id === vendaConcluida.venda.cliente_id)?.nif,
+                    formatoFactura
                   )}
                 >
                   <Eye className="size-4" />
@@ -741,7 +775,8 @@ function VendasTab({ t }: { t: TFunction }) {
                   className="justify-start gap-2"
                   onClick={() => imprimirVenda(
                     vendaConcluida.venda,
-                    clientes.find((c) => c.id === vendaConcluida.venda.cliente_id)?.nif
+                    clientes.find((c) => c.id === vendaConcluida.venda.cliente_id)?.nif,
+                    formatoFactura
                   )}
                 >
                   <Printer className="size-4" />
@@ -789,13 +824,21 @@ function VendasTab({ t }: { t: TFunction }) {
                     <FileSignature className="size-4" />
                     {t('deliveryNotes.buttonLabel')}
                   </Button>
+                  <FormatoFacturaSelect
+                    value={formatoFactura}
+                    onChange={handleFormatoFactura}
+                    t={t}
+                    className="h-8 w-[76px]"
+                    compacto
+                  />
                   <Button
                     variant="outline"
                     size="sm"
                     className="gap-2"
                     onClick={() => imprimirVenda(
                       detalhesVenda,
-                      clientes.find((c) => c.id === detalhesVenda.cliente_id)?.nif
+                      clientes.find((c) => c.id === detalhesVenda.cliente_id)?.nif,
+                      formatoFactura
                     )}
                   >
                     <Printer className="size-4" />
